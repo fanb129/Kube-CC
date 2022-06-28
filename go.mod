@@ -3,7 +3,7 @@ module k8s_deploy_gin
 go 1.18
 
 require (
-	github.com/appleboy/gin-jwt/v2 v2.8.0
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.7.7
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
 	gopkg.in/ini.v1 v1.66.4
@@ -21,7 +21,6 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
-	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/gofuzz v1.0.0 // indirect

@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"golang.org/x/crypto/bcrypt"
 	"k8s_deploy_gin/models"
 	"time"
 )
@@ -16,7 +15,7 @@ func GetUserList(page int, pageSize int) (int, []interface{}) {
 	offset := (page - 1) * pageSize
 	// 查看所有的user,并获取user总数
 	var total int64
-	result := db.Order("status DESC").Offset(offset).Limit(pageSize).Where("status > ?", "0").Find(&users).Count(&total)
+	result := MysqlDb.Order("status DESC").Offset(offset).Limit(pageSize).Where("status > ?", "0").Find(&users).Count(&total)
 	// 如果返回的数据为0条
 	if result.RowsAffected == 0 {
 		return 0, userList
@@ -34,60 +33,47 @@ func GetUserList(page int, pageSize int) (int, []interface{}) {
 }
 
 // GetUserById 通过id获取user
-func GetUserById(id int) *models.User {
+func GetUserById(id int) (*models.User, error) {
 	user := models.User{}
-	db.First(&user, id)
-	return &user
+	result := MysqlDb.First(&user, id)
+	if result.Error == nil {
+		return &user, nil
+	}
+	return nil, result.Error
 }
 
 // GetUserByName 通过name获取user
-func GetUserByName(name string) *models.User {
+func GetUserByName(name string) (*models.User, error) {
 	user := models.User{}
-	result := db.Where("username = ?", name).First(&user)
-	if result.RowsAffected == 0 {
-		return nil
+	result := MysqlDb.Where("username = ?", name).First(&user)
+	if result.Error == nil {
+		return &user, nil
 	}
-	return &user
+	return nil, result.Error
 }
 
 // CreateUser 新增user
-func CreateUser(data map[string]interface{}) bool {
-	result := db.Create(&models.User{
+func CreateUser(username, nickname, password string) (uint, error) {
+	user := models.User{
 		Model: models.Model{
 			CreateAt: time.Now(),
 			UpdateAt: time.Now(),
 		},
-		Username: data["username"].(string),
-		Password: data["password"].(string),
-		Nickname: data["nickname"].(string),
+		Username: username,
+		Password: password,
+		Nickname: nickname,
 		Status:   1,
-	})
-
-	if result.RowsAffected == 0 {
-		return false
 	}
-	return true
+	result := MysqlDb.Create(user)
+	if result.Error == nil {
+		return user.ID, nil
+	}
+	return 0, result.Error
 }
 
 // UpdateUser 更新user
-func UpdateUser(u *models.User) bool {
+func UpdateUser(u *models.User) error {
 	u.UpdateAt = time.Now()
-	result := db.Save(&u)
-	if result.RowsAffected == 0 {
-		return false
-	}
-	return true
-}
-
-// CheckUser 检查密码是否正确
-func CheckUser(username string, password string) bool {
-	user := GetUserByName(username)
-	if user == nil {
-		return false
-	}
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		return false
-	}
-	return true
+	result := MysqlDb.Save(&u)
+	return result.Error
 }

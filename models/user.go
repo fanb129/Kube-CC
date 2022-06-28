@@ -1,10 +1,5 @@
 package models
 
-// Login jwt登录使用
-type Login struct {
-	Username string `form:"username" json:"username" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required"`
-}
 type User struct {
 	Model
 	Username string `json:"username"` // 账号

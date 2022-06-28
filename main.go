@@ -1,29 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"k8s_deploy_gin/pkg/setting"
+	"k8s_deploy_gin/conf"
+	"k8s_deploy_gin/dao"
 	"k8s_deploy_gin/routers"
-	"net/http"
 )
 
 func main() {
-	r := routers.InitRouter()
-
-	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", setting.HTTPPort),
-		Handler:        r,
-		ReadTimeout:    setting.ReadTimeout,
-		WriteTimeout:   setting.WriteTimeout,
-		MaxHeaderBytes: 1 << 20,
-	}
-
-	err := s.ListenAndServe()
+	dao.InitDB()   //数据库初始化
+	dao.InitKube() // client-go k8s初始化
+	//dao.InitRedisPool() //Redis 初始化(暂时不用)
+	r := routers.InitRouter() //路由初始化
+	err := r.Run(conf.Port)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
-
-	//r.Run(fmt.Sprintf(":%d", setting.HTTPPort))
-
 }

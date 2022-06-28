@@ -1,14 +1,18 @@
-package kube
+package service
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s_deploy_gin/common"
+	"k8s_deploy_gin/dao"
 	"log"
 )
 
-func GetPod(ns string) (int, []interface{}) {
-	pods, err := clientset.CoreV1().Pods(ns).List(metav1.ListOptions{})
+// GetPod 获得指定namespace下pod
+func GetPod(ns string) (*common.PodListResponse, error) {
+	pods, err := dao.ClientSet.CoreV1().Pods(ns).List(metav1.ListOptions{})
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
 
 	num := len(pods.Items)
@@ -24,5 +28,5 @@ func GetPod(ns string) (int, []interface{}) {
 		}
 		podList = append(podList, tmpMap)
 	}
-	return num, podList
+	return &common.PodListResponse{Response: common.OK, Length: num, PodList: podList}, nil
 }

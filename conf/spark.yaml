@@ -1,0 +1,85 @@
+# 使用前先拉取镜像
+# docker pull registry.aliyuncs.com/google_containers/spark:1.5.2_v1
+---
+# 创建namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "spark-cluster"
+  labels:
+    name: "spark-cluster"
+---
+# master的控制器
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: spark-master-controller
+  namespace: spark-cluster
+spec:
+  replicas: 1
+  selector:
+    component: spark-master
+  template:
+    metadata:
+      labels:
+        component: spark-master
+    spec:
+      containers:
+        - name: spark-master
+          image: registry.aliyuncs.com/google_containers/spark:1.5.2_v1
+          imagePullPolicy: IfNotPresent
+          command: ["/start-master"]
+          ports:
+            - containerPort: 7077
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+
+---
+# worker的控制器
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: spark-worker-controller
+  namespace: spark-cluster
+spec:
+  replicas: 3
+  selector:
+    component: spark-worker
+  template:
+    metadata:
+      labels:
+        component: spark-worker
+    spec:
+      containers:
+        - name: spark-worker
+          image: registry.aliyuncs.com/google_containers/spark:1.5.2_v1
+          imagePullPolicy: IfNotPresent
+          command: ["/start-worker"]
+          ports:
+            - containerPort: 8081
+          resources:
+            requests:
+              cpu: 100m
+
+---
+# service暴露的端口是32143，worker的映射还没有做
+kind: Service
+apiVersion: v1
+metadata:
+  name: spark-master
+  namespace: spark-cluster
+spec:
+  type: NodePort
+  ports:
+    - port: 7077
+      targetPort: 7077
+      name: spark
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      nodePort: 32143
+      name: http
+  selector:
+    component: spark-master
