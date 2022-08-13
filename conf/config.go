@@ -45,7 +45,6 @@ func loadServer(file *ini.File) {
 	s := file.Section("server")
 	AppMode = s.Key("AppMode").MustString("debug")
 	Port = s.Key("Port").MustString("8888")
-	JwtKey = s.Key("JwtKey").MustString("Kubernetes")
 	PageSize = s.Key("PageSize").MustInt(10)
 }
 func loadKubernetes(file *ini.File) {

@@ -9,7 +9,7 @@ import (
 
 func GetPod(c *gin.Context) {
 	ns := c.DefaultPostForm("namespace", "default")
-	podListResponse, err := service.GetPod(ns)
+	podListResponse, err := service.GetPod(ns, "")
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {

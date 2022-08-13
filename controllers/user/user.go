@@ -11,57 +11,71 @@ import (
 func Index(c *gin.Context) {
 	//fmt.Println("userindex")
 	page, _ := strconv.Atoi(c.Param("page"))
-	userListResponse := service.IndexUser(page)
+	userListResponse, err := service.IndexUser(page)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
 	c.JSON(http.StatusOK, userListResponse)
 }
 
 // Delete 删除用户
 func Delete(c *gin.Context) {
 	//fmt.Println("delete")
-	// 判断权限 管理员或者超级管理员
-	jwt := GetStatus(c)
-	if jwt >= 3 {
-		id, _ := strconv.Atoi(c.Param("id"))
-		response := service.DeleteUSer(id)
-		c.JSON(http.StatusOK, response)
-	} else {
-		c.JSON(http.StatusOK, common.NoStatus)
+
+	id, _ := strconv.Atoi(c.Param("id"))
+	response, err := service.DeleteUSer(uint(id))
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
 	}
+	c.JSON(http.StatusOK, response)
 
 }
 
 // Edit 授权用户
 func Edit(c *gin.Context) {
 	//fmt.Println("useredit")
-	// 判断权限 管理员或者超级管理员
-	jwt := GetStatus(c)
-	if jwt >= 3 {
-		id, _ := strconv.Atoi(c.Param("id"))
-		newStatus, _ := strconv.Atoi(c.PostForm("status"))
-		response := service.EditUser(id, newStatus)
-		c.JSON(http.StatusOK, response)
-	} else {
-		c.JSON(http.StatusOK, common.NoStatus)
+	id, _ := strconv.Atoi(c.Param("id"))
+	form := common.EditForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
 	}
+	response, err := service.EditUser(uint(id), form.Role)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
 
 }
 
 // ResetPass 重置密码
 func ResetPass(c *gin.Context) {
-	jwt := GetStatus(c)
-	if jwt >= 3 {
-		id, _ := strconv.Atoi(c.Param("id"))
-		password := c.PostForm("password")
-		response := service.ResetPassUser(id, password)
-		c.JSON(http.StatusOK, response)
-	} else {
-		c.JSON(http.StatusOK, common.NoStatus)
+	id, _ := strconv.Atoi(c.Param("id"))
+	form := common.ResetPassForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
 	}
+	response, err := service.ResetPassUser(uint(id), form.Password)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
 
-}
-
-// GetStatus 获得权限
-func GetStatus(c *gin.Context) int {
-	status, _ := c.Get("status")
-	return status.(int)
 }

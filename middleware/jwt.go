@@ -22,23 +22,23 @@ func NewJWT() *JWT {
 // MyClaims 自定义Claim
 type MyClaims struct {
 	UserId uint `json:"user_id"` // 用户id
-	Status int  `json:"status"`  // 用户权限
+	Role   uint `json:"role"`    // 用户权限
 	jwt.StandardClaims
 }
 
 var (
-	TokenExpired     error = errors.New("token已过期，请重新登录")
-	TokenNotValidYet error = errors.New("token无效，请重新登录")
-	TokenMalFormed   error = errors.New("token 不正确，请重新登录")
-	TokenInvalid     error = errors.New("这不是一个 token,请重新登录")
+	TokenExpired     = errors.New("token已过期，请重新登录")
+	TokenNotValidYet = errors.New("token无效，请重新登录")
+	TokenMalFormed   = errors.New("token 不正确，请重新登录")
+	TokenInvalid     = errors.New("这不是一个 token,请重新登录")
 )
 
 // SetUpToken 设置claims,为生成token准备
-func SetUpToken(userID uint, status int) (string, error) {
+func SetUpToken(userID uint, role uint) (string, error) {
 	j := NewJWT()
 	claims := MyClaims{
 		UserId: userID,
-		Status: status,
+		Role:   role,
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: time.Now().Unix() - 240,
 			ExpiresAt: time.Now().Unix() + conf.TokenExpiredTime,
@@ -60,7 +60,7 @@ func (j *JWT) CreatToken(claims MyClaims) (string, error) {
 // ParseToken 解析token，返回claims
 func (j *JWT) ParseToken(tokenString string) (*MyClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MyClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(j.JwtKey), nil
+		return j.JwtKey, nil
 	})
 
 	if err != nil {
@@ -91,16 +91,21 @@ func (j *JWT) ParseToken(tokenString string) (*MyClaims, error) {
 func getToken(c *gin.Context) (string, bool) {
 	var token string
 	var ok bool
-	token, ok = c.GetQuery("token")
-	// 如果Query 参数提取到 token 直接返回
-	if ok {
-		return token, true
+
+	token = c.Request.Header.Get("token")
+	if token == "" {
+		token, ok = c.GetQuery("token")
+		// 如果Query 参数提取到 token 直接返回
+		if ok {
+			return token, true
+		}
+		// 否则继续从Form 参数里面提取
+		token, ok = c.GetPostForm("token")
+		if !ok {
+			return "", false
+		}
 	}
-	// 否则继续从Form 参数里面提取
-	token, ok = c.GetPostForm("token")
-	if !ok {
-		return "", false
-	}
+
 	return token, true
 }
 
@@ -127,12 +132,12 @@ func JWTToken() gin.HandlerFunc {
 				return
 			}
 			// 其他错误(不是一个token）
-			c.JSON(http.StatusOK, common.InvalidToken)
+			c.JSON(http.StatusUnauthorized, common.NoToken)
 			c.Abort()
 			return
 		}
-		c.Set("user_id", claims.UserId) // 把解析出来的userID放进头部
-		c.Set("status", claims.Status)
+		c.Set("u_id", claims.UserId) // 把解析出来的userID放进头部
+		c.Set("role", claims.Role)
 
 		c.Next()
 	}

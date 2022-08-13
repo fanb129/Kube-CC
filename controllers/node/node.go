@@ -8,7 +8,7 @@ import (
 )
 
 func Index(c *gin.Context) {
-	nodeListResponse, err := service.GetNode()
+	nodeListResponse, err := service.GetNode("")
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {

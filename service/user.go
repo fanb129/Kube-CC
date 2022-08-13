@@ -1,74 +1,88 @@
 package service
 
 import (
+	"errors"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/dao"
 )
 
 // IndexUser  分页浏览用户信息
-func IndexUser(page int) *common.UserListResponse {
-	total, userList := dao.GetUserList(page, conf.PageSize)
-
-	// 如果无数据，则返回到第一页
-	if total == 0 && page > 1 {
-		page = 1
-		total, userList = dao.GetUserList(page, conf.PageSize)
+func IndexUser(page int) (*common.UserListResponse, error) {
+	u, err := dao.GetUserList(page, conf.PageSize)
+	if err != nil {
+		return nil, errors.New("获取用户列表失败")
 	}
-
+	// 如果无数据，则返回到第一页
+	if len(u) == 0 && page > 1 {
+		page = 1
+		u, err = dao.GetUserList(page, conf.PageSize)
+		if err != nil {
+			return nil, errors.New("获取用户列表失败")
+		}
+	}
+	userList := make([]common.UserInfo, len(u))
+	for i, v := range u {
+		tmp := common.UserInfo{
+			ID:        v.ID,
+			CreatedAt: v.CreatedAt,
+			UpdatedAt: v.UpdatedAt,
+			Username:  v.Username,
+			Nickname:  v.Nickname,
+			Role:      v.Role,
+			Avatar:    v.Avatar,
+		}
+		userList[i] = tmp
+	}
 	return &common.UserListResponse{
 		Response: common.OK,
 		Page:     page,
 		UserList: userList,
-	}
+	}, nil
 }
 
 // DeleteUSer  删除用户
-func DeleteUSer(id int) *common.Response {
-	user, err := dao.GetUserById(id)
-	if err != nil {
-		return &common.Response{StatusCode: -1, StatusMsg: err.Error()}
+func DeleteUSer(id uint) (*common.Response, error) {
+	row, err := dao.DeleteUserById(id)
+	if err != nil || row == 0 {
+		return nil, errors.New("删除失败")
 	}
-	user.Status = 0
-	err = dao.UpdateUser(user)
-	if err != nil {
-		return &common.Response{StatusCode: -1, StatusMsg: err.Error()}
-	}
-	return &common.OK
+	return &common.OK, nil
 }
 
 // EditUser 授权用户
-func EditUser(id, status int) *common.Response {
+func EditUser(id, role uint) (*common.Response, error) {
 	user, err := dao.GetUserById(id)
 	if err != nil {
-		return &common.Response{StatusCode: -1, StatusMsg: err.Error()}
+		return nil, errors.New("获取用户失败")
 	}
-	user.Status = status
-	err = dao.UpdateUser(user)
-	if err != nil {
-		return &common.Response{StatusCode: -1, StatusMsg: err.Error()}
+	user.Role = role
+	row, err := dao.UpdateUser(user)
+	if err != nil || row == 0 {
+		return nil, errors.New("更新失败")
 	}
-	return &common.OK
+
+	return &common.OK, nil
 }
 
 // ResetPassUser 重置密码
-func ResetPassUser(id int, password string) *common.Response {
+func ResetPassUser(id uint, password string) (*common.Response, error) {
 	// 获取用户
 	user, err := dao.GetUserById(id)
 	if err != nil {
-		return &common.Response{StatusCode: -1, StatusMsg: err.Error()}
+		return nil, errors.New("获取用户失败")
 	}
 	// 密码加密
 	pwd, err := EncryptionPWD(password)
 	if err != nil {
-		return &common.Response{StatusCode: -1, StatusMsg: err.Error()}
+		return nil, errors.New("密码加密失败")
 	}
 	// 修改密码
 	user.Password = pwd
-	err = dao.UpdateUser(user)
-	if err != nil {
-		return &common.Response{StatusCode: -1, StatusMsg: err.Error()}
+	row, err := dao.UpdateUser(user)
+	if err != nil || row == 0 {
+		return nil, errors.New("更新失败")
 	}
 
-	return &common.OK
+	return &common.OK, nil
 }

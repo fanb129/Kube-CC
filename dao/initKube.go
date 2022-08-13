@@ -8,13 +8,16 @@ import (
 
 var ClientSet *kubernetes.Clientset
 
-func InitKube() {
+func InitKube() (err error) {
 	config, err := clientcmd.BuildConfigFromFlags("", conf.KubeConfig)
 	if err != nil {
 		panic(err.Error())
+		return
 	}
 	ClientSet, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
+		return
 	}
+	return
 }
