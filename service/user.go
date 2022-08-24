@@ -5,6 +5,9 @@ import (
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/dao"
+	"math/rand"
+	"strings"
+	"time"
 )
 
 // IndexUser  分页浏览用户信息
@@ -85,4 +88,21 @@ func ResetPassUser(id uint, password string) (*common.Response, error) {
 	}
 
 	return &common.OK, nil
+}
+
+func CreatePWD(n int) string {
+
+	pwd := strings.Builder{}
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < n; i++ {
+		ind := rand.Intn(62)
+		if ind >= 0 && ind <= 9 {
+			pwd.WriteByte(byte('0' + ind))
+		} else if ind <= 35 {
+			pwd.WriteByte(byte('a' + ind - 10))
+		} else {
+			pwd.WriteByte(byte('A' + ind - 36))
+		}
+	}
+	return pwd.String()
 }

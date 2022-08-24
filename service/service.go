@@ -4,17 +4,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s_deploy_gin/common"
+	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/dao"
 )
 
 // CreateService 创建自定义服务
 func CreateService(name, ns string, label map[string]string, spec corev1.ServiceSpec) (*corev1.Service, error) {
-	service := &corev1.Service{
+	service := corev1.Service{
 		TypeMeta:   metav1.TypeMeta{Kind: "service", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, Labels: label},
 		Spec:       spec,
 	}
-	create, err := dao.ClientSet.CoreV1().Services(ns).Create(service)
+	create, err := dao.ClientSet.CoreV1().Services(ns).Create(&service)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +32,10 @@ func GetService(ns string, label string) (*common.ServiceListResponse, error) {
 	serviceList := make([]common.Service, num)
 	for i, sc := range list.Items {
 		tmp := common.Service{
-			Name: sc.Name,
+			Name:      sc.Name,
+			Namespase: sc.Namespace,
+			Ports:     sc.Spec.Ports,
+			SshPwd:    conf.SshPwd,
 		}
 		serviceList[i] = tmp
 	}

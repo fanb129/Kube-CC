@@ -32,11 +32,11 @@ func GetNs(label string) (*common.NsListResponse, error) {
 
 // CreateNs 新建属于指定用户的namespace，u_id == 0 则不添加标签
 func CreateNs(name string, label map[string]string) (*common.Response, error) {
-	ns := &v1.Namespace{
+	ns := v1.Namespace{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
 	}
-	_, err := dao.ClientSet.CoreV1().Namespaces().Create(ns)
+	_, err := dao.ClientSet.CoreV1().Namespaces().Create(&ns)
 	if err != nil {
 		return nil, err
 	}

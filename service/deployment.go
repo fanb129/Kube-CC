@@ -10,9 +10,13 @@ import (
 // CreateDeploy 创建自定义控制器
 func CreateDeploy(name, ns string, label map[string]string, spec appsv1.DeploymentSpec) (*appsv1.Deployment, error) {
 	rs := appsv1.Deployment{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Deployment"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, Labels: label},
-		Spec:       spec,
+		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+			Labels:    label,
+		},
+		Spec: spec,
 	}
 	create, err := dao.ClientSet.AppsV1().Deployments(ns).Create(&rs)
 	return create, err
@@ -28,7 +32,12 @@ func GetDeploy(ns, label string) (*common.DeployListResponse, error) {
 	deployList := make([]common.Deploy, num)
 	for i, deploy := range list.Items {
 		tmp := common.Deploy{
-			Name: deploy.Name,
+			Name:          deploy.Name,
+			Namespace:     deploy.Namespace,
+			Replicas:      deploy.Status.Replicas,
+			ReadyReplicas: deploy.Status.ReadyReplicas,
+			//SshPwd:        deploy.Spec.Template.Spec.Containers[0].Args[0],
+			//SshPwd: deploy.Spec.Template.Spec.Containers[0].Env[0].Value,
 		}
 		deployList[i] = tmp
 	}

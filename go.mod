@@ -13,9 +13,9 @@ require (
 	gopkg.in/ini.v1 v1.66.4
 	gorm.io/driver/mysql v1.3.3
 	gorm.io/gorm v1.23.5
-	k8s.io/api v0.17.4
-	k8s.io/apimachinery v0.17.4
-	k8s.io/client-go v0.17.4
+	k8s.io/api v0.17.17
+	k8s.io/apimachinery v0.17.17
+	k8s.io/client-go v0.17.17
 )
 
 require (

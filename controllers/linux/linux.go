@@ -1,20 +1,22 @@
-package spark
+package linux
 
 import (
 	"github.com/gin-gonic/gin"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/service"
 	"net/http"
+	"strconv"
 )
 
-// Index 获取当前用户spark列表
+// Index 获取当前用户下的指定类型的linux
 func Index(c *gin.Context) {
 	u_id, ok := c.Get("u_id")
+	kind, _ := strconv.Atoi(c.Param("kind"))
 	if !ok {
 		c.JSON(http.StatusOK, common.NoUid)
 		return
 	}
-	sparkListRes, err := service.GetSpark(u_id.(uint))
+	linuxListResponse, err := service.GetLinux(u_id.(uint), uint(kind))
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: -1,
@@ -22,18 +24,17 @@ func Index(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, sparkListRes)
+	c.JSON(http.StatusOK, linuxListResponse)
 }
 
-// Add 创建spark
+// Add 创建指定类型的linux
 func Add(c *gin.Context) {
-	// 表单验证
-	form := common.SparkAddForm{}
+	form := common.LinuxAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, common.ValidatorResponse(err))
 		return
 	}
-	response, err := service.CreateSpark(form.Uid, form.MasterReplicas, form.WorkerReplicas)
+	response, err := service.CreateLinux(form.Uid, form.Kind)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
@@ -41,9 +42,10 @@ func Add(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// Delete 删除linux
 func Delete(c *gin.Context) {
 	ns := c.Param("name")
-	response, err := service.DeleteSpark(ns)
+	response, err := service.DeleteLinux(ns)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return

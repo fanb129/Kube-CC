@@ -1,5 +1,6 @@
 # 使用前先拉取镜像
-# docker pull registry.aliyuncs.com/google_containers/spark:1.5.2_v1
+# docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/spark:1.5.2_v1
+#
 ---
 # 创建namespace
 apiVersion: v1
@@ -26,7 +27,7 @@ spec:
     spec:
       containers:
         - name: spark-master
-          image: registry.aliyuncs.com/google_containers/spark:1.5.2_v1
+          image: registry.cn-hangzhou.aliyuncs.com/google_containers/spark:1.5.2_v1
           imagePullPolicy: IfNotPresent
           command: ["/start-master"]
           ports:
@@ -54,7 +55,7 @@ spec:
     spec:
       containers:
         - name: spark-worker
-          image: registry.aliyuncs.com/google_containers/spark:1.5.2_v1
+          image: registry.cn-hangzhou.aliyuncs.com/google_containers/spark:1.5.2_v1
           imagePullPolicy: IfNotPresent
           command: ["/start-worker"]
           ports:
@@ -79,7 +80,7 @@ spec:
     - port: 8080
       targetPort: 8080
       protocol: TCP
-      nodePort: 32143
+#      nodePort: 32143
       name: http
   selector:
     component: spark-master

@@ -21,5 +21,10 @@ type EditForm struct {
 type SparkAddForm struct {
 	Uid            uint  `form:"u_id" json:"u_id" binding:"required,gt=0"`
 	MasterReplicas int32 `form:"master_replicas" json:"master_replicas" binding:"required,gte=1,lte=3"`
-	WorkerReplicas int32 `form:"worker_replicas" json:"worker_replicas" binding:"required,gte=3,lte=10"`
+	WorkerReplicas int32 `form:"worker_replicas" json:"worker_replicas" binding:"required,gte=2,lte=10"`
+}
+
+type LinuxAddForm struct {
+	Uid  uint `form:"u_id" json:"u_id" binding:"required,gt=0"`
+	Kind uint `form:"kind" json:"kind" binding:"required,gt=0"`
 }

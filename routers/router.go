@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/controllers"
+	"k8s_deploy_gin/controllers/linux"
 	"k8s_deploy_gin/controllers/namespace"
 	"k8s_deploy_gin/controllers/node"
 	"k8s_deploy_gin/controllers/pod"
@@ -62,8 +63,17 @@ func InitRouter() *gin.Engine {
 	sparkRouter := auth.Group("/spark")
 	{
 		sparkRouter.POST("/add", middleware.Is2Role(), spark.Add) // 新建spark集群
-		sparkRouter.GET("/delete/:s_id", spark.Delete)
+		sparkRouter.GET("/delete/:name", spark.Delete)
 		sparkRouter.GET("", spark.Index)
 	}
+
+	// linux路由
+	linuxRouter := auth.Group("/linux")
+	{
+		linuxRouter.GET("/:kind", linux.Index)
+		linuxRouter.GET("delete/:name", linux.Delete)
+		linuxRouter.POST("/add", middleware.Is2Role(), linux.Add)
+	}
+
 	return r
 }

@@ -2,11 +2,15 @@ package common
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/extensions/v1beta1"
 	"time"
 )
 
 type Deploy struct {
-	Name string `json:"name"`
+	Name          string `json:"name"`
+	Namespace     string `json:"namespace"`
+	Replicas      int32  `json:"replicas"`
+	ReadyReplicas int32  `json:"ready_replicas"`
 }
 
 type Ns struct {
@@ -23,26 +27,41 @@ type Node struct {
 }
 
 type Pod struct {
-	Name      string `json:"name"`
-	Namespase string `json:"namespase"`
-	Ready     bool   `json:"ready"`
-	Status    corev1.ConditionStatus
-	NodeIp    string `json:"node_ip"`
+	Name      string                 `json:"name"`
+	Namespase string                 `json:"namespase"`
+	Ready     bool                   `json:"ready"`
+	Status    corev1.ConditionStatus `json:"status"`
+	NodeIp    string                 `json:"node_ip"`
 }
 
 type Service struct {
-	Name string `json:"name"`
+	Name      string               `json:"name"`
+	Namespase string               `json:"namespase"`
+	Ports     []corev1.ServicePort `json:"ports"`
+	SshPwd    string               `json:"ssh_pwd,omitempty"`
+}
+
+type Ingress struct {
+	Name      string                `json:"name"`
+	Namespace string                `json:"namespace"`
+	Rules     []v1beta1.IngressRule `json:"rules"`
 }
 
 type Spark struct {
 	Name        string    `json:"name"`
 	Uid         uint      `json:"u_id"`
-	Sid         uint      `json:"s_id"`
+	PodList     []Pod     `json:"pod_list"`
+	DeployList  []Deploy  `json:"deploy_list"`
+	ServiceList []Service `json:"service_list"`
+	IngressList []Ingress `json:"ingress_list"`
+}
+type Linux struct {
+	Name        string    `json:"name"`
+	Uid         uint      `json:"u_id"`
 	PodList     []Pod     `json:"pod_list"`
 	DeployList  []Deploy  `json:"deploy_list"`
 	ServiceList []Service `json:"service_list"`
 }
-
 type UserInfo struct {
 	ID        uint      `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -122,4 +141,15 @@ type SparkListResponse struct {
 	Response
 	Length    int     `json:"length"`
 	SparkList []Spark `json:"spark_list"`
+}
+type LinuxListResponse struct {
+	Response
+	Image     string  `json:"image"`
+	Length    int     `json:"length"`
+	LinuxList []Linux `json:"linux_list"`
+}
+type IngressListResponse struct {
+	Response
+	Length      int       `json:"length"`
+	IngressList []Ingress `json:"ingress_list"`
 }
