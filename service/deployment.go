@@ -44,7 +44,7 @@ func GetDeploy(ns, label string) (*common.DeployListResponse, error) {
 	return &common.DeployListResponse{Response: common.OK, Length: num, DeployList: deployList}, nil
 }
 
-// DeleteDeploy 删除指定namespace先的控制器
+// DeleteDeploy 删除指定namespace的控制器
 func DeleteDeploy(name, ns string) (*common.Response, error) {
 	err := dao.ClientSet.AppsV1().Deployments(ns).Delete(name, &metav1.DeleteOptions{})
 	if err != nil {

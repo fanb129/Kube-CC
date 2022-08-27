@@ -25,6 +25,7 @@ var (
 	LinuxImage       [2]string // linux镜像 1-centos 2-ubuntu
 	ProjectName      string    // 项目名称，用于ingress域名
 	SshPwd           string    // ssh默认密码
+	HadoopImage      string    // hadoop镜像
 )
 
 func init() {
@@ -52,6 +53,7 @@ func loadKubernetes(file *ini.File) {
 	s := file.Section("kubernetes")
 	KubeConfig = s.Key("KubeConfig").MustString("")
 	SparkImage = s.Key("SparkImage").MustString("")
+	HadoopImage = s.Key("HadoopImage").MustString("")
 	LinuxImage[0] = s.Key("CentosImage").MustString("")
 	LinuxImage[1] = s.Key("UbuntuImage").MustString("")
 }

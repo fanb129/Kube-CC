@@ -62,6 +62,13 @@ type Linux struct {
 	DeployList  []Deploy  `json:"deploy_list"`
 	ServiceList []Service `json:"service_list"`
 }
+type Hadoop struct {
+	Name        string    `json:"name"`
+	Uid         uint      `json:"u_id"`
+	PodList     []Pod     `json:"pod_list"`
+	DeployList  []Deploy  `json:"deploy_list"`
+	ServiceList []Service `json:"service_list"`
+}
 type UserInfo struct {
 	ID        uint      `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -152,4 +159,9 @@ type IngressListResponse struct {
 	Response
 	Length      int       `json:"length"`
 	IngressList []Ingress `json:"ingress_list"`
+}
+type HadoopListResponse struct {
+	Response
+	Length int `json:"length"`
+	HadoopList []Hadoop `json:"hadoop_list"`
 }
