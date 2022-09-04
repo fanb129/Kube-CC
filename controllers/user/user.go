@@ -8,6 +8,21 @@ import (
 	"strconv"
 )
 
+func Info(c *gin.Context) {
+	uid, ok := c.Get("u_id")
+	if !ok {
+		c.JSON(http.StatusOK, common.NoUid)
+		return
+	}
+	rsp, err := service.UserInfo(uid.(uint))
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+	}
+	c.JSON(http.StatusOK, rsp)
+}
 func Index(c *gin.Context) {
 	//fmt.Println("userindex")
 	page, _ := strconv.Atoi(c.Param("page"))

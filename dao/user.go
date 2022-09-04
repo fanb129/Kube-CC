@@ -6,17 +6,23 @@ import (
 )
 
 // GetUserList 分页返回用户列表(page第几页,pageSize每页几条数据)
-func GetUserList(page int, pageSize int) ([]models.User, error) {
+func GetUserList(page int, pageSize int) ([]models.User, int, error) {
 	var users []models.User
+	var total int64
+	mysqlDb.Find(&users).Count(&total)
 	// 计算偏移量 Offset指定开始返回记录前要跳过的记录数。
 	offset := (page - 1) * pageSize
-	// 查看所有的user,并获取user总数
+	// 查看所有的user
 	result := mysqlDb.Offset(offset).Limit(pageSize).Find(&users)
 
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, 0, result.Error
 	}
-	return users, nil
+	r := 0
+	if int(total)%pageSize != 0 {
+		r = 1
+	}
+	return users, int(total)/pageSize + r, nil
 }
 
 // GetUserById 通过id获取user

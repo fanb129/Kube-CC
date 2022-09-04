@@ -27,3 +27,7 @@ func GetNode(label string) (*common.NodeListResponse, error) {
 	}
 	return &common.NodeListResponse{Response: common.OK, Length: num, NodeList: nodeList}, nil
 }
+
+//func SshNode(name,ns string){
+//	dao.ClientSet.CoreV1().Pods(ns).Get(name,metav1.GetOptions{}).
+//}

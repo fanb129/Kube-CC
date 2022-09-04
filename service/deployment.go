@@ -52,3 +52,16 @@ func DeleteDeploy(name, ns string) (*common.Response, error) {
 	}
 	return &common.OK, nil
 }
+
+func EditDeploy(name, ns string) (*common.Response, error) {
+	deploy, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = dao.ClientSet.AppsV1().Deployments(ns).Update(deploy)
+	if err != nil {
+		return nil, err
+	}
+	return &common.OK, nil
+}

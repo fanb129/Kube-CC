@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/controllers"
+	"k8s_deploy_gin/controllers/hadoop"
 	"k8s_deploy_gin/controllers/linux"
 	"k8s_deploy_gin/controllers/namespace"
 	"k8s_deploy_gin/controllers/node"
@@ -33,10 +34,11 @@ func InitRouter() *gin.Engine {
 	//用户路由
 	userRouter := auth.Group("/user")
 	{
+		userRouter.GET("/info", user.Info)
 		userRouter.GET("/:page", user.Index)                                    // 浏览用户信息
-		userRouter.GET("/delete/:id", middleware.Is3Role(), user.Delete)        // 删除用户
-		userRouter.POST("/edit/:id", middleware.Is3Role(), user.Edit)           // 授权用户
-		userRouter.POST("/resetpass/:id", middleware.Is3Role(), user.ResetPass) // 重置密码
+		userRouter.GET("/delete/:id", middleware.Is2Role(), user.Delete)        // 删除用户
+		userRouter.POST("/edit/:id", middleware.Is2Role(), user.Edit)           // 授权用户
+		userRouter.POST("/resetpass/:id", middleware.Is2Role(), user.ResetPass) // 重置密码
 	}
 
 	// node路由
@@ -65,6 +67,13 @@ func InitRouter() *gin.Engine {
 		sparkRouter.POST("/add", middleware.Is2Role(), spark.Add) // 新建spark集群
 		sparkRouter.GET("/delete/:name", spark.Delete)
 		sparkRouter.GET("", spark.Index)
+	}
+
+	hadoopRouter := auth.Group("/hadoop")
+	{
+		hadoopRouter.POST("/add", middleware.Is2Role(), hadoop.Add)
+		hadoopRouter.GET("/delete/:name", hadoop.Delete)
+		hadoopRouter.GET("", hadoop.Index)
 	}
 
 	// linux路由

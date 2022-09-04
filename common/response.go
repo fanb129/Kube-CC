@@ -3,7 +3,6 @@ package common
 import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	"time"
 )
 
 type Deploy struct {
@@ -70,23 +69,23 @@ type Hadoop struct {
 	ServiceList []Service `json:"service_list"`
 }
 type UserInfo struct {
-	ID        uint      `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Username  string    `json:"username"`
-	Nickname  string    `json:"nickname"`
-	Role      uint      `json:"role"`
-	Avatar    string    `json:"avatar"`
+	ID        uint   `json:"id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+	Username  string `json:"username"`
+	Nickname  string `json:"nickname"`
+	Role      uint   `json:"role"`
+	Avatar    string `json:"avatar"`
 }
 
 type Response struct {
-	StatusCode int    `json:"status_code"`
-	StatusMsg  string `json:"status_msg,omitempty"`
+	StatusCode int    `json:"code"`
+	StatusMsg  string `json:"msg,omitempty"`
 }
 
 type ResponseOfValidator struct {
-	StatusCode int         `json:"status_code"`
-	StatusMsg  interface{} `json:"status_msg,omitempty"`
+	StatusCode int         `json:"code"`
+	StatusMsg  interface{} `json:"msg,omitempty"`
 }
 
 func ValidatorResponse(err error) ResponseOfValidator {
@@ -96,10 +95,10 @@ func ValidatorResponse(err error) ResponseOfValidator {
 	}
 }
 
-var OK = Response{StatusCode: 0, StatusMsg: "success"}
+var OK = Response{StatusCode: 1, StatusMsg: "success"}
 var NoRole = Response{StatusCode: -1, StatusMsg: "权限不够"}
-var NoToken = Response{StatusCode: -1, StatusMsg: "No Token"}
-var TokenExpired = Response{StatusCode: -1, StatusMsg: "token过期"}
+var NoToken = Response{StatusCode: 50008, StatusMsg: "No Token"}
+var TokenExpired = Response{StatusCode: 50014, StatusMsg: "token过期"}
 var NoUid = Response{StatusCode: -1, StatusMsg: "Uid获取失败"}
 
 type LoginResponse struct {
@@ -108,9 +107,14 @@ type LoginResponse struct {
 	Token  string `json:"token"`
 }
 
+type UserInfoResponse struct {
+	Response
+	UserInfo UserInfo `json:"user_info"`
+}
 type UserListResponse struct {
 	Response
 	Page     int        `json:"page"`
+	Total    int        `json:"total"`
 	UserList []UserInfo `json:"user_list"`
 }
 
@@ -162,6 +166,6 @@ type IngressListResponse struct {
 }
 type HadoopListResponse struct {
 	Response
-	Length int `json:"length"`
+	Length     int      `json:"length"`
 	HadoopList []Hadoop `json:"hadoop_list"`
 }

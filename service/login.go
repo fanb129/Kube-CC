@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"gorm.io/gorm"
 	"time"
 
 	"k8s_deploy_gin/common"
@@ -29,7 +30,7 @@ func Login(username, password string) (*common.LoginResponse, error) {
 	return &common.LoginResponse{Response: common.OK, UserID: user.ID, Token: token}, nil
 }
 
-func Register(username, password string) (*common.Response, error) {
+func Register(username, password, nickname string) (*common.Response, error) {
 	user, _ := dao.GetUserByName(username)
 	if user != nil {
 		return nil, errors.New("账号已注册")
@@ -45,8 +46,9 @@ func Register(username, password string) (*common.Response, error) {
 	user, err = dao.GetDeletedUserByName(username)
 	if user != nil {
 		user.CreatedAt = time.Now()
+		user.DeletedAt = gorm.DeletedAt{}
 		user.Password = pwd
-		user.Nickname = username
+		user.Nickname = nickname
 		user.Role = 1
 		user.Avatar = ""
 		row, err := dao.UpdateUnscopedUser(user)
@@ -55,7 +57,7 @@ func Register(username, password string) (*common.Response, error) {
 		}
 	} else {
 		// 当前用户名不存在时
-		row, err := dao.CreateUser(username, username, pwd)
+		row, err := dao.CreateUser(username, nickname, pwd)
 		if err != nil || row == 0 {
 			return nil, errors.New("注册失败")
 		}

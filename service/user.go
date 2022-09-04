@@ -12,14 +12,14 @@ import (
 
 // IndexUser  分页浏览用户信息
 func IndexUser(page int) (*common.UserListResponse, error) {
-	u, err := dao.GetUserList(page, conf.PageSize)
+	u, total, err := dao.GetUserList(page, conf.PageSize)
 	if err != nil {
 		return nil, errors.New("获取用户列表失败")
 	}
 	// 如果无数据，则返回到第一页
 	if len(u) == 0 && page > 1 {
 		page = 1
-		u, err = dao.GetUserList(page, conf.PageSize)
+		u, total, err = dao.GetUserList(page, conf.PageSize)
 		if err != nil {
 			return nil, errors.New("获取用户列表失败")
 		}
@@ -28,8 +28,8 @@ func IndexUser(page int) (*common.UserListResponse, error) {
 	for i, v := range u {
 		tmp := common.UserInfo{
 			ID:        v.ID,
-			CreatedAt: v.CreatedAt,
-			UpdatedAt: v.UpdatedAt,
+			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Username:  v.Username,
 			Nickname:  v.Nickname,
 			Role:      v.Role,
@@ -40,7 +40,27 @@ func IndexUser(page int) (*common.UserListResponse, error) {
 	return &common.UserListResponse{
 		Response: common.OK,
 		Page:     page,
+		Total:    total,
 		UserList: userList,
+	}, nil
+}
+
+func UserInfo(u_id uint) (*common.UserInfoResponse, error) {
+	user, err := dao.GetUserById(u_id)
+	if err != nil {
+		return nil, errors.New("获取用户失败")
+	}
+	return &common.UserInfoResponse{
+		Response: common.OK,
+		UserInfo: common.UserInfo{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt: user.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:  user.Username,
+			Nickname:  user.Nickname,
+			Role:      user.Role,
+			Avatar:    user.Avatar,
+		},
 	}, nil
 }
 

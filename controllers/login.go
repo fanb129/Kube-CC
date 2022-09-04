@@ -33,7 +33,7 @@ func Login(c *gin.Context) {
 
 // Logout 用户登出
 func Logout(c *gin.Context) {
-	c.JSON(200, gin.H{"msg": "lotout"})
+	c.JSON(200, common.OK)
 }
 
 // Register 用户注册
@@ -45,7 +45,7 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, common.ValidatorResponse(err))
 		return
 	}
-	registerRes, err := service.Register(registerForm.Username, registerForm.Password)
+	registerRes, err := service.Register(registerForm.Username, registerForm.Password, registerForm.Nickname)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: -1,

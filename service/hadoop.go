@@ -16,7 +16,7 @@ const (
 	HDFS_MASTER_SERVICE         = "HDFS_MASTER_SERVICE"
 	HDOOP_YARN_MASTER           = "HDOOP_YARN_MASTER"
 	HADOOP_NODE_TYPE            = "HADOOP_NODE_TYPE"
-	hadoopConfigMapName         = "hadoop-configMap"
+	hadoopConfigMapName         = "hadoop-configmap"
 	hadoopHdfsMasterDeployName  = "hadoop-hdfs-master-deploy"
 	hadoopHdfsMasterServiceName = "hadoop-hdfs-master-service"
 	datanodeDeployName          = "hadoop-datanode-deploy"
@@ -27,7 +27,7 @@ const (
 )
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
-func CreateHadoop(u_id uint,hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas int32) (*common.Response, error) {
+func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32) (*common.Response, error) {
 	// 获取当前时间戳，纳秒
 	s := strconv.FormatInt(time.Now().UnixNano(), 10)
 	ns := "hadoop-" + s
@@ -330,23 +330,23 @@ func CreateHadoop(u_id uint,hdfsMasterReplicas,datanodeReplicas,yarnMasterReplic
 		return nil, err
 	}
 
-	return &common.OK,nil
+	return &common.OK, nil
 }
 
 // GetHadoop 获取uid下的所有hadoop
-func GetHadoop(u_id uint)(*common.HadoopListResponse,error){
+func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 	label := map[string]string{
 		"image": "hadoop",
-		"u-id": strconv.Itoa(int(u_id)),
+		"u_id":  strconv.Itoa(int(u_id)),
 	}
 	// 将map标签转换为string
 	selector := labels.SelectorFromSet(label).String()
-	hadoops,err := GetNs(selector)
+	hadoops, err := GetNs(selector)
 	if err != nil {
 		return nil, err
 	}
 	hadoopList := make([]common.Hadoop, hadoops.Length)
-	for i,hadoop := range hadoops.NsList{
+	for i, hadoop := range hadoops.NsList {
 		// 获取pod
 		podList, err := GetPod(hadoop.Name, "")
 		if err != nil {
@@ -363,52 +363,52 @@ func GetHadoop(u_id uint)(*common.HadoopListResponse,error){
 			return nil, err
 		}
 		hadoopList[i] = common.Hadoop{
-			Name: hadoop.Name,
-			Uid: u_id,
-			PodList: podList.PodList,
-			DeployList: deployList.DeployList,
+			Name:        hadoop.Name,
+			Uid:         u_id,
+			PodList:     podList.PodList,
+			DeployList:  deployList.DeployList,
 			ServiceList: serviceList.ServiceList,
 		}
 	}
 	return &common.HadoopListResponse{
-		Response:common.OK,
-		Length: hadoops.Length,
+		Response:   common.OK,
+		Length:     hadoops.Length,
 		HadoopList: hadoopList,
-	},nil
+	}, nil
 }
 
 // DeleteHadoop 删除指定hadoop
-func DeleteHadoop(ns string)(*common.Response,error){
+func DeleteHadoop(ns string) (*common.Response, error) {
 	var err1 error
-	if _,err := DeleteService(hadoopYarnNodeServiceName,ns);err != nil{
+	if _, err := DeleteService(hadoopYarnNodeServiceName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteDeploy(hadoopYarnNodeDeployName,ns);err != nil{
+	if _, err := DeleteDeploy(hadoopYarnNodeDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteService(hadoopYarnMasterServiceName,ns);err != nil{
+	if _, err := DeleteService(hadoopYarnMasterServiceName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteDeploy(hadoopYarnMasterDeployName,ns);err != nil{
+	if _, err := DeleteDeploy(hadoopYarnMasterDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteDeploy(datanodeDeployName,ns);err != nil{
+	if _, err := DeleteDeploy(datanodeDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteService(hadoopHdfsMasterServiceName,ns);err != nil{
+	if _, err := DeleteService(hadoopHdfsMasterServiceName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteDeploy(hadoopHdfsMasterDeployName,ns);err != nil{
+	if _, err := DeleteDeploy(hadoopHdfsMasterDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteConfigMap(hadoopConfigMapName,ns);err != nil{
+	if _, err := DeleteConfigMap(hadoopConfigMapName, ns); err != nil {
 		err1 = err
 	}
-	if _,err := DeleteNs(ns);err != nil{
+	if _, err := DeleteNs(ns); err != nil {
 		err1 = err
 	}
 	if err1 != nil {
 		return nil, err1
 	}
-	return &common.OK,nil
+	return &common.OK, nil
 }
