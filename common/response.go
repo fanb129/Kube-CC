@@ -15,14 +15,18 @@ type Deploy struct {
 type Ns struct {
 	Name     string                `json:"name"`
 	Status   corev1.NamespacePhase `json:"status"`
-	CreateAt string                `json:"create_at"`
+	CreateAt string                `json:"created_at"`
 }
 
 type Node struct {
-	Name     string                 `json:"name"`
-	Ip       string                 `json:"ip"`
-	Status   corev1.ConditionStatus `json:"status"`
-	CreateAt string                 `json:"create_at"`
+	Name           string                 `json:"name"`
+	Ip             string                 `json:"ip"`
+	Ready          corev1.ConditionStatus `json:"ready"`
+	CreateAt       string                 `json:"created_at"`
+	OsImage        string                 `json:"os_image"`
+	KubeletVersion string                 `json:"kubelet_version"`
+	CPU            string                 `json:"cpu"`
+	Memory         string                 `json:"memory"`
 }
 
 type Pod struct {
