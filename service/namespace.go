@@ -5,6 +5,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/dao"
+	"strconv"
 )
 
 // GetNs 获取所有namespace
@@ -20,10 +21,23 @@ func GetNs(label string) (*common.NsListResponse, error) {
 		//if ns.Name == "default" || ns.Name == "kube-node-lease" || ns.Name == "kube-public" || ns.Name == "kube-system" {
 		//	continue
 		//}
+		uid, err := strconv.Atoi(ns.Labels["u_id"])
+		username := ""
+		nickname := ""
+		if err == nil {
+			user, err := dao.GetUserById(uint(uid))
+			if err == nil {
+				username = user.Username
+				nickname = user.Nickname
+			}
+		}
+
 		tmp := common.Ns{
 			Name:     ns.Name,
 			Status:   ns.Status.Phase,
 			CreateAt: ns.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			Username: username,
+			Nickname: nickname,
 		}
 		namespaceList[i] = tmp
 	}

@@ -2,15 +2,26 @@ package namespace
 
 import (
 	"github.com/gin-gonic/gin"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/service"
 	"net/http"
+	"strconv"
 )
 
 // Index 展示所有namespace，
 func Index(c *gin.Context) {
-	u_id := c.PostForm("u_id")
-	nsListResponse, err := service.GetNs(u_id)
+	u_id := c.DefaultQuery("u_id", "")
+	selector := ""
+	if u_id != "" {
+		label := map[string]string{
+			"u_id": u_id,
+		}
+		// 将map标签转换为string
+		selector = labels.SelectorFromSet(label).String()
+	}
+
+	nsListResponse, err := service.GetNs(selector)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
@@ -30,8 +41,16 @@ func Delete(c *gin.Context) {
 }
 
 func Add(c *gin.Context) {
-	name := c.PostForm("name")
-	response, err := service.CreateNs(name, map[string]string{})
+	form := common.NsAddForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	label := map[string]string{}
+	if form.Uid != 0 {
+		label["u_id"] = strconv.Itoa(int(form.Uid))
+	}
+	response, err := service.CreateNs(form.Name, label)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {

@@ -16,6 +16,8 @@ type Ns struct {
 	Name     string                `json:"name"`
 	Status   corev1.NamespacePhase `json:"status"`
 	CreateAt string                `json:"created_at"`
+	Username string                `json:"username"`
+	Nickname string                `json:"nickname"`
 }
 
 type Node struct {

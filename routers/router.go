@@ -50,15 +50,15 @@ func InitRouter() *gin.Engine {
 	// namespace路由
 	nsRouter := auth.Group("/ns")
 	{
-		nsRouter.GET("", namespace.Index)           // 浏览所有namespace
-		nsRouter.POST("/delete/", namespace.Delete) // 删除指定namespace
-		nsRouter.POST("/add", namespace.Add)        // 添加namespace
+		nsRouter.GET("", namespace.Index)             // 浏览所有namespace
+		nsRouter.GET("/delete/:ns", namespace.Delete) // 删除指定namespace
+		nsRouter.POST("/add", namespace.Add)          // 添加namespace
 	}
 
 	// pod路由
 	podRouter := auth.Group("/pod")
 	{
-		podRouter.POST("", pod.GetPod) // 浏览指定namespace的pod
+		podRouter.GET("", pod.GetPod) // 浏览指定namespace的pod
 	}
 
 	// spark路由

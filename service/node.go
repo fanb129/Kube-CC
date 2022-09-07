@@ -25,9 +25,8 @@ func GetNode(label string) (*common.NodeListResponse, error) {
 			CreateAt:       node.CreationTimestamp.Format("2006-01-02 15:04:05"),
 			OsImage:        node.Status.NodeInfo.OSImage,
 			KubeletVersion: node.Status.NodeInfo.KubeletVersion,
-			//CPU:            strconv.Itoa(int(node.Status.Capacity.Cpu().Value())),
-			CPU:    node.Status.Allocatable.Cpu().String() + " / " + node.Status.Capacity.Cpu().String(),
-			Memory: node.Status.Allocatable.Memory().String() + " / " + node.Status.Capacity.Memory().String(),
+			CPU:            node.Status.Allocatable.Cpu().String() + " / " + node.Status.Capacity.Cpu().String(),
+			Memory:         node.Status.Allocatable.Memory().String() + " / " + node.Status.Capacity.Memory().String(),
 		}
 		nodeList[i] = tmp
 	}
