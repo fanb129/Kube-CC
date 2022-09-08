@@ -19,7 +19,7 @@ func GetPod(ns string, label string) (*common.PodListResponse, error) {
 	for i, pod := range pods.Items {
 		tmp := common.Pod{
 			Name:      pod.Name,
-			Namespase: pod.Namespace,
+			Namespace: pod.Namespace,
 			Ready:     pod.Status.ContainerStatuses[0].Ready,
 			Status:    pod.Status.Conditions[0].Status,
 			NodeIp:    pod.Status.HostIP,
@@ -28,3 +28,28 @@ func GetPod(ns string, label string) (*common.PodListResponse, error) {
 	}
 	return &common.PodListResponse{Response: common.OK, Length: num, PodList: podList}, nil
 }
+
+// DeletePod 删除指定pod
+func DeletePod(name, ns string) (*common.Response, error) {
+	err := dao.ClientSet.CoreV1().Pods(ns).Delete(name, &metav1.DeleteOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return &common.OK, nil
+}
+
+//func AddNPod(ns string){
+//	pod := corev1.Pod{
+//		TypeMeta:metav1.TypeMeta{
+//			Kind: "",
+//			APIVersion: "v1",
+//		},
+//		ObjectMeta:metav1.ObjectMeta{
+//
+//		},
+//		Spec: corev1.PodSpec{
+//
+//		},
+//	}
+//	create, err := dao.ClientSet.CoreV1().Pods(ns).Create(&pod)
+//}

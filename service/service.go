@@ -33,8 +33,11 @@ func GetService(ns string, label string) (*common.ServiceListResponse, error) {
 	for i, sc := range list.Items {
 		tmp := common.Service{
 			Name:      sc.Name,
-			Namespase: sc.Namespace,
+			Namespace: sc.Namespace,
+			CreatedAt: sc.CreationTimestamp.Format("2006-01-02 15:04:05"),
 			Ports:     sc.Spec.Ports,
+			ClusterIP: sc.Spec.ClusterIP,
+			Type:      sc.Spec.Type,
 			SshPwd:    conf.SshPwd,
 		}
 		serviceList[i] = tmp

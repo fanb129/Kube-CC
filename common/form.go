@@ -20,7 +20,7 @@ type EditForm struct {
 }
 type NsAddForm struct {
 	Uid  uint   `form:"u_id" json:"u_id" binding:"gte=0"`
-	Name string `form:"name" json:"name" binding:"required"`
+	Name string `form:"name" json:"name" binding:"required,min=3,max=16"`
 }
 type SparkAddForm struct {
 	Uid            uint  `form:"u_id" json:"u_id" binding:"required,gt=0"`

@@ -4,12 +4,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/controllers"
+	"k8s_deploy_gin/controllers/deploy"
 	"k8s_deploy_gin/controllers/hadoop"
 	"k8s_deploy_gin/controllers/linux"
 	"k8s_deploy_gin/controllers/namespace"
 	"k8s_deploy_gin/controllers/node"
 	"k8s_deploy_gin/controllers/pod"
 	"k8s_deploy_gin/controllers/spark"
+	"k8s_deploy_gin/controllers/svc"
 	"k8s_deploy_gin/controllers/user"
 	"k8s_deploy_gin/middleware"
 )
@@ -50,11 +52,23 @@ func InitRouter() *gin.Engine {
 	// namespace路由
 	nsRouter := auth.Group("/ns")
 	{
-		nsRouter.GET("", namespace.Index)             // 浏览所有namespace
-		nsRouter.GET("/delete/:ns", namespace.Delete) // 删除指定namespace
-		nsRouter.POST("/add", namespace.Add)          // 添加namespace
+		nsRouter.GET("", namespace.Index)                                   // 浏览所有namespace
+		nsRouter.GET("/delete/:ns", middleware.Is3Role(), namespace.Delete) // 删除指定namespace
+		nsRouter.POST("/add", middleware.Is3Role(), namespace.Add)          // 添加namespace
 	}
 
+	// deploy路由
+	deployRouter := auth.Group("/deploy")
+	{
+		deployRouter.GET("", deploy.Index)
+		deployRouter.GET("/delete", middleware.Is3Role(), deploy.Delete)
+	}
+
+	serviceRouter := auth.Group("/service")
+	{
+		serviceRouter.GET("", svc.Index)
+		serviceRouter.GET("/delete", middleware.Is3Role(), svc.Delete)
+	}
 	// pod路由
 	podRouter := auth.Group("/pod")
 	{

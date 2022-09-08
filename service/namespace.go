@@ -33,11 +33,11 @@ func GetNs(label string) (*common.NsListResponse, error) {
 		}
 
 		tmp := common.Ns{
-			Name:     ns.Name,
-			Status:   ns.Status.Phase,
-			CreateAt: ns.CreationTimestamp.Format("2006-01-02 15:04:05"),
-			Username: username,
-			Nickname: nickname,
+			Name:      ns.Name,
+			Status:    ns.Status.Phase,
+			CreatedAt: ns.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			Username:  username,
+			Nickname:  nickname,
 		}
 		namespaceList[i] = tmp
 	}

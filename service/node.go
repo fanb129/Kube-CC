@@ -22,7 +22,7 @@ func GetNode(label string) (*common.NodeListResponse, error) {
 			Name:           node.Name,
 			Ip:             node.Status.Addresses[0].Address,
 			Ready:          node.Status.Conditions[len(node.Status.Conditions)-1].Status,
-			CreateAt:       node.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			CreatedAt:      node.CreationTimestamp.Format("2006-01-02 15:04:05"),
 			OsImage:        node.Status.NodeInfo.OSImage,
 			KubeletVersion: node.Status.NodeInfo.KubeletVersion,
 			CPU:            node.Status.Allocatable.Cpu().String() + " / " + node.Status.Capacity.Cpu().String(),

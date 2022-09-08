@@ -32,10 +32,13 @@ func GetDeploy(ns, label string) (*common.DeployListResponse, error) {
 	deployList := make([]common.Deploy, num)
 	for i, deploy := range list.Items {
 		tmp := common.Deploy{
-			Name:          deploy.Name,
-			Namespace:     deploy.Namespace,
-			Replicas:      deploy.Status.Replicas,
-			ReadyReplicas: deploy.Status.ReadyReplicas,
+			Name:              deploy.Name,
+			Namespace:         deploy.Namespace,
+			CreatedAt:         deploy.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			Replicas:          deploy.Status.Replicas,
+			UpdatedReplicas:   deploy.Status.UpdatedReplicas,
+			ReadyReplicas:     deploy.Status.ReadyReplicas,
+			AvailableReplicas: deploy.Status.AvailableReplicas,
 			//SshPwd:        deploy.Spec.Template.Spec.Containers[0].Args[0],
 			//SshPwd: deploy.Spec.Template.Spec.Containers[0].Env[0].Value,
 		}

@@ -6,25 +6,28 @@ import (
 )
 
 type Deploy struct {
-	Name          string `json:"name"`
-	Namespace     string `json:"namespace"`
-	Replicas      int32  `json:"replicas"`
-	ReadyReplicas int32  `json:"ready_replicas"`
+	Name              string `json:"name"`
+	Namespace         string `json:"namespace"`
+	CreatedAt         string `json:"created_at"`
+	Replicas          int32  `json:"replicas"`
+	UpdatedReplicas   int32  `json:"updated_replicas"`
+	ReadyReplicas     int32  `json:"ready_replicas"`
+	AvailableReplicas int32  `json:"available_replicas"`
 }
 
 type Ns struct {
-	Name     string                `json:"name"`
-	Status   corev1.NamespacePhase `json:"status"`
-	CreateAt string                `json:"created_at"`
-	Username string                `json:"username"`
-	Nickname string                `json:"nickname"`
+	Name      string                `json:"name"`
+	Status    corev1.NamespacePhase `json:"status"`
+	CreatedAt string                `json:"created_at"`
+	Username  string                `json:"username"`
+	Nickname  string                `json:"nickname"`
 }
 
 type Node struct {
 	Name           string                 `json:"name"`
 	Ip             string                 `json:"ip"`
 	Ready          corev1.ConditionStatus `json:"ready"`
-	CreateAt       string                 `json:"created_at"`
+	CreatedAt      string                 `json:"created_at"`
 	OsImage        string                 `json:"os_image"`
 	KubeletVersion string                 `json:"kubelet_version"`
 	CPU            string                 `json:"cpu"`
@@ -33,7 +36,8 @@ type Node struct {
 
 type Pod struct {
 	Name      string                 `json:"name"`
-	Namespase string                 `json:"namespase"`
+	Namespace string                 `json:"namespace"`
+	CreatedAt string                 `json:"created_at"`
 	Ready     bool                   `json:"ready"`
 	Status    corev1.ConditionStatus `json:"status"`
 	NodeIp    string                 `json:"node_ip"`
@@ -41,7 +45,10 @@ type Pod struct {
 
 type Service struct {
 	Name      string               `json:"name"`
-	Namespase string               `json:"namespase"`
+	Namespace string               `json:"namespace"`
+	CreatedAt string               `json:"created_at"`
+	ClusterIP string               `json:"cluster_ip"`
+	Type      corev1.ServiceType   `json:"type"`
 	Ports     []corev1.ServicePort `json:"ports"`
 	SshPwd    string               `json:"ssh_pwd,omitempty"`
 }
@@ -49,12 +56,14 @@ type Service struct {
 type Ingress struct {
 	Name      string                `json:"name"`
 	Namespace string                `json:"namespace"`
+	CreatedAt string                `json:"created_at"`
 	Rules     []v1beta1.IngressRule `json:"rules"`
 }
 
 type Spark struct {
 	Name        string    `json:"name"`
 	Uid         uint      `json:"u_id"`
+	CreatedAt   string    `json:"created_at"`
 	PodList     []Pod     `json:"pod_list"`
 	DeployList  []Deploy  `json:"deploy_list"`
 	ServiceList []Service `json:"service_list"`
@@ -63,6 +72,7 @@ type Spark struct {
 type Linux struct {
 	Name        string    `json:"name"`
 	Uid         uint      `json:"u_id"`
+	CreatedAt   string    `json:"created_at"`
 	PodList     []Pod     `json:"pod_list"`
 	DeployList  []Deploy  `json:"deploy_list"`
 	ServiceList []Service `json:"service_list"`
@@ -70,6 +80,7 @@ type Linux struct {
 type Hadoop struct {
 	Name        string    `json:"name"`
 	Uid         uint      `json:"u_id"`
+	CreatedAt   string    `json:"created_at"`
 	PodList     []Pod     `json:"pod_list"`
 	DeployList  []Deploy  `json:"deploy_list"`
 	ServiceList []Service `json:"service_list"`
