@@ -37,9 +37,11 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	}
 	masterLabel := map[string]string{
 		"component": "spark-master",
+		"u_id":      uid,
 	}
 	workerLabel := map[string]string{
 		"component": "spark-worker",
+		"u_id":      uid,
 	}
 
 	// 创建namespace
@@ -77,7 +79,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 			},
 		},
 	}
-	_, err = CreateDeploy(sparkMasterDeployName, "spark-"+s, map[string]string{}, masterSpec)
+	_, err = CreateDeploy(sparkMasterDeployName, "spark-"+s, label, masterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +94,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 			{Name: "ssh", Port: 22, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 22}},
 		},
 	}
-	_, err = CreateService(sparkMasterServiceName, "spark-"+s, map[string]string{}, masterServiceSpec)
+	_, err = CreateService(sparkMasterServiceName, "spark-"+s, label, masterServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +126,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 			},
 		},
 	}
-	_, err = CreateDeploy(sparkWorkerDeployName, "spark-"+s, map[string]string{}, workerSpec)
+	_, err = CreateDeploy(sparkWorkerDeployName, "spark-"+s, label, workerSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +140,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 			{Name: "ssh", Port: 22, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 22}},
 		},
 	}
-	_, err = CreateService(sparkWorkerServiceName, "spark-"+s, map[string]string{}, workerServiceSpec)
+	_, err = CreateService(sparkWorkerServiceName, "spark-"+s, label, workerServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +178,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 			},
 		},
 	}
-	_, err = CreateIngress(sparkIngressName, "spark-"+s, map[string]string{}, ingressSpec)
+	_, err = CreateIngress(sparkIngressName, "spark-"+s, label, ingressSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +222,10 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 		}
 		sparkList[i] = common.Spark{
 			Name:        spark.Name,
+			CreatedAt:   spark.CreatedAt,
 			Uid:         u_id,
+			Username:    spark.Username,
+			Nickname:    spark.Nickname,
 			PodList:     podList.PodList,
 			DeployList:  deployList.DeployList,
 			ServiceList: serviceList.ServiceList,

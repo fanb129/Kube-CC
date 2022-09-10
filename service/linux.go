@@ -69,7 +69,7 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 			},
 		},
 	}
-	_, err = CreateDeploy(linuxImage[kind-1]+"-deploy", linuxImage[kind-1]+"-"+s, map[string]string{}, deploySpec)
+	_, err = CreateDeploy(linuxImage[kind-1]+"-deploy", linuxImage[kind-1]+"-"+s, label, deploySpec)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 			{Name: "ssh", Port: 22, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 22}},
 		},
 	}
-	_, err = CreateService(linuxImage[kind-1]+"-service", linuxImage[kind-1]+"-"+s, map[string]string{}, serviceSpec)
+	_, err = CreateService(linuxImage[kind-1]+"-service", linuxImage[kind-1]+"-"+s, label, serviceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +122,8 @@ func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 		LinuxList[i] = common.Linux{
 			Name:        linux.Name,
 			Uid:         u_id,
+			Username:    linux.Username,
+			Nickname:    linux.Nickname,
 			PodList:     podList.PodList,
 			DeployList:  deployList.DeployList,
 			ServiceList: serviceList.ServiceList,

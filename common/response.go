@@ -13,6 +13,7 @@ type Deploy struct {
 	UpdatedReplicas   int32  `json:"updated_replicas"`
 	ReadyReplicas     int32  `json:"ready_replicas"`
 	AvailableReplicas int32  `json:"available_replicas"`
+	Uid               string `json:"u_id"`
 }
 
 type Ns struct {
@@ -21,6 +22,7 @@ type Ns struct {
 	CreatedAt string                `json:"created_at"`
 	Username  string                `json:"username"`
 	Nickname  string                `json:"nickname"`
+	Uid       uint                  `json:"u_id"`
 }
 
 type Node struct {
@@ -35,12 +37,13 @@ type Node struct {
 }
 
 type Pod struct {
-	Name      string                 `json:"name"`
-	Namespace string                 `json:"namespace"`
-	CreatedAt string                 `json:"created_at"`
-	Ready     bool                   `json:"ready"`
-	Status    corev1.ConditionStatus `json:"status"`
-	NodeIp    string                 `json:"node_ip"`
+	Name              string                   `json:"name"`
+	Namespace         string                   `json:"namespace"`
+	CreatedAt         string                   `json:"created_at"`
+	Phase             corev1.PodPhase          `json:"phase"`
+	NodeIp            string                   `json:"node_ip"`
+	ContainerStatuses []corev1.ContainerStatus `json:"container_statuses"`
+	Uid               string                   `json:"u_id"`
 }
 
 type Service struct {
@@ -51,6 +54,7 @@ type Service struct {
 	Type      corev1.ServiceType   `json:"type"`
 	Ports     []corev1.ServicePort `json:"ports"`
 	SshPwd    string               `json:"ssh_pwd,omitempty"`
+	Uid       string               `json:"u_id"`
 }
 
 type Ingress struct {
@@ -58,11 +62,14 @@ type Ingress struct {
 	Namespace string                `json:"namespace"`
 	CreatedAt string                `json:"created_at"`
 	Rules     []v1beta1.IngressRule `json:"rules"`
+	Uid       uint                  `json:"u_id"`
 }
 
 type Spark struct {
 	Name        string    `json:"name"`
 	Uid         uint      `json:"u_id"`
+	Username    string    `json:"username"`
+	Nickname    string    `json:"nickname"`
 	CreatedAt   string    `json:"created_at"`
 	PodList     []Pod     `json:"pod_list"`
 	DeployList  []Deploy  `json:"deploy_list"`
@@ -72,6 +79,8 @@ type Spark struct {
 type Linux struct {
 	Name        string    `json:"name"`
 	Uid         uint      `json:"u_id"`
+	Username    string    `json:"username"`
+	Nickname    string    `json:"nickname"`
 	CreatedAt   string    `json:"created_at"`
 	PodList     []Pod     `json:"pod_list"`
 	DeployList  []Deploy  `json:"deploy_list"`
@@ -80,6 +89,8 @@ type Linux struct {
 type Hadoop struct {
 	Name        string    `json:"name"`
 	Uid         uint      `json:"u_id"`
+	Username    string    `json:"username"`
+	Nickname    string    `json:"nickname"`
 	CreatedAt   string    `json:"created_at"`
 	PodList     []Pod     `json:"pod_list"`
 	DeployList  []Deploy  `json:"deploy_list"`

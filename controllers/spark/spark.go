@@ -5,16 +5,21 @@ import (
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/service"
 	"net/http"
+	"strconv"
 )
 
 // Index 获取当前用户spark列表
 func Index(c *gin.Context) {
-	u_id, ok := c.Get("u_id")
-	if !ok {
-		c.JSON(http.StatusOK, common.NoUid)
+	u_id := c.DefaultQuery("u_id", "")
+	uid, err := strconv.Atoi(u_id)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
 		return
 	}
-	sparkListRes, err := service.GetSpark(u_id.(uint))
+	sparkListRes, err := service.GetSpark(uint(uid))
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: -1,

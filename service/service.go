@@ -39,6 +39,7 @@ func GetService(ns string, label string) (*common.ServiceListResponse, error) {
 			ClusterIP: sc.Spec.ClusterIP,
 			Type:      sc.Spec.Type,
 			SshPwd:    conf.SshPwd,
+			Uid:       sc.Labels["u_id"],
 		}
 		serviceList[i] = tmp
 	}

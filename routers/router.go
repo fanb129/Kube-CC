@@ -52,27 +52,28 @@ func InitRouter() *gin.Engine {
 	// namespace路由
 	nsRouter := auth.Group("/ns")
 	{
-		nsRouter.GET("", namespace.Index)                                   // 浏览所有namespace
-		nsRouter.GET("/delete/:ns", middleware.Is3Role(), namespace.Delete) // 删除指定namespace
-		nsRouter.POST("/add", middleware.Is3Role(), namespace.Add)          // 添加namespace
+		nsRouter.GET("", namespace.Index)                          // 浏览所有namespace
+		nsRouter.GET("/delete/:ns", namespace.Delete)              // 删除指定namespace
+		nsRouter.POST("/add", middleware.Is3Role(), namespace.Add) // 添加namespace
 	}
 
 	// deploy路由
 	deployRouter := auth.Group("/deploy")
 	{
 		deployRouter.GET("", deploy.Index)
-		deployRouter.GET("/delete", middleware.Is3Role(), deploy.Delete)
+		deployRouter.GET("/delete", deploy.Delete)
 	}
 
 	serviceRouter := auth.Group("/service")
 	{
 		serviceRouter.GET("", svc.Index)
-		serviceRouter.GET("/delete", middleware.Is3Role(), svc.Delete)
+		serviceRouter.GET("/delete", svc.Delete)
 	}
 	// pod路由
 	podRouter := auth.Group("/pod")
 	{
-		podRouter.GET("", pod.GetPod) // 浏览指定namespace的pod
+		podRouter.GET("", pod.Index) // 浏览指定namespace的pod
+		podRouter.GET("/delete", pod.Delete)
 	}
 
 	// spark路由

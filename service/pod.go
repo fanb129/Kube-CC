@@ -18,11 +18,13 @@ func GetPod(ns string, label string) (*common.PodListResponse, error) {
 
 	for i, pod := range pods.Items {
 		tmp := common.Pod{
-			Name:      pod.Name,
-			Namespace: pod.Namespace,
-			Ready:     pod.Status.ContainerStatuses[0].Ready,
-			Status:    pod.Status.Conditions[0].Status,
-			NodeIp:    pod.Status.HostIP,
+			Name:              pod.Name,
+			Namespace:         pod.Namespace,
+			CreatedAt:         pod.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			NodeIp:            pod.Status.HostIP,
+			Phase:             pod.Status.Phase,
+			ContainerStatuses: pod.Status.ContainerStatuses,
+			Uid:               pod.Labels["u_id"],
 		}
 		podList[i] = tmp
 	}

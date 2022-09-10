@@ -38,15 +38,19 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	}
 	hdfsMasterLabel := map[string]string{
 		"name": "hdfs-master",
+		"u_id": uid,
 	}
 	datanodeLabel := map[string]string{
 		"name": "hadoop-datanode",
+		"u_id": uid,
 	}
 	yarnMasterLabel := map[string]string{
 		"name": "yarn-master",
+		"u_id": uid,
 	}
 	yarnNodeLabel := map[string]string{
 		"name": "yarn-node",
+		"u_id": uid,
 	}
 	// 创建namespace
 	_, err := CreateNs(ns, label)
@@ -55,7 +59,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	}
 
 	// 创建configMap
-	_, err = CreateConfigMap(hadoopConfigMapName, ns, map[string]string{}, map[string]string{
+	_, err = CreateConfigMap(hadoopConfigMapName, ns, label, map[string]string{
 		HDFS_MASTER_SERVICE: "hadoop-hdfs-master",
 		HDOOP_YARN_MASTER:   "hadoop-yarn-master",
 	})
@@ -107,7 +111,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(hadoopHdfsMasterDeployName, ns, map[string]string{}, hdfsMasterSpec)
+	_, err = CreateDeploy(hadoopHdfsMasterDeployName, ns, label, hdfsMasterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +125,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			{Name: "http", Port: 50070, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 50070}},
 		},
 	}
-	_, err = CreateService(hadoopHdfsMasterServiceName, ns, map[string]string{}, hdfsMasterServiceSpec)
+	_, err = CreateService(hadoopHdfsMasterServiceName, ns, label, hdfsMasterServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +183,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(datanodeDeployName, ns, map[string]string{}, datanodeSpec)
+	_, err = CreateDeploy(datanodeDeployName, ns, label, datanodeSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +243,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(hadoopYarnMasterDeployName, ns, map[string]string{}, yarnMasterSpec)
+	_, err = CreateDeploy(hadoopYarnMasterDeployName, ns, label, yarnMasterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +259,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			{Name: "http", Port: 8088, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 8088}},
 		},
 	}
-	_, err = CreateService(hadoopYarnMasterServiceName, ns, map[string]string{}, yarnMasterServiceSpec)
+	_, err = CreateService(hadoopYarnMasterServiceName, ns, label, yarnMasterServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +317,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(hadoopYarnNodeDeployName, ns, map[string]string{}, yarnNodeSpec)
+	_, err = CreateDeploy(hadoopYarnNodeDeployName, ns, label, yarnNodeSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +329,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			{Port: 8040},
 		},
 	}
-	_, err = CreateService(hadoopYarnNodeServiceName, ns, map[string]string{}, yarnNodeServiceSpec)
+	_, err = CreateService(hadoopYarnNodeServiceName, ns, label, yarnNodeServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -365,6 +369,8 @@ func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 		hadoopList[i] = common.Hadoop{
 			Name:        hadoop.Name,
 			Uid:         u_id,
+			Username:    hadoop.Username,
+			Nickname:    hadoop.Nickname,
 			PodList:     podList.PodList,
 			DeployList:  deployList.DeployList,
 			ServiceList: serviceList.ServiceList,
