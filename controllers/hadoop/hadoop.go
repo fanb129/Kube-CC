@@ -5,16 +5,25 @@ import (
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/service"
 	"net/http"
+	"strconv"
 )
 
 // Index 获取当前用户的Hadoop列表
 func Index(c *gin.Context) {
-	u_id, ok := c.Get("u_id")
-	if !ok {
-		c.JSON(http.StatusOK, common.NoUid)
-		return
+	u_id := c.DefaultQuery("u_id", "")
+	uid := 0
+	var err error
+	if u_id != "" {
+		uid, err = strconv.Atoi(u_id)
+		if err != nil {
+			c.JSON(http.StatusOK, common.Response{
+				StatusCode: -1,
+				StatusMsg:  err.Error(),
+			})
+			return
+		}
 	}
-	hadoopListResponse, err := service.GetHadoop(u_id.(uint))
+	hadoopListResponse, err := service.GetHadoop(uint(uid))
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: -1,

@@ -190,7 +190,9 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 	label := map[string]string{
 		"image": "spark",
-		"u_id":  strconv.Itoa(int(u_id)),
+	}
+	if u_id > 0 {
+		label["u_id"] = strconv.Itoa(int(u_id))
 	}
 	// 将map标签转换为string
 	selector := labels.SelectorFromSet(label).String()

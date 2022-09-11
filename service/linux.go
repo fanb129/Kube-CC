@@ -92,8 +92,10 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 // GetLinux 获取uid用户下的所有kind类型的linux
 func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 	label := map[string]string{
-		"u_id":  strconv.Itoa(int(u_id)),
 		"image": linuxImage[kind-1],
+	}
+	if u_id > 0 {
+		label["u_id"] = strconv.Itoa(int(u_id))
 	}
 	// 将map标签转换为string
 	selector := labels.SelectorFromSet(label).String()

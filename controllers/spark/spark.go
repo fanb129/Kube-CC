@@ -11,14 +11,19 @@ import (
 // Index 获取当前用户spark列表
 func Index(c *gin.Context) {
 	u_id := c.DefaultQuery("u_id", "")
-	uid, err := strconv.Atoi(u_id)
-	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-		return
+	uid := 0
+	var err error
+	if u_id != "" {
+		uid, err = strconv.Atoi(u_id)
+		if err != nil {
+			c.JSON(http.StatusOK, common.Response{
+				StatusCode: -1,
+				StatusMsg:  err.Error(),
+			})
+			return
+		}
 	}
+
 	sparkListRes, err := service.GetSpark(uint(uid))
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{

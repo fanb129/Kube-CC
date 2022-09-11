@@ -341,7 +341,9 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 	label := map[string]string{
 		"image": "hadoop",
-		"u_id":  strconv.Itoa(int(u_id)),
+	}
+	if u_id > 0 {
+		label["u_id"] = strconv.Itoa(int(u_id))
 	}
 	// 将map标签转换为string
 	selector := labels.SelectorFromSet(label).String()

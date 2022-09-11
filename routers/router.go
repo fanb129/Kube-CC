@@ -94,7 +94,7 @@ func InitRouter() *gin.Engine {
 	// linux路由
 	linuxRouter := auth.Group("/linux")
 	{
-		linuxRouter.GET("/:kind", linux.Index)
+		linuxRouter.GET("", linux.Index)
 		linuxRouter.GET("delete/:name", linux.Delete)
 		linuxRouter.POST("/add", middleware.Is2Role(), linux.Add)
 	}
