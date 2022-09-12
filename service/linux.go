@@ -25,12 +25,13 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 	//fmt.Println(pwd)
 	// 获取当前时间戳，纳秒
 	s := strconv.FormatInt(time.Now().UnixNano(), 10)
-	uid := strconv.Itoa(int(u_id))
 	label := map[string]string{
-		"u_id":  uid,
 		"image": linuxImage[kind-1],
 	}
-
+	if u_id != 0 {
+		uid := strconv.Itoa(int(u_id))
+		label["u_id"] = uid
+	}
 	// 创建namespace
 	_, err := CreateNs(linuxImage[kind-1]+"-"+s, label)
 	if err != nil {
@@ -126,6 +127,8 @@ func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 			Uid:         u_id,
 			Username:    linux.Username,
 			Nickname:    linux.Nickname,
+			Status:      linux.Status,
+			CreatedAt:   linux.CreatedAt,
 			PodList:     podList.PodList,
 			DeployList:  deployList.DeployList,
 			ServiceList: serviceList.ServiceList,

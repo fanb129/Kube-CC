@@ -30,20 +30,21 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	//fmt.Println(pwd)
 	// 获取当前时间戳，纳秒
 	s := strconv.FormatInt(time.Now().UnixNano(), 10)
-	uid := strconv.Itoa(int(u_id))
 	label := map[string]string{
 		"image": "spark",
-		"u_id":  uid,
 	}
 	masterLabel := map[string]string{
 		"component": "spark-master",
-		"u_id":      uid,
 	}
 	workerLabel := map[string]string{
 		"component": "spark-worker",
-		"u_id":      uid,
 	}
-
+	if u_id != 0 {
+		uid := strconv.Itoa(int(u_id))
+		label["u_id"] = uid
+		masterLabel["u_id"] = uid
+		workerLabel["u_id"] = uid
+	}
 	// 创建namespace
 	_, err := CreateNs("spark-"+s, label)
 	if err != nil {
@@ -226,6 +227,7 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 			Name:        spark.Name,
 			CreatedAt:   spark.CreatedAt,
 			Uid:         u_id,
+			Status:      spark.Status,
 			Username:    spark.Username,
 			Nickname:    spark.Nickname,
 			PodList:     podList.PodList,

@@ -31,26 +31,28 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	// 获取当前时间戳，纳秒
 	s := strconv.FormatInt(time.Now().UnixNano(), 10)
 	ns := "hadoop-" + s
-	uid := strconv.Itoa(int(u_id))
 	label := map[string]string{
 		"image": "hadoop",
-		"u_id":  uid,
 	}
 	hdfsMasterLabel := map[string]string{
 		"name": "hdfs-master",
-		"u_id": uid,
 	}
 	datanodeLabel := map[string]string{
 		"name": "hadoop-datanode",
-		"u_id": uid,
 	}
 	yarnMasterLabel := map[string]string{
 		"name": "yarn-master",
-		"u_id": uid,
 	}
 	yarnNodeLabel := map[string]string{
 		"name": "yarn-node",
-		"u_id": uid,
+	}
+	if u_id != 0 {
+		uid := strconv.Itoa(int(u_id))
+		label["u_id"] = uid
+		hdfsMasterLabel["u_id"] = uid
+		datanodeLabel["u_id"] = uid
+		yarnMasterLabel["u_id"] = uid
+		yarnNodeLabel["u_id"] = uid
 	}
 	// 创建namespace
 	_, err := CreateNs(ns, label)
@@ -373,6 +375,8 @@ func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 			Uid:         u_id,
 			Username:    hadoop.Username,
 			Nickname:    hadoop.Nickname,
+			CreatedAt:   hadoop.CreatedAt,
+			Status:      hadoop.Status,
 			PodList:     podList.PodList,
 			DeployList:  deployList.DeployList,
 			ServiceList: serviceList.ServiceList,
