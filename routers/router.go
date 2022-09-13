@@ -26,7 +26,8 @@ func InitRouter() *gin.Engine {
 
 	apiRouter := r.Group("/api")
 	{
-		apiRouter.POST("/login", controllers.Login)       // 登陆路由
+		apiRouter.POST("/login", controllers.Login) // 登陆路由
+		apiRouter.POST("/checkPass", controllers.CheckPass)
 		apiRouter.GET("/logout", controllers.Logout)      // 登出路由
 		apiRouter.POST("/register", controllers.Register) // 注册路由
 	}
@@ -41,6 +42,7 @@ func InitRouter() *gin.Engine {
 		userRouter.GET("/delete/:id", middleware.Is2Role(), user.Delete)        // 删除用户
 		userRouter.POST("/edit/:id", middleware.Is2Role(), user.Edit)           // 授权用户
 		userRouter.POST("/resetpass/:id", middleware.Is2Role(), user.ResetPass) // 重置密码
+		userRouter.POST("/update/:id", user.Update)                             // 更新用户信息
 	}
 
 	// node路由

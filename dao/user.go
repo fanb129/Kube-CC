@@ -18,11 +18,12 @@ func GetUserList(page int, pageSize int) ([]models.User, int, error) {
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
-	r := 0
-	if int(total)%pageSize != 0 {
-		r = 1
-	}
-	return users, int(total)/pageSize + r, nil
+	//r := 0
+	//if int(total)%pageSize != 0 {
+	//	r = 1
+	//}
+	//return users, int(total)/pageSize + r, nil
+	return users, int(total), nil
 }
 
 // GetUserById 通过id获取user

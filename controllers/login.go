@@ -9,6 +9,28 @@ import (
 	"net/http"
 )
 
+// CheckPass 验证密码
+func CheckPass(c *gin.Context) {
+	loginForm := common.LoginForm{}
+	// 参数绑定
+	if err := c.ShouldBind(&loginForm); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+
+	// 调用业务层登录
+	loginRes, err := service.Login(loginForm.Username, loginForm.Password)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: 0, // 返回0，前端不弹出错误提示框
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, loginRes)
+}
+
 // Login 用户登录
 func Login(c *gin.Context) {
 	loginForm := common.LoginForm{}

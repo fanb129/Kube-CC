@@ -75,6 +75,26 @@ func Edit(c *gin.Context) {
 
 }
 
+// Update 更新用户信息
+func Update(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	form := common.UpdateForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	response, err := service.UpdateUser(uint(id), form)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+
+}
+
 // ResetPass 重置密码
 func ResetPass(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
@@ -92,5 +112,4 @@ func ResetPass(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response)
-
 }

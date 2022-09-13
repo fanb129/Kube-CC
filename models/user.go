@@ -10,3 +10,6 @@ type User struct {
 	Role     uint   `gorm:"not null;default:1"`                                        // 权限状态 1普通用户 2管理员 3超级管理员
 	Avatar   string `gorm:"type:varchar(100)"`                                         // 头像地址
 }
+
+type UserInfo struct {
+}

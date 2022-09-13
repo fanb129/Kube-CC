@@ -88,6 +88,22 @@ func EditUser(id, role uint) (*common.Response, error) {
 	return &common.OK, nil
 }
 
+// UpdateUser 更新用户信息
+func UpdateUser(id uint, data common.UpdateForm) (*common.Response, error) {
+	user, err := dao.GetUserById(id)
+	if err != nil {
+		return nil, errors.New("获取用户失败")
+	}
+	user.Avatar = data.Avatar
+	user.Nickname = data.Nickname
+	row, err := dao.UpdateUser(user)
+	if err != nil || row == 0 {
+		return nil, errors.New("更新失败")
+	}
+
+	return &common.OK, nil
+}
+
 // ResetPassUser 重置密码
 func ResetPassUser(id uint, password string) (*common.Response, error) {
 	// 获取用户

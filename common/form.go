@@ -2,7 +2,7 @@ package common
 
 type LoginForm struct {
 	Username string `form:"username" json:"username" binding:"required,min=3,max=16"`
-	Password string `form:"password" json:"password" binding:"required,min=6,max=20"`
+	Password string `form:"password" json:"password" binding:"required,min=6,max=16"`
 }
 
 type RegisterForm struct {
@@ -12,11 +12,16 @@ type RegisterForm struct {
 }
 
 type ResetPassForm struct {
-	Password string `form:"password" json:"password" binding:"required,min=6,max=20"`
+	Password string `form:"password" json:"password" binding:"required,min=6,max=16"`
 }
 
 type EditForm struct {
 	Role uint `form:"role" json:"role" binding:"required,oneof=1 2 3"`
+}
+
+type UpdateForm struct {
+	Nickname string `form:"nickname" json:"nickname" binding:"required,min=1,max=16"` // 昵称
+	Avatar   string `form:"avatar" json:"avatar"`
 }
 type NsAddForm struct {
 	Uid  uint   `form:"u_id" json:"u_id" binding:"gte=0"`
