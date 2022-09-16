@@ -17,13 +17,15 @@ import (
 )
 
 func InitRouter() *gin.Engine {
-	r := gin.New()
+	r := gin.Default()
 
 	r.Use(gin.Logger())             // 日志
 	r.Use(middleware.CorsHandler()) // 跨域设置
 	r.Use(gin.Recovery())           // 恐慌 恢复
 	gin.SetMode(conf.AppMode)
 
+	r.GET("/api/node/ssh", node.WsSsh)
+	r.GET("/api/pod/ssh", pod.Ssh)
 	apiRouter := r.Group("/api")
 	{
 		apiRouter.POST("/login", controllers.Login) // 登陆路由

@@ -1,9 +1,11 @@
 package node
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/service"
+	"k8s_deploy_gin/service/ws"
 	"net/http"
 )
 
@@ -14,4 +16,9 @@ func Index(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, nodeListResponse)
 	}
+}
+
+func WsSsh(c *gin.Context) {
+	fmt.Println("node WsSsh")
+	ws.NodeWsSsh(c.Writer, c.Request)
 }
