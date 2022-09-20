@@ -28,7 +28,7 @@ type xtermMessage struct {
 	Cols    uint16 `json:"cols"`  // msgtype=resize情况下使用
 }
 
-// executor回调获取web是否resize
+// Next executor回调获取web是否resize
 func (handler *streamHandler) Next() (size *remotecommand.TerminalSize) {
 	ret := <-handler.resizeEvent
 	size = &ret

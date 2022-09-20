@@ -15,13 +15,13 @@ var wsUpgrader = websocket.Upgrader{
 	},
 }
 
-// websocket消息
+// WsMessage websocket消息
 type WsMessage struct {
 	MessageType int
 	Data        []byte
 }
 
-// 封装websocket连接
+// WsConnection 封装websocket连接
 type WsConnection struct {
 	wsSocket *websocket.Conn // 底层websocket
 	inChan   chan *WsMessage // 读取队列

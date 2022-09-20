@@ -132,7 +132,7 @@ func (ws *WebSSH) SetConnTimeOut(connTimeout time.Duration) {
 	ws.connTimeout = connTimeout
 }
 
-// 添加 websocket 连接
+// AddWebsocket 添加 websocket 连接
 func (ws *WebSSH) AddWebsocket(conn *websocket.Conn) {
 	ws.logger.Printf("(%s) websocket connected", ws.id)
 	ws.websocket = conn
@@ -141,7 +141,7 @@ func (ws *WebSSH) AddWebsocket(conn *websocket.Conn) {
 	}()
 }
 
-// 添加 ssh 连接
+// AddSSHConn 添加 ssh 连接
 func (ws *WebSSH) AddSSHConn(conn net.Conn) {
 	ws.logger.Printf("(%s) ssh connected", ws.id)
 	ws.sshConn = conn
