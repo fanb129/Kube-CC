@@ -62,10 +62,10 @@ func loadKubernetes(file *ini.File) {
 func loadDb(file *ini.File) {
 	s := file.Section("database")
 	DbType = s.Key("DbType").MustString("mysql")
-	DbHost = s.Key("DbHost").MustString("39.103.195.185")
+	DbHost = s.Key("DbHost").MustString("")
 	DbPort = s.Key("DbPort").MustString("3306")
 	DbUser = s.Key("DbUser").MustString("root")
-	DbPassword = s.Key("DbPassWord").MustString("Fb123456.")
+	DbPassword = s.Key("DbPassWord").MustString("")
 	DbName = s.Key("DbName").MustString("k8s_deploy_gin")
 }
 
