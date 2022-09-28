@@ -44,3 +44,17 @@ func Ssh(c *gin.Context) {
 	fmt.Println("pod ssh")
 	podSsh.PodWsSsh(c.Writer, c.Request)
 }
+
+func Info(c *gin.Context) {
+	ns := c.Query("ns")
+	name := c.Query("name")
+	res, err := service.GetAPod(name, ns)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, common.PodInfo{
+			Response: common.OK,
+			Info:     *res,
+		})
+	}
+}

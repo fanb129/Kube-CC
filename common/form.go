@@ -45,3 +45,7 @@ type HadoopAddForm struct {
 	YarnMasterReplicas int32 `form:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1,lte=3"`
 	YarnNodeReplicas   int32 `form:"yarn_node_replicas" json:"yarn_node_replicas" binding:"required,gte=2,lte=10"`
 }
+
+type YamlForm struct {
+	Yaml interface{} `json:"yaml" form:"yaml"`
+}

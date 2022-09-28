@@ -1,0 +1,123 @@
+package yamlApply
+
+import (
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s_deploy_gin/common"
+	"k8s_deploy_gin/dao"
+	"k8s_deploy_gin/service"
+)
+
+// NamespaceApply namespace的更新或新建
+func NamespaceApply(ns *corev1.Namespace) (*common.Response, error) {
+	name := ns.Name
+	if _, err := dao.ClientSet.CoreV1().Namespaces().Get(name, metav1.GetOptions{}); err != nil {
+		if errors.IsNotFound(err) {
+			if _, err := dao.ClientSet.CoreV1().Namespaces().Create(ns); err != nil {
+				return nil, err
+			}
+			return &common.OK, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		if _, err := dao.ClientSet.CoreV1().Namespaces().Update(ns); err != nil {
+			return nil, err
+		}
+		return &common.OK, nil
+	}
+
+}
+
+// DeployApply  deploy的更新或者创建
+func DeployApply(deploy *appsv1.Deployment) (*common.Response, error) {
+	name := deploy.Name
+	ns := deploy.Namespace
+	labels := deploy.Labels
+	if _, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{}); err != nil {
+		// 不存在则创建
+		if errors.IsNotFound(err) {
+			// 获取namespace，提取出uid的label
+			get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			uid, ok := get.Labels["u_id"]
+			if ok {
+				labels["u_id"] = uid                      //deploy的label
+				deploy.Spec.Template.Labels["u_id"] = uid // pod的label
+			}
+			if _, err := service.CreateDeploy(name, ns, labels, deploy.Spec); err != nil {
+				return nil, err
+			}
+			return &common.OK, nil
+		} else { // 其他错误直接返回
+			return nil, err
+		}
+	} else { // 存在则更新
+		response, err := service.UpdateDeploy(deploy)
+		return response, err
+	}
+
+}
+
+// ServiceApply service的更新或者创建
+func ServiceApply(svc *corev1.Service) (*common.Response, error) {
+	name := svc.Name
+	ns := svc.Namespace
+	labels := svc.Labels
+	if _, err := dao.ClientSet.CoreV1().Services(ns).Get(name, metav1.GetOptions{}); err != nil {
+		// 不存在则创建
+		if errors.IsNotFound(err) {
+			// 获取namespace，提取出uid的label
+			get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			uid, ok := get.Labels["u_id"]
+			if ok {
+				labels["u_id"] = uid //service的label
+			}
+			if _, err := service.CreateService(name, ns, labels, svc.Spec); err != nil {
+				return nil, err
+			}
+			return &common.OK, nil
+		} else { // 其他错误直接返回
+			return nil, err
+		}
+	} else {
+		res, err := service.UpdateService(svc)
+		return res, err
+	}
+}
+
+func PodApply(pod *corev1.Pod) (*common.Response, error) {
+	name := pod.Name
+	ns := pod.Namespace
+	labels := pod.Labels
+	if _, err := dao.ClientSet.CoreV1().Pods(ns).Get(name, metav1.GetOptions{}); err != nil {
+		// 不存在则创建
+		if errors.IsNotFound(err) {
+			// 获取namespace，提取出uid的label
+			get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			uid, ok := get.Labels["u_id"]
+			if ok {
+				labels["u_id"] = uid //service的label
+			}
+			if _, err := service.CreatePod(name, ns, labels, pod.Spec); err != nil {
+				return nil, err
+			}
+			return &common.OK, nil
+		} else { // 其他错误直接返回
+			return nil, err
+		}
+	} else {
+		res, err := service.UpdatePod(pod)
+		return res, err
+	}
+}

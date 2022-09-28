@@ -39,3 +39,17 @@ func Delete(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 	}
 }
+
+func Info(c *gin.Context) {
+	ns := c.Query("ns")
+	name := c.Query("name")
+	res, err := service.GetADeploy(name, ns)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, common.DeployInfo{
+			Response: common.OK,
+			Info:     *res,
+		})
+	}
+}

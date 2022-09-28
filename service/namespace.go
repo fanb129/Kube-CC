@@ -1,7 +1,7 @@
 package service
 
 import (
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/dao"
@@ -14,7 +14,6 @@ func GetNs(label string) (*common.NsListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	num := len(namespace.Items)
 	namespaceList := make([]common.Ns, num)
 	for i, ns := range namespace.Items {
@@ -47,7 +46,7 @@ func GetNs(label string) (*common.NsListResponse, error) {
 
 // CreateNs 新建属于指定用户的namespace，u_id == 0 则不添加标签
 func CreateNs(name string, label map[string]string) (*common.Response, error) {
-	ns := v1.Namespace{
+	ns := corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
 	}

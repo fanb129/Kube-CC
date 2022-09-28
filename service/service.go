@@ -8,6 +8,15 @@ import (
 	"k8s_deploy_gin/dao"
 )
 
+// GetAService 获得指定deploy
+func GetAService(name, ns string) (*corev1.Service, error) {
+	get, err := dao.ClientSet.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return get, nil
+}
+
 // CreateService 创建自定义服务
 func CreateService(name, ns string, label map[string]string, spec corev1.ServiceSpec) (*corev1.Service, error) {
 	service := corev1.Service{
@@ -49,6 +58,15 @@ func GetService(ns string, label string) (*common.ServiceListResponse, error) {
 // DeleteService 删除指定service
 func DeleteService(name, ns string) (*common.Response, error) {
 	err := dao.ClientSet.CoreV1().Services(ns).Delete(name, &metav1.DeleteOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return &common.OK, nil
+}
+
+// UpdateService 更新service
+func UpdateService(service *corev1.Service) (*common.Response, error) {
+	_, err := dao.ClientSet.CoreV1().Services(service.Namespace).Update(service)
 	if err != nil {
 		return nil, err
 	}

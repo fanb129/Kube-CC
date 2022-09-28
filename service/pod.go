@@ -1,10 +1,20 @@
 package service
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/dao"
 )
+
+// GetAPod 获得指定deploy
+func GetAPod(name, ns string) (*corev1.Pod, error) {
+	get, err := dao.ClientSet.CoreV1().Pods(ns).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return get, nil
+}
 
 // GetPod 获得指定namespace下pod
 func GetPod(ns string, label string) (*common.PodListResponse, error) {
@@ -40,18 +50,30 @@ func DeletePod(name, ns string) (*common.Response, error) {
 	return &common.OK, nil
 }
 
-//func AddNPod(ns string){
-//	pod := corev1.Pod{
-//		TypeMeta:metav1.TypeMeta{
-//			Kind: "",
-//			APIVersion: "v1",
-//		},
-//		ObjectMeta:metav1.ObjectMeta{
-//
-//		},
-//		Spec: corev1.PodSpec{
-//
-//		},
-//	}
-//	create, err := dao.ClientSet.CoreV1().Pods(ns).Create(&pod)
-//}
+func CreatePod(name, ns string, label map[string]string, spec corev1.PodSpec) (*corev1.Pod, error) {
+	pod := corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+			Labels:    label,
+		},
+		Spec: spec,
+	}
+	create, err := dao.ClientSet.CoreV1().Pods(ns).Create(&pod)
+	if err != nil {
+		return nil, err
+	}
+	return create, nil
+}
+
+func UpdatePod(pod *corev1.Pod) (*common.Response, error) {
+	_, err := dao.ClientSet.CoreV1().Pods(pod.Name).Update(pod)
+	if err != nil {
+		return nil, err
+	}
+	return &common.OK, nil
+}

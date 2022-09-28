@@ -1,6 +1,7 @@
 package common
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 )
@@ -199,4 +200,19 @@ type HadoopListResponse struct {
 	Response
 	Length     int      `json:"length"`
 	HadoopList []Hadoop `json:"hadoop_list"`
+}
+
+type DeployInfo struct {
+	Response
+	Info appsv1.Deployment `json:"info"`
+}
+
+type ServiceInfo struct {
+	Response
+	Info corev1.Service `json:"info"`
+}
+
+type PodInfo struct {
+	Response
+	Info corev1.Pod `json:"info"`
 }

@@ -13,6 +13,7 @@ import (
 	"k8s_deploy_gin/controllers/spark"
 	"k8s_deploy_gin/controllers/svc"
 	"k8s_deploy_gin/controllers/user"
+	"k8s_deploy_gin/controllers/yaml"
 	"k8s_deploy_gin/middleware"
 )
 
@@ -36,6 +37,14 @@ func InitRouter() *gin.Engine {
 
 	// 需要鉴权
 	auth := apiRouter.Group("", middleware.JWTToken())
+
+	// yaml路由
+	yamlRouter := auth.Group("/yaml")
+	{
+		yamlRouter.POST("/apply", yaml.Apply)
+		yamlRouter.POST("/create", yaml.Create)
+	}
+
 	//用户路由
 	userRouter := auth.Group("/user")
 	{
@@ -66,18 +75,21 @@ func InitRouter() *gin.Engine {
 	{
 		deployRouter.GET("", deploy.Index)
 		deployRouter.GET("/delete", deploy.Delete)
+		deployRouter.GET("/info", deploy.Info)
 	}
 
 	serviceRouter := auth.Group("/service")
 	{
 		serviceRouter.GET("", svc.Index)
 		serviceRouter.GET("/delete", svc.Delete)
+		serviceRouter.GET("/info", svc.Info)
 	}
 	// pod路由
 	podRouter := auth.Group("/pod")
 	{
 		podRouter.GET("", pod.Index) // 浏览指定namespace的pod
 		podRouter.GET("/delete", pod.Delete)
+		podRouter.GET("/info", pod.Info)
 	}
 
 	// spark路由

@@ -7,6 +7,15 @@ import (
 	"k8s_deploy_gin/dao"
 )
 
+// GetADeploy 获得指定deploy
+func GetADeploy(name, ns string) (*appsv1.Deployment, error) {
+	get, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return get, nil
+}
+
 // CreateDeploy 创建自定义控制器
 func CreateDeploy(name, ns string, label map[string]string, spec appsv1.DeploymentSpec) (*appsv1.Deployment, error) {
 	rs := appsv1.Deployment{
@@ -57,13 +66,9 @@ func DeleteDeploy(name, ns string) (*common.Response, error) {
 	return &common.OK, nil
 }
 
-func EditDeploy(name, ns string) (*common.Response, error) {
-	deploy, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = dao.ClientSet.AppsV1().Deployments(ns).Update(deploy)
+// UpdateDeploy 更新deploy
+func UpdateDeploy(deploy *appsv1.Deployment) (*common.Response, error) {
+	_, err := dao.ClientSet.AppsV1().Deployments(deploy.Namespace).Update(deploy)
 	if err != nil {
 		return nil, err
 	}
