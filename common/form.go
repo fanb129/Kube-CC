@@ -46,6 +46,15 @@ type HadoopAddForm struct {
 	YarnNodeReplicas   int32 `form:"yarn_node_replicas" json:"yarn_node_replicas" binding:"required,gte=2,lte=10"`
 }
 
-type YamlForm struct {
-	Yaml interface{} `json:"yaml" form:"yaml"`
+type YamlApplyForm struct {
+	Kind string      `json:"kind" form:"kind"`
+	Name string      `json:"name" form:"name"`
+	Ns   string      `json:"ns" form:"ns"`
+	Yaml interface{} `json:"yaml" form:"yaml" binding:"required"`
+}
+
+type YamlCreateForm struct {
+	Kind string      `json:"kind" form:"kind"`
+	Ns   string      `json:"ns" form:"ns"`
+	Yaml interface{} `json:"yaml" form:"yaml" binding:"required"`
 }

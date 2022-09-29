@@ -15,7 +15,7 @@ import (
 func Login(username, password string) (*common.LoginResponse, error) {
 	user, err := dao.GetUserByName(username)
 	if err != nil {
-		return nil, errors.New("获取用户示表")
+		return nil, errors.New("获取用户失败")
 	}
 	// 验证密码
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
