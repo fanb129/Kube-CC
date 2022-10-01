@@ -24,14 +24,26 @@ func Apply(c *gin.Context) {
 	kind := form.Kind
 	name := form.Name
 	ns := form.Ns
+	metadata := yaml["metadata"].(map[string]interface{})
 	var err error
-	//if kind !=
 	// 转为json
 	jsonYaml, err := json.Marshal(yaml)
 	if err != nil {
 		goto END
 	}
-	switch yaml["kind"] {
+	if kind != "" && kind != yaml["kind"].(string) {
+		err = errors.New("请勿修改yaml中kind")
+		goto END
+	}
+	if name != "" && kind != metadata["name"].(string) {
+		err = errors.New("请勿修改yaml中name")
+		goto END
+	}
+	if ns != "" && kind != metadata["namespace"].(string) {
+		err = errors.New("请勿修改yaml中namespace")
+		goto END
+	}
+	switch yaml["kind"].(string) {
 	case "Namespace", "namespace":
 		// json转为struct
 		ns := corev1.Namespace{}
@@ -93,7 +105,7 @@ func Create(c *gin.Context) {
 	yaml := form.Yaml.(map[string]interface{})
 	kind := form.Kind
 	ns := form.Ns
-	yamlKind := yaml["kind"]
+	yamlKind := yaml["kind"].(string)
 	//fmt.Printf("%v", yaml)
 	// 转为json
 	jsonYaml, err := json.Marshal(yaml)

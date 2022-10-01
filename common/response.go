@@ -67,16 +67,18 @@ type Ingress struct {
 }
 
 type Spark struct {
-	Name        string                `json:"name"`
-	Uid         uint                  `json:"u_id"`
-	Username    string                `json:"username"`
-	Nickname    string                `json:"nickname"`
-	CreatedAt   string                `json:"created_at"`
-	Status      corev1.NamespacePhase `json:"status"`
-	PodList     []Pod                 `json:"pod_list"`
-	DeployList  []Deploy              `json:"deploy_list"`
-	ServiceList []Service             `json:"service_list"`
-	IngressList []Ingress             `json:"ingress_list"`
+	Name           string                `json:"name"`
+	Uid            uint                  `json:"u_id"`
+	Username       string                `json:"username"`
+	Nickname       string                `json:"nickname"`
+	CreatedAt      string                `json:"created_at"`
+	Status         corev1.NamespacePhase `json:"status"`
+	PodList        []Pod                 `json:"pod_list"`
+	DeployList     []Deploy              `json:"deploy_list"`
+	ServiceList    []Service             `json:"service_list"`
+	IngressList    []Ingress             `json:"ingress_list"`
+	MasterReplicas int32                 `json:"master_replicas"`
+	WorkerReplicas int32                 `json:"worker_replicas"`
 }
 type Linux struct {
 	Name        string                `json:"name"`
@@ -90,15 +92,19 @@ type Linux struct {
 	ServiceList []Service             `json:"service_list"`
 }
 type Hadoop struct {
-	Name        string                `json:"name"`
-	Uid         uint                  `json:"u_id"`
-	Username    string                `json:"username"`
-	Nickname    string                `json:"nickname"`
-	Status      corev1.NamespacePhase `json:"status"`
-	CreatedAt   string                `json:"created_at"`
-	PodList     []Pod                 `json:"pod_list"`
-	DeployList  []Deploy              `json:"deploy_list"`
-	ServiceList []Service             `json:"service_list"`
+	Name               string                `json:"name"`
+	Uid                uint                  `json:"u_id"`
+	Username           string                `json:"username"`
+	Nickname           string                `json:"nickname"`
+	Status             corev1.NamespacePhase `json:"status"`
+	CreatedAt          string                `json:"created_at"`
+	PodList            []Pod                 `json:"pod_list"`
+	DeployList         []Deploy              `json:"deploy_list"`
+	ServiceList        []Service             `json:"service_list"`
+	HdfsMasterReplicas int32                 `json:"hdfs_master_replicas"`
+	DatanodeReplicas   int32                 `json:"datanode_replicas"`
+	YarnMasterReplicas int32                 `json:"yarn_master_replicas"`
+	YarnNodeReplicas   int32                 `json:"yarn_node_replicas"`
 }
 type UserInfo struct {
 	ID        uint   `json:"id"`

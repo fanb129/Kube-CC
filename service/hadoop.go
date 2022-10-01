@@ -34,14 +34,26 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	label := map[string]string{
 		"image": "hadoop",
 	}
+	hdfsMasterSelector := map[string]string{
+		"name": "hdfs-master",
+	}
 	hdfsMasterLabel := map[string]string{
 		"name": "hdfs-master",
+	}
+	datanodeSelector := map[string]string{
+		"name": "hadoop-datanode",
 	}
 	datanodeLabel := map[string]string{
 		"name": "hadoop-datanode",
 	}
+	yarnMasterSelector := map[string]string{
+		"name": "yarn-master",
+	}
 	yarnMasterLabel := map[string]string{
 		"name": "yarn-master",
+	}
+	yarnNodeSelector := map[string]string{
+		"name": "yarn-node",
 	}
 	yarnNodeLabel := map[string]string{
 		"name": "yarn-node",
@@ -73,7 +85,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	//var hdfsMasterReplicas int32 = 1
 	hdfsMasterSpec := appsv1.DeploymentSpec{
 		Replicas: &hdfsMasterReplicas,
-		Selector: &metav1.LabelSelector{MatchLabels: hdfsMasterLabel},
+		Selector: &metav1.LabelSelector{MatchLabels: hdfsMasterSelector},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: hdfsMasterLabel,
@@ -121,7 +133,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	// 创建hdfs-master的service
 	hdfsMasterServiceSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeNodePort,
-		Selector: hdfsMasterLabel,
+		Selector: hdfsMasterSelector,
 		Ports: []corev1.ServicePort{
 			{Name: "rpc", Port: 9000, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 9000}},
 			{Name: "http", Port: 50070, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 50070}},
@@ -136,7 +148,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	//var datanodeReplicas int32 = 3
 	datanodeSpec := appsv1.DeploymentSpec{
 		Replicas: &datanodeReplicas,
-		Selector: &metav1.LabelSelector{MatchLabels: datanodeLabel},
+		Selector: &metav1.LabelSelector{MatchLabels: datanodeSelector},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: datanodeLabel,
@@ -195,7 +207,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	yarnMasterSpec := appsv1.DeploymentSpec{
 		Replicas: &yarnMasterReplicas,
 		Selector: &metav1.LabelSelector{
-			MatchLabels: yarnMasterLabel,
+			MatchLabels: yarnMasterSelector,
 		},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -253,7 +265,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	// yarn-master的service
 	yarnMasterServiceSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeNodePort,
-		Selector: yarnMasterLabel,
+		Selector: yarnMasterSelector,
 		Ports: []corev1.ServicePort{
 			{Name: "8030", Port: 8030},
 			{Name: "8031", Port: 8031},
@@ -271,7 +283,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	yarnNodeSpec := appsv1.DeploymentSpec{
 		Replicas: &yarnNodeReplicas,
 		Selector: &metav1.LabelSelector{
-			MatchLabels: yarnNodeLabel,
+			MatchLabels: yarnNodeSelector,
 		},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -326,7 +338,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 
 	// yarn-node的service
 	yarnNodeServiceSpec := corev1.ServiceSpec{
-		Selector: yarnNodeLabel,
+		Selector: yarnNodeSelector,
 		Ports: []corev1.ServicePort{
 			{Port: 8040},
 		},
@@ -365,21 +377,39 @@ func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 		if err != nil {
 			return nil, err
 		}
+		var hdfsMaster, datanode, yarnMaster, yarnNode int32
+		for j := 0; j < deployList.Length; j++ {
+			deploy := deployList.DeployList[j]
+			switch deploy.Name {
+			case hadoopHdfsMasterDeployName:
+				hdfsMaster = deploy.Replicas
+			case datanodeDeployName:
+				datanode = deploy.Replicas
+			case hadoopYarnMasterDeployName:
+				yarnMaster = deploy.Replicas
+			case hadoopYarnNodeDeployName:
+				yarnNode = deploy.Replicas
+			}
+		}
 		// 获取service
 		serviceList, err := GetService(hadoop.Name, "")
 		if err != nil {
 			return nil, err
 		}
 		hadoopList[i] = common.Hadoop{
-			Name:        hadoop.Name,
-			Uid:         u_id,
-			Username:    hadoop.Username,
-			Nickname:    hadoop.Nickname,
-			CreatedAt:   hadoop.CreatedAt,
-			Status:      hadoop.Status,
-			PodList:     podList.PodList,
-			DeployList:  deployList.DeployList,
-			ServiceList: serviceList.ServiceList,
+			Name:               hadoop.Name,
+			Uid:                u_id,
+			Username:           hadoop.Username,
+			Nickname:           hadoop.Nickname,
+			CreatedAt:          hadoop.CreatedAt,
+			Status:             hadoop.Status,
+			PodList:            podList.PodList,
+			DeployList:         deployList.DeployList,
+			ServiceList:        serviceList.ServiceList,
+			HdfsMasterReplicas: hdfsMaster,
+			DatanodeReplicas:   datanode,
+			YarnMasterReplicas: yarnMaster,
+			YarnNodeReplicas:   yarnNode,
 		}
 	}
 	return &common.HadoopListResponse{
@@ -422,5 +452,54 @@ func DeleteHadoop(ns string) (*common.Response, error) {
 	if err1 != nil {
 		return nil, err1
 	}
+	return &common.OK, nil
+}
+
+// UpdateHadoop 更新hadoop的uid，以及replicas
+func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32) (*common.Response, error) {
+	if _, err := UpdateNs(name, uid); err != nil {
+		return nil, err
+	}
+
+	// 更新hdfsMaster的Replicas
+	hdfsMaster, err := GetADeploy(hadoopHdfsMasterDeployName, name)
+	if err != nil {
+		return nil, err
+	}
+	hdfsMaster.Spec.Replicas = &hdfsMasterReplicas
+	if _, err := UpdateDeploy(hdfsMaster); err != nil {
+		return nil, err
+	}
+
+	// 更新datanode的Replicas
+	datanode, err := GetADeploy(datanodeDeployName, name)
+	if err != nil {
+		return nil, err
+	}
+	datanode.Spec.Replicas = &datanodeReplicas
+	if _, err := UpdateDeploy(datanode); err != nil {
+		return nil, err
+	}
+
+	// 更新yarnMaster的Replicas
+	yarnMaster, err := GetADeploy(hadoopYarnMasterDeployName, name)
+	if err != nil {
+		return nil, err
+	}
+	yarnMaster.Spec.Replicas = &yarnMasterReplicas
+	if _, err := UpdateDeploy(yarnMaster); err != nil {
+		return nil, err
+	}
+
+	// 更新yarnNode的Replicas
+	yarnNode, err := GetADeploy(hadoopYarnNodeDeployName, name)
+	if err != nil {
+		return nil, err
+	}
+	yarnNode.Spec.Replicas = &yarnNodeReplicas
+	if _, err := UpdateDeploy(yarnNode); err != nil {
+		return nil, err
+	}
+
 	return &common.OK, nil
 }

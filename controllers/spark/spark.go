@@ -60,3 +60,22 @@ func Delete(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response)
 }
+
+func Update(c *gin.Context) {
+	// 表单验证
+	form := common.SparkUpdateForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	uid := ""
+	if form.Uid != 0 {
+		uid = strconv.Itoa(int(form.Uid))
+	}
+	response, err := service.UpdateSpark(form.Name, uid, form.MasterReplicas, form.WorkerReplicas)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}

@@ -32,7 +32,12 @@ type SparkAddForm struct {
 	MasterReplicas int32 `form:"master_replicas" json:"master_replicas" binding:"required,gte=1,lte=3"`
 	WorkerReplicas int32 `form:"worker_replicas" json:"worker_replicas" binding:"required,gte=2,lte=10"`
 }
-
+type SparkUpdateForm struct {
+	Name           string `json:"name" form:"name" binding:"required"`
+	Uid            uint   `form:"u_id" json:"u_id" binding:"required,gt=0"`
+	MasterReplicas int32  `form:"master_replicas" json:"master_replicas" binding:"required,gte=1,lte=3"`
+	WorkerReplicas int32  `form:"worker_replicas" json:"worker_replicas" binding:"required,gte=2,lte=10"`
+}
 type LinuxAddForm struct {
 	Uid  uint `form:"u_id" json:"u_id" binding:"required,gt=0"`
 	Kind uint `form:"kind" json:"kind" binding:"required,gt=0"`
@@ -44,6 +49,14 @@ type HadoopAddForm struct {
 	DatanodeReplicas   int32 `form:"datanode_replicas" json:"datanode_replicas" binding:"required,gte=2,lte=10"`
 	YarnMasterReplicas int32 `form:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1,lte=3"`
 	YarnNodeReplicas   int32 `form:"yarn_node_replicas" json:"yarn_node_replicas" binding:"required,gte=2,lte=10"`
+}
+type HadoopUpdateForm struct {
+	Name               string `json:"name" form:"name" binding:"required"`
+	Uid                uint   `form:"u_id" json:"u_id" binding:"required,gt=0"`
+	HdfsMasterReplicas int32  `form:"hdfs_master_replicas" json:"hdfs_master_replicas" binding:"required,gte=1,lte=3"`
+	DatanodeReplicas   int32  `form:"datanode_replicas" json:"datanode_replicas" binding:"required,gte=2,lte=10"`
+	YarnMasterReplicas int32  `form:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1,lte=3"`
+	YarnNodeReplicas   int32  `form:"yarn_node_replicas" json:"yarn_node_replicas" binding:"required,gte=2,lte=10"`
 }
 
 type YamlApplyForm struct {

@@ -65,9 +65,10 @@ func InitRouter() *gin.Engine {
 	// namespace路由
 	nsRouter := auth.Group("/ns")
 	{
-		nsRouter.GET("", namespace.Index)                          // 浏览所有namespace
-		nsRouter.GET("/delete/:ns", namespace.Delete)              // 删除指定namespace
-		nsRouter.POST("/add", middleware.Is3Role(), namespace.Add) // 添加namespace
+		nsRouter.GET("", namespace.Index)                                // 浏览所有namespace
+		nsRouter.GET("/delete/:ns", namespace.Delete)                    // 删除指定namespace
+		nsRouter.POST("/add", middleware.Is2Role(), namespace.Add)       // 添加namespace
+		nsRouter.POST("/update", middleware.Is2Role(), namespace.Update) // 更新uid
 	}
 
 	// deploy路由
@@ -98,6 +99,7 @@ func InitRouter() *gin.Engine {
 		sparkRouter.POST("/add", middleware.Is2Role(), spark.Add) // 新建spark集群
 		sparkRouter.GET("/delete/:name", spark.Delete)
 		sparkRouter.GET("", spark.Index)
+		sparkRouter.POST("/update", spark.Update)
 	}
 
 	hadoopRouter := auth.Group("/hadoop")
@@ -105,6 +107,7 @@ func InitRouter() *gin.Engine {
 		hadoopRouter.POST("/add", middleware.Is2Role(), hadoop.Add)
 		hadoopRouter.GET("/delete/:name", hadoop.Delete)
 		hadoopRouter.GET("", hadoop.Index)
+		hadoopRouter.POST("/update", hadoop.Update)
 	}
 
 	// linux路由

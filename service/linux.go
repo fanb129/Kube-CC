@@ -25,6 +25,9 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 	//fmt.Println(pwd)
 	// 获取当前时间戳，纳秒
 	s := strconv.FormatInt(time.Now().UnixNano(), 10)
+	selector := map[string]string{
+		"image": linuxImage[kind-1],
+	}
 	label := map[string]string{
 		"image": linuxImage[kind-1],
 	}
@@ -44,7 +47,7 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 	replicas = 1
 	deploySpec := appsv1.DeploymentSpec{
 		Replicas: &replicas,
-		Selector: &metav1.LabelSelector{MatchLabels: label},
+		Selector: &metav1.LabelSelector{MatchLabels: selector},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{Labels: label},
 			Spec: corev1.PodSpec{
@@ -78,7 +81,7 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 	// centos的service
 	serviceSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeNodePort,
-		Selector: label,
+		Selector: selector,
 		Ports: []corev1.ServicePort{
 			{Name: "ssh", Port: 22, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 22}},
 		},

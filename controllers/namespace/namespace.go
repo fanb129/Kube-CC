@@ -57,3 +57,22 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 	}
 }
+
+// Update 更新namespace及其所含所有资源的uid
+func Update(c *gin.Context) {
+	form := common.NsAddForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	uid := ""
+	if form.Uid != 0 {
+		uid = strconv.Itoa(int(form.Uid))
+	}
+	response, err := service.UpdateNs(form.Name, uid)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
+	}
+}

@@ -67,3 +67,25 @@ func Delete(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
+func Update(c *gin.Context) {
+	// 表单验证
+	form := common.HadoopUpdateForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	uid := ""
+	if form.Uid != 0 {
+		uid = strconv.Itoa(int(form.Uid))
+	}
+	res, err := service.UpdateHadoop(form.Name, uid, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}

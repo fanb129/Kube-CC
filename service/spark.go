@@ -33,8 +33,14 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	label := map[string]string{
 		"image": "spark",
 	}
+	masterSelector := map[string]string{
+		"component": "spark-master",
+	}
 	masterLabel := map[string]string{
 		"component": "spark-master",
+	}
+	workerSelector := map[string]string{
+		"component": "spark-worker",
 	}
 	workerLabel := map[string]string{
 		"component": "spark-worker",
@@ -54,7 +60,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	// spark的master控制器
 	masterSpec := appsv1.DeploymentSpec{
 		Replicas: &masterReplicas,
-		Selector: &metav1.LabelSelector{MatchLabels: masterLabel},
+		Selector: &metav1.LabelSelector{MatchLabels: masterSelector},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{Labels: masterLabel},
 			Spec: corev1.PodSpec{
@@ -88,7 +94,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	// spark的master的service
 	masterServiceSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeNodePort,
-		Selector: masterLabel,
+		Selector: masterSelector,
 		Ports: []corev1.ServicePort{ // 默认生成nodePort
 			{Name: "spark", Port: 7077, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 7077}},
 			{Name: "http", Port: 8080, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 8080}},
@@ -103,7 +109,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	// spark的worker的控制器
 	workerSpec := appsv1.DeploymentSpec{
 		Replicas: &workerReplicas,
-		Selector: &metav1.LabelSelector{MatchLabels: workerLabel},
+		Selector: &metav1.LabelSelector{MatchLabels: workerSelector},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{Labels: workerLabel},
 			Spec: corev1.PodSpec{
@@ -135,7 +141,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	// spark的worker的service
 	workerServiceSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeNodePort,
-		Selector: workerLabel,
+		Selector: workerSelector,
 		Ports: []corev1.ServicePort{
 			{Name: "http", Port: 8081, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 8081}},
 			{Name: "ssh", Port: 22, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 22}},
@@ -213,6 +219,15 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 		if err != nil {
 			return nil, err
 		}
+		var master, worker int32
+		for j := 0; j < deployList.Length; j++ {
+			deploy := deployList.DeployList[j]
+			if deploy.Name == sparkMasterDeployName {
+				master = deploy.Replicas
+			} else if deploy.Name == sparkWorkerDeployName {
+				worker = deploy.Replicas
+			}
+		}
 		// 获取service
 		serviceList, err := GetService(spark.Name, "")
 		if err != nil {
@@ -224,16 +239,18 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 			return nil, err
 		}
 		sparkList[i] = common.Spark{
-			Name:        spark.Name,
-			CreatedAt:   spark.CreatedAt,
-			Uid:         u_id,
-			Status:      spark.Status,
-			Username:    spark.Username,
-			Nickname:    spark.Nickname,
-			PodList:     podList.PodList,
-			DeployList:  deployList.DeployList,
-			ServiceList: serviceList.ServiceList,
-			IngressList: ingressList.IngressList,
+			Name:           spark.Name,
+			CreatedAt:      spark.CreatedAt,
+			Uid:            u_id,
+			Status:         spark.Status,
+			Username:       spark.Username,
+			Nickname:       spark.Nickname,
+			PodList:        podList.PodList,
+			DeployList:     deployList.DeployList,
+			ServiceList:    serviceList.ServiceList,
+			IngressList:    ingressList.IngressList,
+			MasterReplicas: master,
+			WorkerReplicas: worker,
 		}
 	}
 
@@ -268,5 +285,34 @@ func DeleteSpark(ns string) (*common.Response, error) {
 	if err1 != nil {
 		return nil, err1
 	}
+	return &common.OK, nil
+}
+
+// UpdateSpark 更新spark的uid以及replicas
+func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32) (*common.Response, error) {
+	if _, err := UpdateNs(name, uid); err != nil {
+		return nil, err
+	}
+
+	// 更新master的Replicas
+	master, err := GetADeploy(sparkMasterDeployName, name)
+	if err != nil {
+		return nil, err
+	}
+	master.Spec.Replicas = &masterReplicas
+	if _, err := UpdateDeploy(master); err != nil {
+		return nil, err
+	}
+
+	// 更新worker的Replicas
+	worker, err := GetADeploy(sparkWorkerDeployName, name)
+	if err != nil {
+		return nil, err
+	}
+	worker.Spec.Replicas = &workerReplicas
+	if _, err := UpdateDeploy(worker); err != nil {
+		return nil, err
+	}
+
 	return &common.OK, nil
 }
