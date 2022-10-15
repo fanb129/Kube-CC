@@ -1,6 +1,7 @@
 /.idea
 /.vscode
 conf/config.ini
+/log/*.log
 # Binaries for programs and plugins
 *.exe
 *.exe~
