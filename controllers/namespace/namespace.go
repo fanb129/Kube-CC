@@ -54,6 +54,7 @@ func Add(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
+
 		c.JSON(http.StatusOK, response)
 	}
 }

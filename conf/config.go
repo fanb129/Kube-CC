@@ -2,7 +2,7 @@ package conf
 
 import (
 	"gopkg.in/ini.v1"
-	"log"
+	"k8s_deploy_gin/service/ssh"
 	"strconv"
 )
 
@@ -13,7 +13,7 @@ var (
 	JwtKey           string    //JWT签名
 	DbType           string    //数据库类型
 	DbHost           string    //数据库服务器主机
-	DbPort           string    //数据库服务器端口
+	DbPort           int       //数据库服务器端口
 	DbUser           string    //数据库用户名
 	DbPassword       string    //数据库密码
 	BcryptCost       int       //bcrypt 生成密码时的cost
@@ -26,12 +26,15 @@ var (
 	ProjectName      string    // 项目名称，用于ingress域名
 	SshPwd           string    // ssh默认密码
 	HadoopImage      string    // hadoop镜像
+	RedisHost        string    // redis服务器
+	RedisPort        int
+	MasterInfo       ssh.Config // master的ssh信息
 )
 
 func init() {
 	f, err := ini.Load("./conf/config.ini")
 	if err != nil {
-		log.Fatal("配置文件初始化失败")
+		panic("配置文件初始化失败")
 	}
 
 	loadServer(f)
@@ -39,6 +42,7 @@ func init() {
 	loadDb(f)
 	loadJWt(f)
 	loadPwd(f)
+	loadMaster(f)
 }
 
 // 加载服务器配置
@@ -63,10 +67,12 @@ func loadDb(file *ini.File) {
 	s := file.Section("database")
 	DbType = s.Key("DbType").MustString("mysql")
 	DbHost = s.Key("DbHost").MustString("")
-	DbPort = s.Key("DbPort").MustString("3306")
+	DbPort = s.Key("DbPort").MustInt(3306)
 	DbUser = s.Key("DbUser").MustString("root")
 	DbPassword = s.Key("DbPassWord").MustString("")
 	DbName = s.Key("DbName").MustString("k8s_deploy_gin")
+	RedisHost = s.Key("RedisHost").MustString("")
+	RedisPort = s.Key("RedisPort").MustInt(6379)
 }
 
 // 加载JWT相关配置
@@ -81,4 +87,13 @@ func loadPwd(file *ini.File) {
 	s := file.Section("password")
 	BcryptCost, _ = strconv.Atoi(s.Key("bcryptCost").MustString("10"))
 	SshPwd = s.Key("SshPwd").MustString("root123456")
+}
+
+// 加载master的ssh配置
+func loadMaster(file *ini.File) {
+	s := file.Section("master")
+	MasterInfo.Host = s.Key("Host").MustString("")
+	MasterInfo.Port = s.Key("Port").MustInt(22)
+	MasterInfo.User = s.Key("User").MustString("root")
+	MasterInfo.Password = s.Key("Password").MustString("")
 }

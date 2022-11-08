@@ -2,6 +2,7 @@ package service
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s_deploy_gin/common"
 	"k8s_deploy_gin/dao"
@@ -52,6 +53,26 @@ func CreateNs(name string, label map[string]string) (*common.Response, error) {
 	}
 	_, err := dao.ClientSet.CoreV1().Namespaces().Create(&ns)
 	if err != nil {
+		return nil, err
+	}
+	// 创建resourceQuota
+	spec := corev1.ResourceQuotaSpec{
+		Hard: corev1.ResourceList{
+			// CPU, in cores. (500m = .5 cores)
+			corev1.ResourceRequestsCPU: resource.MustParse("100m"),
+			corev1.ResourceLimitsCPU:   resource.MustParse("100m"),
+
+			// Memory, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
+			corev1.ResourceRequestsMemory: resource.MustParse("100m"),
+			corev1.ResourceLimitsMemory:   resource.MustParse("100m"),
+			// Volume size, in bytes (e,g. 5Gi = 5GiB = 5 * 1024 * 1024 * 1024)
+			//corev1.ResourceRequestsStorage: resource.MustParse("100m"),
+			// Local ephemeral storage, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
+			// The resource name for ResourceEphemeralStorage is alpha and it can change across releases.
+			//corev1.ResourceEphemeralStorage: resource.Quantity{},
+		},
+	}
+	if err = createResourceQuota(name, spec); err != nil {
 		return nil, err
 	}
 	return &common.OK, nil
@@ -152,4 +173,35 @@ func UpdateNs(name, uid string) (*common.Response, error) {
 	}
 
 	return &common.OK, nil
+}
+
+// 为namespace创建ResourceQuota，进行namespace总的资源限制
+func createResourceQuota(ns string, spec corev1.ResourceQuotaSpec) error {
+	resourceQuota := corev1.ResourceQuota{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ResourceQuota",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ns + "-ResourceQuota",
+			Namespace: ns,
+		},
+		Spec: spec,
+	}
+	_, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Create(&resourceQuota)
+	return err
+}
+
+// 获取指定namespace下的ResourceQuota
+func getResourceQuota(ns string) (*corev1.ResourceQuota, error) {
+	resourceQuota, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Get(ns+"-ResourceQuota", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return resourceQuota, nil
+}
+
+func updateResourceQuota(ns string, r *corev1.ResourceQuota) error {
+	_, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Update(r)
+	return err
 }

@@ -40,6 +40,7 @@ func Delete(c *gin.Context) {
 	}
 }
 
+// Info 获取单个deploy的yaml信息
 func Info(c *gin.Context) {
 	ns := c.Query("ns")
 	name := c.Query("name")
@@ -53,3 +54,9 @@ func Info(c *gin.Context) {
 		})
 	}
 }
+
+// Add 通过表单提交添加deploy
+//func Add(c *gin.Context) {
+//	v1.Deployment{}
+//	yamlApply.DeployCreate()
+//}

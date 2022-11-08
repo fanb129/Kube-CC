@@ -52,3 +52,7 @@ func Info(c *gin.Context) {
 		})
 	}
 }
+
+//func Add(c *gin.Context) {
+//	v1.Service{}
+//}

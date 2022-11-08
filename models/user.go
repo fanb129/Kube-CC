@@ -11,5 +11,4 @@ type User struct {
 	Avatar   string `gorm:"type:varchar(100)"`                                         // 头像地址
 }
 
-type UserInfo struct {
-}
+//func (u *User) Create

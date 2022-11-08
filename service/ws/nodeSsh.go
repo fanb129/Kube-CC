@@ -3,6 +3,7 @@ package ws
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"os"
@@ -39,7 +40,7 @@ func NodeWsSsh(w http.ResponseWriter, r *http.Request) {
 	ws, err := upGrader.Upgrade(w, r, nil)
 
 	if err != nil {
-		log.Panic(err)
+		zap.S().Errorln(err)
 	}
 
 	//ws.SetCompressionLevel(4)

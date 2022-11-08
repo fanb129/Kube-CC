@@ -2,18 +2,18 @@ package dao
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/models"
-	"log"
 	"time"
 )
 
 var mysqlDb *gorm.DB
 
 func InitDB() (err error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		conf.DbUser,
 		conf.DbPassword,
 		conf.DbHost,
@@ -29,19 +29,19 @@ func InitDB() (err error) {
 		//SkipDefaultTransaction: true, // 禁用默认事务
 	})
 	if err != nil {
-		log.Println("数据库连接失败：", err)
+		zap.S().Panicln("数据库连接失败：", err)
 		panic(err)
 		return
 	}
 	err = mysqlDb.AutoMigrate(&models.User{}) // 数据库自动迁移
 	if err != nil {
-		log.Println("数据库自动迁移失败，err:", err)
+		zap.S().Errorln("数据库自动迁移失败，err:", err)
 		panic(err)
 		return
 	}
 	sqlDb, err := mysqlDb.DB()
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Errorln(err)
 		return
 	}
 	sqlDb.SetMaxIdleConns(50)                   // 连接池中的最大闲置连接数

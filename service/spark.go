@@ -83,6 +83,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 						},
 					},
 				},
+				RestartPolicy: corev1.RestartPolicyAlways,
 			},
 		},
 	}
@@ -130,6 +131,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 						},
 					},
 				},
+				RestartPolicy: corev1.RestartPolicyAlways,
 			},
 		},
 	}

@@ -20,7 +20,7 @@ import (
 func InitRouter() *gin.Engine {
 	r := gin.Default()
 
-	r.Use(gin.Logger())             // 日志
+	//r.Use(gin.Logger())             // 日志
 	r.Use(middleware.CorsHandler()) // 跨域设置
 	r.Use(gin.Recovery())           // 恐慌 恢复
 	gin.SetMode(conf.AppMode)
@@ -33,6 +33,7 @@ func InitRouter() *gin.Engine {
 		apiRouter.POST("/checkPass", controllers.CheckPass)
 		apiRouter.GET("/logout", controllers.Logout)      // 登出路由
 		apiRouter.POST("/register", controllers.Register) // 注册路由
+		apiRouter.GET("/Captcha", controllers.GetCaptcha) // 验证码
 	}
 
 	// 需要鉴权
@@ -77,6 +78,7 @@ func InitRouter() *gin.Engine {
 		deployRouter.GET("", deploy.Index)
 		deployRouter.GET("/delete", deploy.Delete)
 		deployRouter.GET("/info", deploy.Info)
+		//deployRouter.POST("/add", deploy.Add) // 通过表单添加deploy
 	}
 
 	serviceRouter := auth.Group("/service")
