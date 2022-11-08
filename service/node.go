@@ -1,10 +1,37 @@
 package service
 
 import (
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s_deploy_gin/common"
+	"k8s_deploy_gin/conf"
 	"k8s_deploy_gin/dao"
+	"k8s_deploy_gin/service/ssh"
+	"sync"
 )
+
+func createToken() (string, error) {
+	config := ssh.Config{
+		Host:     conf.MasterInfo.Host,
+		Port:     conf.MasterInfo.Port,
+		User:     conf.MasterInfo.User,
+		Type:     ssh.TypePassword,
+		Password: conf.MasterInfo.Password,
+	}
+	newSsh, err := ssh.NewSsh(config)
+	if err != nil {
+		zap.S().Errorln(err)
+		return "", err
+	}
+	defer newSsh.CloseClient()
+	r, err := newSsh.SendCmd("kubeadm token create --print-join-command 2> /dev/null")
+	if err != nil {
+		zap.S().Errorln(err)
+		return "", err
+	}
+	zap.S().Debug(r)
+	return r, nil
+}
 
 // GetNode 获得所有node
 func GetNode(label string) (*common.NodeListResponse, error) {
@@ -33,6 +60,53 @@ func GetNode(label string) (*common.NodeListResponse, error) {
 	return &common.NodeListResponse{Response: common.OK, Length: num, NodeList: nodeList}, nil
 }
 
-//func SshNode(name,ns string){
-//	dao.ClientSet.CoreV1().Pods(ns).Get(name,metav1.GetOptions{}).
-//}
+// CreateNode 添加node
+func CreateNode(configs []ssh.Config) (*common.Response, error) {
+	//node := corev1.Node{
+	//	ObjectMeta: metav1.ObjectMeta{
+	//		Name: name,
+	//	},
+	//}
+	//create, err := dao.ClientSet.CoreV1().Nodes().Create(&node)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//fmt.Println(create)
+	//return &common.OK, nil
+	token, err := createToken()
+	if err != nil {
+		zap.S().Errorln(err)
+		return nil, err
+	}
+	// 使用协程，并行批量添加
+	group := sync.WaitGroup{}
+	group.Add(len(configs))
+	for _, config := range configs {
+		go func(config ssh.Config) {
+			zap.S().Info(config)
+			newSsh, err := ssh.NewSsh(config)
+			defer newSsh.CloseClient()
+			if err != nil {
+				zap.S().Errorln(err)
+				group.Done()
+			}
+			// 在join之前，先reset
+			reset := "echo y|kubeadm reset"
+			if _, err = newSsh.SendCmd(reset + "&&" + token); err != nil {
+				zap.S().Errorln(err)
+			}
+			group.Done()
+		}(config)
+	}
+	group.Wait()
+	return &common.OK, nil
+}
+
+// DeleteNode 删除node节点
+func DeleteNode(name string) (*common.Response, error) {
+	err := dao.ClientSet.CoreV1().Nodes().Delete(name, &metav1.DeleteOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return &common.OK, nil
+}
