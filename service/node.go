@@ -10,6 +10,7 @@ import (
 	"sync"
 )
 
+// master创建token
 func createToken() (string, error) {
 	config := ssh.Config{
 		Host:     conf.MasterInfo.Host,

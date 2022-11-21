@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"go.uber.org/zap"
@@ -19,12 +20,12 @@ var (
 )
 
 type Config struct {
-	Host     string
-	Port     int
-	User     string
-	Type     string // password或者key
-	Password string
-	KeyPath  string // ssh id_rsa.id路径
+	Host     string `json:"host" form:"host"`
+	Port     int    `json:"port" form:"port"`
+	User     string `json:"user" form:"user"`
+	Type     string `json:"type" form:"type"` // password或者key
+	Password string `json:"password" form:"password"`
+	KeyPath  string `json:"key_path" form:"key_path"` // ssh id_rsa.id路径
 }
 
 type Ssh struct {
@@ -44,6 +45,8 @@ func NewSsh(c Config) (*Ssh, error) {
 		config.Auth = []ssh.AuthMethod{ssh.Password(c.Password)}
 	} else if c.Type == TypeKey {
 		config.Auth = []ssh.AuthMethod{publicKeyAuthFunc(c.KeyPath)}
+	} else {
+		return nil, errors.New("类型选择错误")
 	}
 
 	addr := fmt.Sprintf("%s:%d", c.Host, c.Port)

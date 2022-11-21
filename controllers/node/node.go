@@ -22,3 +22,17 @@ func WsSsh(c *gin.Context) {
 	fmt.Println("node WsSsh")
 	ws.NodeWsSsh(c.Writer, c.Request)
 }
+
+func Add(c *gin.Context) {
+	form := common.NodeAddForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	rsp, err := service.CreateNode(form.Nodes)
+	if err != nil {
+		c.JSON(http.StatusOK, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, rsp)
+}
