@@ -41,11 +41,11 @@ func InitLogger() {
 
 	//info文件writeSyncer
 	infoFileWriteSyncer := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "./log/info.log", //日志文件存放目录，如果文件夹不存在会自动创建
-		MaxSize:    2,                //文件大小限制,单位MB
-		MaxBackups: 100,              //最大保留日志文件数量
-		MaxAge:     30,               //日志文件保留天数
-		Compress:   false,            //是否压缩处理
+		Filename:   "./tmp/log/info.log", //日志文件存放目录，如果文件夹不存在会自动创建
+		MaxSize:    2,                    //文件大小限制,单位MB
+		MaxBackups: 100,                  //最大保留日志文件数量
+		MaxAge:     30,                   //日志文件保留天数
+		Compress:   false,                //是否压缩处理
 	})
 	infoFileCore := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(infoFileWriteSyncer, zapcore.AddSync(os.Stdout)), lowPriority) //第三个及之后的参数为写入文件的日志级别,ErrorLevel模式只记录error级别的日志
 	//error文件writeSyncer
