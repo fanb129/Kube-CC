@@ -1,13 +1,13 @@
 package yaml
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/service/yamlApply"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/service/yamlApply"
 	"net/http"
 )
 

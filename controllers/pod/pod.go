@@ -1,12 +1,12 @@
 package pod
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/service"
+	"Kube-CC/service/ws/podSsh"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/service"
-	"k8s_deploy_gin/service/ws/podSsh"
 	"net/http"
 )
 

@@ -1,6 +1,8 @@
 package podSsh
 
 import (
+	"Kube-CC/conf"
+	"Kube-CC/dao"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -9,8 +11,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
-	"k8s_deploy_gin/conf"
-	"k8s_deploy_gin/dao"
 	"net/http"
 )
 

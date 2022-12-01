@@ -1,6 +1,8 @@
 package service
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/conf"
 	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -9,10 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/conf"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"strconv"
-	"time"
 )
 
 const (
@@ -28,8 +28,12 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
 	//fmt.Println(pwd)
+
 	// 获取当前时间戳，纳秒
-	s := strconv.FormatInt(time.Now().UnixNano(), 10)
+	//s := strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	// uuid
+	s := string(uuid.NewUUID())
 	label := map[string]string{
 		"image": "spark",
 	}

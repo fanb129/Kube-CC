@@ -1,15 +1,15 @@
 package service
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/conf"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/conf"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"strconv"
-	"time"
 )
 
 const (
@@ -28,9 +28,7 @@ const (
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
 func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32) (*common.Response, error) {
-	// 获取当前时间戳，纳秒
-	s := strconv.FormatInt(time.Now().UnixNano(), 10)
-	ns := "hadoop-" + s
+	ns := "hadoop-" + string(uuid.NewUUID())
 	label := map[string]string{
 		"image": "hadoop",
 	}

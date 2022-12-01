@@ -1,10 +1,10 @@
 package service
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/conf"
+	"Kube-CC/dao"
 	"errors"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/conf"
-	"k8s_deploy_gin/dao"
 	"math/rand"
 	"strings"
 	"time"

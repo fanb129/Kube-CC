@@ -1,9 +1,9 @@
 package dao
 
 import (
+	"Kube-CC/conf"
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	"k8s_deploy_gin/conf"
 	"time"
 )
 

@@ -1,12 +1,12 @@
 package service
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/conf"
+	"Kube-CC/dao"
+	"Kube-CC/service/ssh"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/conf"
-	"k8s_deploy_gin/dao"
-	"k8s_deploy_gin/service/ssh"
 	"sync"
 )
 

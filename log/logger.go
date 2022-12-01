@@ -1,10 +1,10 @@
 package log
 
 import (
+	"Kube-CC/conf"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"k8s_deploy_gin/conf"
 	"os"
 )
 

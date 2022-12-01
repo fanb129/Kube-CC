@@ -1,10 +1,10 @@
 package service
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/dao"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/dao"
 )
 
 // GetADeploy 获得指定deploy

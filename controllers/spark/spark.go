@@ -1,11 +1,13 @@
 package spark
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/service"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 // Index 获取当前用户spark列表
@@ -78,4 +80,27 @@ func Update(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response)
+}
+
+// BatchAdd 批量添加
+func BatchAdd(c *gin.Context) {
+	// 表单验证
+	form := common.BatchSparkAddForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	ids := form.Uid
+	group := sync.WaitGroup{}
+	group.Add(len(ids))
+	for _, id := range ids {
+		go func(id uint) {
+			if _, err := service.CreateSpark(id, form.MasterReplicas, form.WorkerReplicas); err != nil {
+				zap.S().Errorln(err)
+			}
+			group.Done()
+		}(id)
+	}
+	group.Wait()
+	c.JSON(http.StatusOK, common.OK)
 }

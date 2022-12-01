@@ -1,8 +1,8 @@
 package dao
 
 import (
+	"Kube-CC/models"
 	"gorm.io/gorm"
-	"k8s_deploy_gin/models"
 )
 
 // GetUserList 分页返回用户列表(page第几页,pageSize每页几条数据)

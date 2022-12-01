@@ -1,11 +1,12 @@
 package node
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/service"
+	"Kube-CC/service/ssh"
+	"Kube-CC/service/ws"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/service"
-	"k8s_deploy_gin/service/ws"
 	"net/http"
 )
 
@@ -29,9 +30,30 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, common.ValidatorResponse(err))
 		return
 	}
-	rsp, err := service.CreateNode(form.Nodes)
+	nodes := make([]ssh.Config, len(form.Nodes))
+	for i, node := range form.Nodes {
+		tmp := ssh.Config{
+			Host:     node.Host,
+			Port:     form.Port,
+			User:     form.User,
+			Password: form.Password,
+			Type:     ssh.TypePassword,
+		}
+		nodes[i] = tmp
+	}
+	rsp, err := service.CreateNode(nodes)
 	if err != nil {
-		c.JSON(http.StatusOK, err.Error())
+		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, rsp)
+}
+
+func Delete(c *gin.Context) {
+	node := c.Param("name")
+	rsp, err := service.DeleteNode(node)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, rsp)

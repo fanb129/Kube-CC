@@ -1,10 +1,10 @@
 package namespace
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/service"
 	"net/http"
 	"strconv"
 )
@@ -54,7 +54,6 @@ func Add(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
-
 		c.JSON(http.StatusOK, response)
 	}
 }

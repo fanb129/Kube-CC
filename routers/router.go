@@ -1,20 +1,20 @@
 package routers
 
 import (
+	"Kube-CC/conf"
+	"Kube-CC/controllers"
+	"Kube-CC/controllers/deploy"
+	"Kube-CC/controllers/hadoop"
+	"Kube-CC/controllers/linux"
+	"Kube-CC/controllers/namespace"
+	"Kube-CC/controllers/node"
+	"Kube-CC/controllers/pod"
+	"Kube-CC/controllers/spark"
+	"Kube-CC/controllers/svc"
+	"Kube-CC/controllers/user"
+	"Kube-CC/controllers/yaml"
+	"Kube-CC/middleware"
 	"github.com/gin-gonic/gin"
-	"k8s_deploy_gin/conf"
-	"k8s_deploy_gin/controllers"
-	"k8s_deploy_gin/controllers/deploy"
-	"k8s_deploy_gin/controllers/hadoop"
-	"k8s_deploy_gin/controllers/linux"
-	"k8s_deploy_gin/controllers/namespace"
-	"k8s_deploy_gin/controllers/node"
-	"k8s_deploy_gin/controllers/pod"
-	"k8s_deploy_gin/controllers/spark"
-	"k8s_deploy_gin/controllers/svc"
-	"k8s_deploy_gin/controllers/user"
-	"k8s_deploy_gin/controllers/yaml"
-	"k8s_deploy_gin/middleware"
 )
 
 func InitRouter() *gin.Engine {
@@ -61,6 +61,8 @@ func InitRouter() *gin.Engine {
 	nodeRouter := auth.Group("/node")
 	{
 		nodeRouter.GET("", node.Index) // 浏览所有node
+		nodeRouter.GET("/delete/:node", middleware.Is3Role(), node.Delete)
+		nodeRouter.POST("/add", middleware.Is3Role(), node.Add)
 	}
 
 	// namespace路由
@@ -98,7 +100,9 @@ func InitRouter() *gin.Engine {
 	// spark路由
 	sparkRouter := auth.Group("/spark")
 	{
-		sparkRouter.POST("/add", middleware.Is2Role(), spark.Add) // 新建spark集群
+		//sparkRouter.POST("/add", middleware.Is2Role(), spark.Add) // 新建spark集群
+		// 批量添加
+		sparkRouter.POST("/add", middleware.Is2Role(), spark.BatchAdd) // 新建spark集群
 		sparkRouter.GET("/delete/:name", spark.Delete)
 		sparkRouter.GET("", spark.Index)
 		sparkRouter.POST("/update", spark.Update)
@@ -106,7 +110,9 @@ func InitRouter() *gin.Engine {
 
 	hadoopRouter := auth.Group("/hadoop")
 	{
-		hadoopRouter.POST("/add", middleware.Is2Role(), hadoop.Add)
+		//hadoopRouter.POST("/add", middleware.Is2Role(), hadoop.Add)
+		// 批量添加
+		hadoopRouter.POST("/add", middleware.Is2Role(), hadoop.BatchAdd)
 		hadoopRouter.GET("/delete/:name", hadoop.Delete)
 		hadoopRouter.GET("", hadoop.Index)
 		hadoopRouter.POST("/update", hadoop.Update)
@@ -117,7 +123,9 @@ func InitRouter() *gin.Engine {
 	{
 		linuxRouter.GET("", linux.Index)
 		linuxRouter.GET("delete/:name", linux.Delete)
-		linuxRouter.POST("/add", middleware.Is2Role(), linux.Add)
+		//linuxRouter.POST("/add", middleware.Is2Role(), linux.Add)
+		// 批量添加
+		linuxRouter.POST("/add", middleware.Is2Role(), linux.BatchAdd)
 	}
 
 	return r

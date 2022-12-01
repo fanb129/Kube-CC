@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"Kube-CC/common"
 	"github.com/gin-gonic/gin"
-	"k8s_deploy_gin/common"
 	"net/http"
 )
 

@@ -1,12 +1,12 @@
 package yamlApply
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/dao"
+	"Kube-CC/service"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/dao"
-	"k8s_deploy_gin/service"
 )
 
 func NamespaceCreate(ns *corev1.Namespace) (*common.Response, error) {

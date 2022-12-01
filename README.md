@@ -1,2 +1,2 @@
-# k8s_deploy_gin
+# Kube-CC
 自动部署集群，云计算平台搭建

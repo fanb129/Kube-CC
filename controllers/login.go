@@ -1,11 +1,11 @@
 package controllers
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
 	"go.uber.org/zap"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/service"
 	"net/http"
 )
 

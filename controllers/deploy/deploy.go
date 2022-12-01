@@ -1,10 +1,10 @@
 package deploy
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/service"
 	"net/http"
 )
 

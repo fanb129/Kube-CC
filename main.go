@@ -1,12 +1,12 @@
 package main
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/conf"
+	"Kube-CC/dao"
+	"Kube-CC/log"
+	"Kube-CC/routers"
 	"go.uber.org/zap"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/conf"
-	"k8s_deploy_gin/dao"
-	"k8s_deploy_gin/log"
-	"k8s_deploy_gin/routers"
 
 	"os"
 	"os/signal"

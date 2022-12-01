@@ -1,12 +1,12 @@
 package dao
 
 import (
+	"Kube-CC/conf"
+	"Kube-CC/models"
 	"fmt"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"k8s_deploy_gin/conf"
-	"k8s_deploy_gin/models"
 	"time"
 )
 

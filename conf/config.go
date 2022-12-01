@@ -1,8 +1,8 @@
 package conf
 
 import (
+	"Kube-CC/service/ssh"
 	"gopkg.in/ini.v1"
-	"k8s_deploy_gin/service/ssh"
 	"strconv"
 )
 
@@ -70,7 +70,7 @@ func loadDb(file *ini.File) {
 	DbPort = s.Key("DbPort").MustInt(3306)
 	DbUser = s.Key("DbUser").MustString("root")
 	DbPassword = s.Key("DbPassWord").MustString("")
-	DbName = s.Key("DbName").MustString("k8s_deploy_gin")
+	DbName = s.Key("DbName").MustString("")
 	RedisHost = s.Key("RedisHost").MustString("")
 	RedisPort = s.Key("RedisPort").MustInt(6379)
 }

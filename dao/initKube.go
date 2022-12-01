@@ -1,9 +1,9 @@
 package dao
 
 import (
+	"Kube-CC/conf"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s_deploy_gin/conf"
 )
 
 var ClientSet *kubernetes.Clientset

@@ -1,16 +1,16 @@
 package service
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/conf"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/conf"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var linuxImage = [2]string{"centos", "ubuntu"}
@@ -23,8 +23,9 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
 	//fmt.Println(pwd)
-	// 获取当前时间戳，纳秒
-	s := strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	// uuid
+	s := string(uuid.NewUUID())
 	selector := map[string]string{
 		"image": linuxImage[kind-1],
 	}

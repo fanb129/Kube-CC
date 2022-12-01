@@ -1,11 +1,10 @@
 package service
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/dao"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/dao"
 	"strconv"
 )
 
@@ -56,25 +55,26 @@ func CreateNs(name string, label map[string]string) (*common.Response, error) {
 		return nil, err
 	}
 	// 创建resourceQuota
-	spec := corev1.ResourceQuotaSpec{
-		Hard: corev1.ResourceList{
-			// CPU, in cores. (500m = .5 cores)
-			corev1.ResourceRequestsCPU: resource.MustParse("100m"),
-			corev1.ResourceLimitsCPU:   resource.MustParse("100m"),
-
-			// Memory, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
-			corev1.ResourceRequestsMemory: resource.MustParse("100m"),
-			corev1.ResourceLimitsMemory:   resource.MustParse("100m"),
-			// Volume size, in bytes (e,g. 5Gi = 5GiB = 5 * 1024 * 1024 * 1024)
-			//corev1.ResourceRequestsStorage: resource.MustParse("100m"),
-			// Local ephemeral storage, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
-			// The resource name for ResourceEphemeralStorage is alpha and it can change across releases.
-			//corev1.ResourceEphemeralStorage: resource.Quantity{},
-		},
-	}
-	if err = createResourceQuota(name, spec); err != nil {
-		return nil, err
-	}
+	//spec := corev1.ResourceQuotaSpec{
+	//	Hard: corev1.ResourceList{
+	//		// CPU, in cores. (500m = .5 cores)
+	//		corev1.ResourceRequestsCPU: resource.MustParse("100m"),
+	//		corev1.ResourceLimitsCPU:   resource.MustParse("100m"),
+	//
+	//		// Memory, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
+	//		corev1.ResourceRequestsMemory: resource.MustParse("100m"),
+	//		corev1.ResourceLimitsMemory:   resource.MustParse("100m"),
+	//
+	//		// Volume size, in bytes (e,g. 5Gi = 5GiB = 5 * 1024 * 1024 * 1024)
+	//		//corev1.ResourceRequestsStorage: resource.MustParse("100m"),
+	//		// Local ephemeral storage, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
+	//		// The resource name for ResourceEphemeralStorage is alpha and it can change across releases.
+	//		//corev1.ResourceEphemeralStorage: resource.Quantity{},
+	//	},
+	//}
+	//if err = createResourceQuota(name, spec); err != nil {
+	//	return nil, err
+	//}
 	return &common.OK, nil
 }
 

@@ -5,9 +5,9 @@ import (
 	"gorm.io/gorm"
 	"time"
 
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/dao"
-	"k8s_deploy_gin/middleware"
+	"Kube-CC/common"
+	"Kube-CC/dao"
+	"Kube-CC/middleware"
 
 	"golang.org/x/crypto/bcrypt"
 )

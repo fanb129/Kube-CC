@@ -1,6 +1,6 @@
 package dao
 
-import "k8s_deploy_gin/models"
+import "Kube-CC/models"
 
 // GetNsList 根据uid和image获取namespace切片
 func GetNsList(uid uint, image string) ([]models.Namespace, error) {

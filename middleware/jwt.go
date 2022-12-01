@@ -1,11 +1,11 @@
 package middleware
 
 import (
+	"Kube-CC/common"
+	"Kube-CC/conf"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"k8s_deploy_gin/common"
-	"k8s_deploy_gin/conf"
 	"net/http"
 	"time"
 )
