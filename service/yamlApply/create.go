@@ -21,6 +21,9 @@ func DeployCreate(deploy *appsv1.Deployment) (*common.Response, error) {
 	name := deploy.Name
 	ns := deploy.Namespace
 	labels := deploy.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	// 获取namespace，提取出uid的label
 	get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
 	if err != nil {
@@ -42,6 +45,9 @@ func ServiceCreate(svc *corev1.Service) (*common.Response, error) {
 	name := svc.Name
 	ns := svc.Namespace
 	labels := svc.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	// 获取namespace，提取出uid的label
 	get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
 	if err != nil {
@@ -62,6 +68,9 @@ func PodCreate(pod *corev1.Pod) (*common.Response, error) {
 	name := pod.Name
 	ns := pod.Namespace
 	labels := pod.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	// 获取namespace，提取出uid的label
 	get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
 	if err != nil {

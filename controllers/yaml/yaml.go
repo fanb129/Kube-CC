@@ -107,6 +107,7 @@ func Create(c *gin.Context) {
 	ns := form.Ns
 	yamlKind := yaml["kind"].(string)
 	//fmt.Printf("%v", yaml)
+
 	// 转为json
 	jsonYaml, err := json.Marshal(yaml)
 	if err != nil {

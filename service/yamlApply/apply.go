@@ -36,6 +36,9 @@ func DeployApply(deploy *appsv1.Deployment) (*common.Response, error) {
 	name := deploy.Name
 	ns := deploy.Namespace
 	labels := deploy.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	if _, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{}); err != nil {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
@@ -68,6 +71,9 @@ func ServiceApply(svc *corev1.Service) (*common.Response, error) {
 	name := svc.Name
 	ns := svc.Namespace
 	labels := svc.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	if _, err := dao.ClientSet.CoreV1().Services(ns).Get(name, metav1.GetOptions{}); err != nil {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
@@ -97,6 +103,9 @@ func PodApply(pod *corev1.Pod) (*common.Response, error) {
 	name := pod.Name
 	ns := pod.Namespace
 	labels := pod.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	if _, err := dao.ClientSet.CoreV1().Pods(ns).Get(name, metav1.GetOptions{}); err != nil {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
