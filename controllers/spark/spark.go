@@ -45,7 +45,7 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, common.ValidatorResponse(err))
 		return
 	}
-	response, err := service.CreateSpark(form.Uid, form.MasterReplicas, form.WorkerReplicas)
+	response, err := service.CreateSpark(form.Uid, form.MasterReplicas, form.WorkerReplicas, form.ExpiredTime, form.Cpu, form.Memory)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
@@ -74,7 +74,7 @@ func Update(c *gin.Context) {
 	if form.Uid != 0 {
 		uid = strconv.Itoa(int(form.Uid))
 	}
-	response, err := service.UpdateSpark(form.Name, uid, form.MasterReplicas, form.WorkerReplicas)
+	response, err := service.UpdateSpark(form.Name, uid, form.MasterReplicas, form.WorkerReplicas, form.ExpiredTime, form.Cpu, form.Memory)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
@@ -95,7 +95,7 @@ func BatchAdd(c *gin.Context) {
 	group.Add(len(ids))
 	for _, id := range ids {
 		go func(id uint) {
-			if _, err := service.CreateSpark(id, form.MasterReplicas, form.WorkerReplicas); err != nil {
+			if _, err := service.CreateSpark(id, form.MasterReplicas, form.WorkerReplicas, form.ExpiredTime, form.Cpu, form.Memory); err != nil {
 				zap.S().Errorln(err)
 			}
 			group.Done()

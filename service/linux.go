@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var linuxImage = [2]string{"centos", "ubuntu"}
@@ -18,7 +19,7 @@ var cmd = [2][]string{{"/usr/sbin/init"}, {"/init.sh"}}
 var privileged = [2]bool{true, false}
 
 // CreateLinux 为uid创建linux 1-centos，2-ubuntu
-func CreateLinux(u_id, kind uint) (*common.Response, error) {
+func CreateLinux(u_id, kind uint, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
 
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
@@ -37,7 +38,7 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 		label["u_id"] = uid
 	}
 	// 创建namespace
-	_, err := CreateNs(linuxImage[kind-1]+"-"+s, label)
+	_, err := CreateNs(linuxImage[kind-1]+"-"+s, expiredTime, label, cpu, memory, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +65,16 @@ func CreateLinux(u_id, kind uint) (*common.Response, error) {
 						Ports: []corev1.ContainerPort{
 							{ContainerPort: 22},
 						},
+						//Resources: corev1.ResourceRequirements{
+						//	Requests: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse("1m"),
+						//		corev1.ResourceMemory: resource.MustParse("1m"),
+						//	},
+						//	Limits: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse(cpu),
+						//		corev1.ResourceMemory: resource.MustParse(memory),
+						//	},
+						//},
 						//Resources: corev1.ResourceRequirements{
 						//	Requests: corev1.ResourceList{
 						//		corev1.ResourceCPU: resource.MustParse("100m"),
@@ -136,6 +147,11 @@ func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 			PodList:     podList.PodList,
 			DeployList:  deployList.DeployList,
 			ServiceList: serviceList.ServiceList,
+			ExpiredTime: linux.ExpiredTime,
+			Cpu:         linux.Cpu,
+			Memory:      linux.Memory,
+			UsedCpu:     linux.UsedCpu,
+			UsedMemory:  linux.UsedMemory,
 		}
 	}
 	return &common.LinuxListResponse{
@@ -163,4 +179,9 @@ func DeleteLinux(ns string) (*common.Response, error) {
 		return nil, err1
 	}
 	return &common.OK, nil
+}
+
+func UpdateLinux(name, uid string, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+	res, err := UpdateNs(name, uid, expiredTime, cpu, memory, 1)
+	return res, err
 }

@@ -7,12 +7,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"strconv"
+	"time"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 )
 
 // CreateSpark 为uid创建spark，masterReplicas默认1， masterReplicas默认2
-func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common.Response, error) {
+func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
 	//fmt.Println(pwd)
@@ -56,7 +56,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 		workerLabel["u_id"] = uid
 	}
 	// 创建namespace
-	_, err := CreateNs("spark-"+s, label)
+	_, err := CreateNs("spark-"+s, expiredTime, label, cpu, memory, int(masterReplicas+workerReplicas))
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +80,15 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 							{ContainerPort: 8080},
 							{ContainerPort: 22},
 						},
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								corev1.ResourceCPU: resource.MustParse("100m"),
-							},
-						},
+						//Resources: corev1.ResourceRequirements{
+						//	Requests: corev1.ResourceList{
+						//		corev1.ResourceCPU: resource.MustParse("100m"),
+						//	},
+						//	Limits: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse(cpu),
+						//		corev1.ResourceMemory: resource.MustParse(memory),
+						//	},
+						//},
 					},
 				},
 				RestartPolicy: corev1.RestartPolicyAlways,
@@ -128,11 +132,15 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32) (*common
 							{ContainerPort: 8081},
 							{ContainerPort: 22},
 						},
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								corev1.ResourceCPU: resource.MustParse("100m"),
-							},
-						},
+						//Resources: corev1.ResourceRequirements{
+						//	Requests: corev1.ResourceList{
+						//		corev1.ResourceCPU: resource.MustParse("100m"),
+						//	},
+						//	Limits: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse(cpu),
+						//		corev1.ResourceMemory: resource.MustParse(memory),
+						//	},
+						//},
 					},
 				},
 				RestartPolicy: corev1.RestartPolicyAlways,
@@ -257,6 +265,11 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 			IngressList:    ingressList.IngressList,
 			MasterReplicas: master,
 			WorkerReplicas: worker,
+			ExpiredTime:    spark.ExpiredTime,
+			Cpu:            spark.Cpu,
+			Memory:         spark.Memory,
+			UsedCpu:        spark.UsedCpu,
+			UsedMemory:     spark.UsedMemory,
 		}
 	}
 
@@ -295,8 +308,8 @@ func DeleteSpark(ns string) (*common.Response, error) {
 }
 
 // UpdateSpark 更新spark的uid以及replicas
-func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32) (*common.Response, error) {
-	if _, err := UpdateNs(name, uid); err != nil {
+func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+	if _, err := UpdateNs(name, uid, expiredTime, cpu, memory, int(masterReplicas+workerReplicas)); err != nil {
 		return nil, err
 	}
 

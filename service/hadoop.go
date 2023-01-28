@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"strconv"
+	"time"
 )
 
 const (
@@ -27,7 +28,7 @@ const (
 )
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
-func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32) (*common.Response, error) {
+func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
 	ns := "hadoop-" + string(uuid.NewUUID())
 	label := map[string]string{
 		"image": "hadoop",
@@ -65,7 +66,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 		yarnNodeLabel["u_id"] = uid
 	}
 	// 创建namespace
-	_, err := CreateNs(ns, label)
+	_, err := CreateNs(ns, expiredTime, label, cpu, memory, int(hdfsMasterReplicas+datanodeReplicas+yarnMasterReplicas+yarnNodeReplicas))
 	if err != nil {
 		return nil, err
 	}
@@ -98,6 +99,12 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 							{ContainerPort: 9000},
 							{ContainerPort: 50070},
 						},
+						//Resources: corev1.ResourceRequirements{
+						//	Limits: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse(cpu),
+						//		corev1.ResourceMemory: resource.MustParse(memory),
+						//	},
+						//},
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "namenode"},
 							{Name: HDFS_MASTER_SERVICE, ValueFrom: &corev1.EnvVarSource{
@@ -161,6 +168,12 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 							{ContainerPort: 9000},
 							{ContainerPort: 50070},
 						},
+						//Resources: corev1.ResourceRequirements{
+						//	Limits: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse(cpu),
+						//		corev1.ResourceMemory: resource.MustParse(memory),
+						//	},
+						//},
 						Env: []corev1.EnvVar{
 							{
 								Name:  HADOOP_NODE_TYPE,
@@ -221,6 +234,12 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 							{ContainerPort: 9000},
 							{ContainerPort: 50070},
 						},
+						//Resources: corev1.ResourceRequirements{
+						//	Limits: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse(cpu),
+						//		corev1.ResourceMemory: resource.MustParse(memory),
+						//	},
+						//},
 						Env: []corev1.EnvVar{
 							{
 								Name:  HADOOP_NODE_TYPE,
@@ -298,6 +317,12 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 							{ContainerPort: 8041},
 							{ContainerPort: 8042},
 						},
+						//Resources: corev1.ResourceRequirements{
+						//	Limits: corev1.ResourceList{
+						//		corev1.ResourceCPU:    resource.MustParse(cpu),
+						//		corev1.ResourceMemory: resource.MustParse(memory),
+						//	},
+						//},
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "yarnnode"},
 							{
@@ -408,6 +433,11 @@ func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 			DatanodeReplicas:   datanode,
 			YarnMasterReplicas: yarnMaster,
 			YarnNodeReplicas:   yarnNode,
+			ExpiredTime:        hadoop.ExpiredTime,
+			Cpu:                hadoop.Cpu,
+			UsedCpu:            hadoop.UsedCpu,
+			Memory:             hadoop.Memory,
+			UsedMemory:         hadoop.UsedMemory,
 		}
 	}
 	return &common.HadoopListResponse{
@@ -454,8 +484,8 @@ func DeleteHadoop(ns string) (*common.Response, error) {
 }
 
 // UpdateHadoop 更新hadoop的uid，以及replicas
-func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32) (*common.Response, error) {
-	if _, err := UpdateNs(name, uid); err != nil {
+func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+	if _, err := UpdateNs(name, uid, expiredTime, cpu, memory, int(hdfsMasterReplicas+datanodeReplicas+yarnMasterReplicas+yarnNodeReplicas)); err != nil {
 		return nil, err
 	}
 

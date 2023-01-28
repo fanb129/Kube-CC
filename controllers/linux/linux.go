@@ -53,7 +53,7 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, common.ValidatorResponse(err))
 		return
 	}
-	response, err := service.CreateLinux(form.Uid, form.Kind)
+	response, err := service.CreateLinux(form.Uid, form.Kind, form.ExpiredTime, form.Cpu, form.Memory)
 	if err != nil {
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
@@ -85,7 +85,7 @@ func BatchAdd(c *gin.Context) {
 	group.Add(len(ids))
 	for _, id := range ids {
 		go func(id uint) {
-			if _, err := service.CreateLinux(id, form.Kind); err != nil {
+			if _, err := service.CreateLinux(id, form.Kind, form.ExpiredTime, form.Cpu, form.Memory); err != nil {
 				zap.S().Errorln(err)
 			}
 			group.Done()
@@ -93,4 +93,23 @@ func BatchAdd(c *gin.Context) {
 	}
 	group.Wait()
 	c.JSON(http.StatusOK, common.OK)
+}
+
+func Update(c *gin.Context) {
+	// 表单验证
+	form := common.LinuxUpdateForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		return
+	}
+	uid := ""
+	if form.Uid != 0 {
+		uid = strconv.Itoa(int(form.Uid))
+	}
+	response, err := service.UpdateLinux(form.Name, uid, form.ExpiredTime, form.Cpu, form.Memory)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }

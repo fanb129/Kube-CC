@@ -35,11 +35,11 @@ func Apply(c *gin.Context) {
 		err = errors.New("请勿修改yaml中kind")
 		goto END
 	}
-	if name != "" && kind != metadata["name"].(string) {
+	if name != "" && name != metadata["name"].(string) {
 		err = errors.New("请勿修改yaml中name")
 		goto END
 	}
-	if ns != "" && kind != metadata["namespace"].(string) {
+	if ns != "" && ns != metadata["namespace"].(string) {
 		err = errors.New("请勿修改yaml中namespace")
 		goto END
 	}

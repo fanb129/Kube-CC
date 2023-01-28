@@ -18,12 +18,17 @@ type Deploy struct {
 }
 
 type Ns struct {
-	Name      string                `json:"name"`
-	Status    corev1.NamespacePhase `json:"status"`
-	CreatedAt string                `json:"created_at"`
-	Username  string                `json:"username"`
-	Nickname  string                `json:"nickname"`
-	Uid       uint                  `json:"u_id"`
+	Name        string                `json:"name"`
+	Status      corev1.NamespacePhase `json:"status"`
+	CreatedAt   string                `json:"created_at"`
+	Username    string                `json:"username"`
+	Nickname    string                `json:"nickname"`
+	Uid         uint                  `json:"u_id"`
+	ExpiredTime string                `json:"expired_time"`
+	Cpu         string                `json:"cpu"`
+	UsedCpu     string                `json:"used_cpu"`
+	Memory      string                `json:"memory"`
+	UsedMemory  string                `json:"used_memory"`
 }
 
 type Node struct {
@@ -79,6 +84,11 @@ type Spark struct {
 	IngressList    []Ingress             `json:"ingress_list"`
 	MasterReplicas int32                 `json:"master_replicas"`
 	WorkerReplicas int32                 `json:"worker_replicas"`
+	ExpiredTime    string                `json:"expired_time"`
+	Cpu            string                `json:"cpu"`
+	UsedCpu        string                `json:"used_cpu"`
+	Memory         string                `json:"memory"`
+	UsedMemory     string                `json:"used_memory"`
 }
 type Linux struct {
 	Name        string                `json:"name"`
@@ -90,6 +100,11 @@ type Linux struct {
 	PodList     []Pod                 `json:"pod_list"`
 	DeployList  []Deploy              `json:"deploy_list"`
 	ServiceList []Service             `json:"service_list"`
+	ExpiredTime string                `json:"expired_time"`
+	Cpu         string                `json:"cpu"`
+	UsedCpu     string                `json:"used_cpu"`
+	Memory      string                `json:"memory"`
+	UsedMemory  string                `json:"used_memory"`
 }
 type Hadoop struct {
 	Name               string                `json:"name"`
@@ -105,6 +120,11 @@ type Hadoop struct {
 	DatanodeReplicas   int32                 `json:"datanode_replicas"`
 	YarnMasterReplicas int32                 `json:"yarn_master_replicas"`
 	YarnNodeReplicas   int32                 `json:"yarn_node_replicas"`
+	ExpiredTime        string                `json:"expired_time"`
+	Cpu                string                `json:"cpu"`
+	UsedCpu            string                `json:"used_cpu"`
+	Memory             string                `json:"memory"`
+	UsedMemory         string                `json:"used_memory"`
 }
 type UserInfo struct {
 	ID        uint   `json:"id"`

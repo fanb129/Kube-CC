@@ -4,6 +4,7 @@ import (
 	"Kube-CC/common"
 	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
 	"net/http"
 	"strconv"
@@ -50,12 +51,19 @@ func Add(c *gin.Context) {
 	if form.Uid != 0 {
 		label["u_id"] = strconv.Itoa(int(form.Uid))
 	}
-	response, err := service.CreateNs(form.Name, label)
+	//expiredTime, err := time.Parse("2006-01-02 15:04:05", form.ExpiredTime)
+	//if err != nil {
+	//	zap.S().Errorln(err)
+	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+	//	return
+	//}
+	response, err := service.CreateNs(form.Name, form.ExpiredTime, label, form.Cpu, form.Memory, form.Num)
 	if err != nil {
+		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
-	} else {
-		c.JSON(http.StatusOK, response)
+		return
 	}
+	c.JSON(http.StatusOK, response)
 }
 
 // Update 更新namespace及其所含所有资源的uid
@@ -69,8 +77,15 @@ func Update(c *gin.Context) {
 	if form.Uid != 0 {
 		uid = strconv.Itoa(int(form.Uid))
 	}
-	response, err := service.UpdateNs(form.Name, uid)
+	//expiredTime, err := time.Parse("2006-01-02 15:04:05", form.ExpiredTime)
+	//if err != nil {
+	//	zap.S().Errorln(err)
+	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+	//	return
+	//}
+	response, err := service.UpdateNs(form.Name, uid, form.ExpiredTime, form.Cpu, form.Memory, form.Num)
 	if err != nil {
+		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
 		c.JSON(http.StatusOK, response)
