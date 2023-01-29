@@ -12,7 +12,10 @@ import (
 
 // CreateLimitRange 为namespace创建LimitRange，进行namespace的默认资源限制
 func CreateLimitRange(ns string, cpu, memory string, n int) error {
-	cpu1, memory1 := SplitSource(cpu, memory, n)
+	cpu1, memory1, err := SplitSource(cpu, memory, n)
+	if err != nil {
+		return err
+	}
 	limitRange := corev1.LimitRange{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -34,7 +37,7 @@ func CreateLimitRange(ns string, cpu, memory string, n int) error {
 			},
 		},
 	}
-	_, err := dao.ClientSet.CoreV1().LimitRanges(ns).Create(&limitRange)
+	_, err = dao.ClientSet.CoreV1().LimitRanges(ns).Create(&limitRange)
 	return err
 }
 
@@ -52,8 +55,11 @@ func UpdateLimitRange(ns string, cpu, memory string, n int) error {
 	if err != nil {
 		return err
 	}
-	// 默认每个container的limit为1/8
-	cpu1, memory1 := SplitSource(cpu, memory, n)
+	// 默认每个container的limit为1/n
+	cpu1, memory1, err := SplitSource(cpu, memory, n)
+	if err != nil {
+		return err
+	}
 	limit.Spec.Limits[0].Default[corev1.ResourceCPU] = resource.MustParse(cpu1)
 	limit.Spec.Limits[0].Default[corev1.ResourceMemory] = resource.MustParse(memory1)
 
@@ -61,28 +67,34 @@ func UpdateLimitRange(ns string, cpu, memory string, n int) error {
 	return err
 }
 
-func SplitSource(cpu, memory string, n int) (string, string) {
+func SplitSource(cpu, memory string, n int) (string, string, error) {
 	// 分割数字与单位
 	index1 := 0
 	index2 := 0
 	for i, v := range cpu {
-		if v < '0' || v > '9' {
+		if (v < '0' || v > '9') && v != '.' {
 			index1 = i
 			break
 		}
 	}
 	for i, v := range memory {
-		if v < '0' || v > '9' {
+		if (v < '0' || v > '9') && v != '.' {
 			index2 = i
 			break
 		}
 	}
-	cpu1, _ := strconv.Atoi(cpu[:index1])
-	memory1, _ := strconv.Atoi(memory[:index2])
+	cpu1, err := strconv.ParseFloat(cpu[:index1], 64)
+	if err != nil {
+		return "", "", err
+	}
+	memory1, err := strconv.ParseFloat(memory[:index2], 64)
+	if err != nil {
+		return "", "", err
+	}
 
-	cpu11 := fmt.Sprintf("%.3f", float64(cpu1)/float64(n)) + cpu[index1:]
-	memory11 := fmt.Sprintf("%.3f", float64(memory1)/float64(n)) + memory[index2:]
-	zap.S().Infoln(cpu11, memory11)
-	return cpu11, memory11
+	cpu11 := fmt.Sprintf("%.3f", cpu1/float64(n)) + cpu[index1:]
+	memory11 := fmt.Sprintf("%.3f", memory1/float64(n)) + memory[index2:]
+	zap.S().Infoln(cpu11, cpu11, memory1, memory11)
+	return cpu11, memory11, nil
 
 }
