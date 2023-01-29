@@ -63,18 +63,22 @@ Password = 1234567890
 ### 1. 平台功能结构图
 
 ![](img/功能结构图.png) 
+![](main/img/功能结构图.png) 
 
 ### 2. 系统整体架构图
 
 ![](img/整体架构图.png) 
+![](main/img/整体架构图.png) 
 
 ### 3. 后端结构图
 
 ![](img/后端结构.png) 
+![](main/img/后端结构.png) 
 
 ### 4. 前端结构图
 
 ![](img/前端结构.png) 
+![](main/img/前端结构.png) 
 
 
 
@@ -83,51 +87,64 @@ Password = 1234567890
 ### 1. 首页
 
 ![](img/首页.png)
+![](main/img/首页.png)
 
 ### 2. 用户管理
 
 ![](img/user.png)
+![](main/img/user.png)
 
 ### 3. node
 
 ![](img/node.png)
+![](main/img/node.png)
 
 ### 4. namespace
 
 ![](img/ns.png)
+![](main/img/ns.png)
 
 ### 5. deployment
 
 ![](img/deploy.png)
+![](main/img/deploy.png)
 
 添加
 
 ![](img/add deploy.png)
+![](main/img/add deploy.png)
 
 编辑
 
 ![](img/update deploy.png)
+![](main/img/update deploy.png)
 
 ### 6. service
 
 ![](img/service.png)
+![](main/img/service.png)
 
 ### 7. pod
 
 ![](img/pod.png)
+![](main/img/pod.png)
 
 ### 8. spark
 
 ![](img/spark.png)
+![](main/img/spark.png)
 
 进入终端
 
 ![](img/spark-console.png)
+![](main/img/spark-console.png)
 
 添加
 
 ![](img/add spark.png) 
+![](main/img/add spark.png) 
 
 ### 9. terminal
 
 ![](img/terminal.png)
+![](main/img/terminal.png)
