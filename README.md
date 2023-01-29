@@ -41,7 +41,7 @@ DbPort = 3306
 DbUser = root
 DbPassWord = ******
 DbName = k8s_deploy_gin
-RedisHost = 39.103.195.185
+RedisHost = ***
 RedisPort = 6379
 [jwt]
 JwtKey = kubernetes.com
