@@ -111,13 +111,13 @@ Password = 1234567890
 
 添加
 
-![](img/add deploy.png)
-![](main/img/add deploy.png)
+![](img/add_deploy.png)
+![](main/img/add_deploy.png)
 
 编辑
 
-![](img/update deploy.png)
-![](main/img/update deploy.png)
+![](img/update_deploy.png)
+![](main/img/update_deploy.png)
 
 ### 6. service
 
@@ -141,8 +141,8 @@ Password = 1234567890
 
 添加
 
-![](img/add spark.png) 
-![](main/img/add spark.png) 
+![](img/add_spark.png) 
+![](main/img/add_spark.png) 
 
 ### 9. terminal
 
