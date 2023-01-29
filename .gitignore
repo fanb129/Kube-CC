@@ -1,6 +1,8 @@
 /.idea
 /.vscode
 conf/config.ini
+dao/main
+service/main
 /tmp
 # Binaries for programs and plugins
 *.exe
