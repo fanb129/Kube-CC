@@ -137,7 +137,7 @@ func DeleteNs(name string) (*common.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = deleteTtl(name); err != nil {
+	if err = DeleteTtl(name); err != nil {
 		return nil, err
 	}
 	return &common.OK, nil

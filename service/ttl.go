@@ -36,7 +36,7 @@ func CreateOrUpdateTtl(ns string, expiredTime time.Time) error {
 	return nil
 }
 
-func deleteTtl(ns string) error {
+func DeleteTtl(ns string) error {
 	ttl, err := dao.GetTtlByNs(ns)
 	if ttl != nil {
 		err = dao.DeleteTtl(ttl)

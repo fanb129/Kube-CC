@@ -6,7 +6,9 @@ import (
 	"Kube-CC/dao"
 	"Kube-CC/log"
 	"Kube-CC/routers"
+	"Kube-CC/service"
 	"go.uber.org/zap"
+	"time"
 
 	"os"
 	"os/signal"
@@ -34,6 +36,34 @@ func main() {
 	if err := r.Run(conf.Port); err != nil {
 		zap.S().Panicln(err)
 	}
+
+	go func() {
+		// 每隔一小时检测ttl
+		ticker := time.NewTicker(time.Hour)
+		for {
+			select {
+			case <-ticker.C:
+				ttls, err := dao.ListTtl()
+				if err != nil {
+					zap.S().Errorln("获取ttl失败:", err)
+				}
+				for _, ttl := range ttls {
+					// 如果过期时间在现在之前，则删除
+					if ttl.ExpiredTime.Before(time.Now()) {
+						// 删除ns
+						_, err := service.DeleteNs(ttl.Namespace)
+						if err != nil {
+							zap.S().Errorln("删除ns失败:", err)
+						}
+						err = service.DeleteTtl(ttl.Namespace)
+						if err != nil {
+							zap.S().Errorln("删除ttl失败:", err)
+						}
+					}
+				}
+			}
+		}
+	}()
 
 	//接收终止信号
 	quit := make(chan os.Signal)
