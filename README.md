@@ -60,22 +60,32 @@ Password = 1234567890
 
 ## 三、项目介绍
 
-### 1. 平台功能结构图
+### 1. 总体结构图
+
+![](img/pipe.png)
+![](main/img/pipe.png)
+
+### 2. 网络结构图
+
+![](img/network.png)
+![](main/img/network.png)
+
+### 3. 平台功能结构图
 
 ![](img/功能结构图.png) 
 ![](main/img/功能结构图.png) 
 
-### 2. 系统整体架构图
+### 4. 系统整体架构图
 
 ![](img/整体架构图.png) 
 ![](main/img/整体架构图.png) 
 
-### 3. 后端结构图
+### 5. 后端结构图
 
 ![](img/后端结构.png) 
 ![](main/img/后端结构.png) 
 
-### 4. 前端结构图
+### 6. 前端结构图
 
 ![](img/前端结构.png) 
 ![](main/img/前端结构.png) 
