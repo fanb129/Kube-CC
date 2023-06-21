@@ -1,4 +1,4 @@
-package controllers
+package login
 
 import (
 	"Kube-CC/common"

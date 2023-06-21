@@ -1,18 +1,18 @@
 package routers
 
 import (
+	"Kube-CC/api/v1/deploy"
+	"Kube-CC/api/v1/hadoop"
+	"Kube-CC/api/v1/linux"
+	"Kube-CC/api/v1/login"
+	"Kube-CC/api/v1/namespace"
+	"Kube-CC/api/v1/node"
+	"Kube-CC/api/v1/pod"
+	"Kube-CC/api/v1/spark"
+	"Kube-CC/api/v1/svc"
+	"Kube-CC/api/v1/user"
+	"Kube-CC/api/v1/yaml"
 	"Kube-CC/conf"
-	"Kube-CC/controllers"
-	"Kube-CC/controllers/deploy"
-	"Kube-CC/controllers/hadoop"
-	"Kube-CC/controllers/linux"
-	"Kube-CC/controllers/namespace"
-	"Kube-CC/controllers/node"
-	"Kube-CC/controllers/pod"
-	"Kube-CC/controllers/spark"
-	"Kube-CC/controllers/svc"
-	"Kube-CC/controllers/user"
-	"Kube-CC/controllers/yaml"
 	"Kube-CC/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -29,11 +29,11 @@ func InitRouter() *gin.Engine {
 	r.GET("/api/pod/ssh", pod.Ssh)
 	apiRouter := r.Group("/api")
 	{
-		apiRouter.POST("/login", controllers.Login) // 登陆路由
-		apiRouter.POST("/checkPass", controllers.CheckPass)
-		apiRouter.GET("/logout", controllers.Logout)      // 登出路由
-		apiRouter.POST("/register", controllers.Register) // 注册路由
-		apiRouter.GET("/Captcha", controllers.GetCaptcha) // 验证码
+		apiRouter.POST("/login", login.Login) // 登陆路由
+		apiRouter.POST("/checkPass", login.CheckPass)
+		apiRouter.GET("/logout", login.Logout)      // 登出路由
+		apiRouter.POST("/register", login.Register) // 注册路由
+		apiRouter.GET("/Captcha", login.GetCaptcha) // 验证码
 	}
 
 	// 需要鉴权
