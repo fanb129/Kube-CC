@@ -16,7 +16,10 @@
 
 ## 二、后端配置文件
 
-/conf/conf.ini
+### 1. k8s配置文件
+将kubernetes配置文件`admin.conf`(一般在`/etc/kubernetes/admin.conf`),拷贝到项目的conf目录
+
+### 2. /conf/conf.ini
 
 ```ini
 [server]
@@ -26,7 +29,7 @@ PageSize = 10
 ProjectName = fanb.com
 
 [kubernetes]
-KubeConfig = E:\go\Kube-CC\conf\kube.config
+KubeConfig = E:\go\Kube-CC\conf\admin.conf
 SparkImage = registry.cn-shanghai.aliyuncs.com/fanb/myspark:1.5.2_v1
 CentosImage = registry.cn-shanghai.aliyuncs.com/fanb/mycentos:7
 UbuntuImage = registry.cn-shanghai.aliyuncs.com/fanb/myubuntu:18.04
@@ -62,33 +65,26 @@ Password = 1234567890
 
 ### 1. 总体结构图
 
-![](img/pipe.png)
-![](main/img/pipe.png)
-
+![](./img/pipe.png)
 ### 2. 网络结构图
 
-![](img/network.png)
-![](main/img/network.png)
+![](./img/network.png)
 
 ### 3. 平台功能结构图
 
-![](img/功能结构图.png) 
-![](main/img/功能结构图.png) 
+![](./img/功能结构图.png) 
 
 ### 4. 系统整体架构图
 
-![](img/整体架构图.png) 
-![](main/img/整体架构图.png) 
+![](./img/整体架构图.png) 
 
 ### 5. 后端结构图
 
-![](img/后端结构.png) 
-![](main/img/后端结构.png) 
+![](./img/后端结构.png) 
 
 ### 6. 前端结构图
 
-![](img/前端结构.png) 
-![](main/img/前端结构.png) 
+![](./img/前端结构.png) 
 
 
 
@@ -96,65 +92,52 @@ Password = 1234567890
 
 ### 1. 首页
 
-![](img/首页.png)
-![](main/img/首页.png)
+![](./img/首页.png)
 
 ### 2. 用户管理
 
-![](img/user.png)
-![](main/img/user.png)
+![](./img/user.png)
 
 ### 3. node
 
-![](img/node.png)
-![](main/img/node.png)
+![](./img/node.png)
 
 ### 4. namespace
 
-![](img/ns.png)
-![](main/img/ns.png)
+![](./img/ns.png)
 
 ### 5. deployment
 
-![](img/deploy.png)
-![](main/img/deploy.png)
+![](./img/deploy.png)
 
 添加
 
-![](img/add_deploy.png)
-![](main/img/add_deploy.png)
+![](./img/add_deploy.png)
 
 编辑
 
-![](img/update_deploy.png)
-![](main/img/update_deploy.png)
+![](./img/update_deploy.png)
 
 ### 6. service
 
-![](img/service.png)
-![](main/img/service.png)
+![](./img/service.png)
 
 ### 7. pod
 
-![](img/pod.png)
-![](main/img/pod.png)
+![](./img/pod.png)
 
 ### 8. spark
 
-![](img/spark.png)
-![](main/img/spark.png)
+![](./img/spark.png)
 
 进入终端
 
-![](img/spark-console.png)
-![](main/img/spark-console.png)
+![](./img/spark-console.png)
 
 添加
 
-![](img/add_spark.png) 
-![](main/img/add_spark.png) 
+![](./img/add_spark.png) 
 
 ### 9. terminal
 
-![](img/terminal.png)
-![](main/img/terminal.png)
+![](./img/terminal.png)
