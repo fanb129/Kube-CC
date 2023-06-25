@@ -2,6 +2,7 @@ package service
 
 import (
 	"Kube-CC/dao"
+	"context"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -19,13 +20,13 @@ func CreateResourceQuota(ns string, spec corev1.ResourceQuotaSpec) error {
 		},
 		Spec: spec,
 	}
-	_, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Create(&resourceQuota)
+	_, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Create(context.Background(), &resourceQuota, metav1.CreateOptions{})
 	return err
 }
 
 // GetResourceQuota 获取指定namespace下的ResourceQuota
 func GetResourceQuota(ns string) (*corev1.ResourceQuota, error) {
-	resourceQuota, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Get(ns+"-resourcequota", metav1.GetOptions{})
+	resourceQuota, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Get(context.Background(), ns+"-resourcequota", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -33,6 +34,6 @@ func GetResourceQuota(ns string) (*corev1.ResourceQuota, error) {
 }
 
 func UpdateResourceQuota(ns string, r *corev1.ResourceQuota) error {
-	_, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Update(r)
+	_, err := dao.ClientSet.CoreV1().ResourceQuotas(ns).Update(context.Background(), r, metav1.UpdateOptions{})
 	return err
 }

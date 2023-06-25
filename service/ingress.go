@@ -3,6 +3,7 @@ package service
 import (
 	"Kube-CC/common"
 	"Kube-CC/dao"
+	"context"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -14,7 +15,7 @@ func CreateIngress(name, ns string, label map[string]string, spec v1beta1.Ingres
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, Labels: label},
 		Spec:       spec,
 	}
-	create, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).Create(&ingress)
+	create, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).Create(context.Background(), &ingress, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +24,7 @@ func CreateIngress(name, ns string, label map[string]string, spec v1beta1.Ingres
 
 // GetIngress 获得指定namespace下的ingress
 func GetIngress(ns string, label string) (*common.IngressListResponse, error) {
-	list, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).List(metav1.ListOptions{LabelSelector: label})
+	list, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func GetIngress(ns string, label string) (*common.IngressListResponse, error) {
 
 // DeleteIngress 删除指定ingress
 func DeleteIngress(name, ns string) (*common.Response, error) {
-	err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).Delete(name, &metav1.DeleteOptions{})
+	err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}

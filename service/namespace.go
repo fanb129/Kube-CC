@@ -3,6 +3,7 @@ package service
 import (
 	"Kube-CC/common"
 	"Kube-CC/dao"
+	"context"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -13,7 +14,7 @@ import (
 
 // GetNs 获取所有namespace
 func GetNs(label string) (*common.NsListResponse, error) {
-	namespace, err := dao.ClientSet.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: label})
+	namespace, err := dao.ClientSet.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu,
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
 	}
-	_, err := dao.ClientSet.CoreV1().Namespaces().Create(&ns)
+	_, err := dao.ClientSet.CoreV1().Namespaces().Create(context.Background(), &ns, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +134,7 @@ func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu,
 
 // DeleteNs 删除指定namespace
 func DeleteNs(name string) (*common.Response, error) {
-	err := dao.ClientSet.CoreV1().Namespaces().Delete(name, &metav1.DeleteOptions{})
+	err := dao.ClientSet.CoreV1().Namespaces().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +146,7 @@ func DeleteNs(name string) (*common.Response, error) {
 
 // UpdateNs 分配namespace
 func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n int) (*common.Response, error) {
-	get, err := dao.ClientSet.CoreV1().Namespaces().Get(name, metav1.GetOptions{})
+	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,7 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 		} else {
 			get.Labels["u_id"] = uid
 		}
-		if _, err := dao.ClientSet.CoreV1().Namespaces().Update(get); err != nil {
+		if _, err := dao.ClientSet.CoreV1().Namespaces().Update(context.Background(), get, metav1.UpdateOptions{}); err != nil {
 			return nil, err
 		}
 
@@ -171,7 +172,7 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 		if err == nil {
 			for i := 0; i < deployList.Length; i++ {
 				name := deployList.DeployList[i].Name
-				deployment, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{})
+				deployment, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
 				if err != nil {
 					return nil, err
 				}
@@ -193,7 +194,7 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 		if err == nil {
 			for i := 0; i < serviceList.Length; i++ {
 				name := serviceList.ServiceList[i].Name
-				service, err := dao.ClientSet.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+				service, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{})
 				if err != nil {
 					return nil, err
 				}
@@ -213,7 +214,7 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 		if err == nil {
 			for i := 0; i < podList.Length; i++ {
 				name := podList.PodList[i].Name
-				pod, err := dao.ClientSet.CoreV1().Pods(ns).Get(name, metav1.GetOptions{})
+				pod, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
 				if err != nil {
 					return nil, err
 				}

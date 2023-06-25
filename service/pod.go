@@ -3,13 +3,14 @@ package service
 import (
 	"Kube-CC/common"
 	"Kube-CC/dao"
+	"context"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetAPod 获得指定deploy
 func GetAPod(name, ns string) (*corev1.Pod, error) {
-	get, err := dao.ClientSet.CoreV1().Pods(ns).Get(name, metav1.GetOptions{})
+	get, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +19,7 @@ func GetAPod(name, ns string) (*corev1.Pod, error) {
 
 // GetPod 获得指定namespace下pod
 func GetPod(ns string, label string) (*common.PodListResponse, error) {
-	pods, err := dao.ClientSet.CoreV1().Pods(ns).List(metav1.ListOptions{LabelSelector: label})
+	pods, err := dao.ClientSet.CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func GetPod(ns string, label string) (*common.PodListResponse, error) {
 
 // DeletePod 删除指定pod
 func DeletePod(name, ns string) (*common.Response, error) {
-	err := dao.ClientSet.CoreV1().Pods(ns).Delete(name, &metav1.DeleteOptions{})
+	err := dao.ClientSet.CoreV1().Pods(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func CreatePod(name, ns string, label map[string]string, spec corev1.PodSpec) (*
 		},
 		Spec: spec,
 	}
-	create, err := dao.ClientSet.CoreV1().Pods(ns).Create(&pod)
+	create, err := dao.ClientSet.CoreV1().Pods(ns).Create(context.Background(), &pod, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func CreatePod(name, ns string, label map[string]string, spec corev1.PodSpec) (*
 }
 
 func UpdatePod(pod *corev1.Pod) (*common.Response, error) {
-	_, err := dao.ClientSet.CoreV1().Pods(pod.Name).Update(pod)
+	_, err := dao.ClientSet.CoreV1().Pods(pod.Name).Update(context.Background(), pod, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}

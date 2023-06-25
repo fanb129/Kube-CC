@@ -3,13 +3,14 @@ package service
 import (
 	"Kube-CC/common"
 	"Kube-CC/dao"
+	"context"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetADeploy 获得指定deploy
 func GetADeploy(name, ns string) (*appsv1.Deployment, error) {
-	get, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{})
+	get, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -27,13 +28,13 @@ func CreateDeploy(name, ns string, label map[string]string, spec appsv1.Deployme
 		},
 		Spec: spec,
 	}
-	create, err := dao.ClientSet.AppsV1().Deployments(ns).Create(&rs)
+	create, err := dao.ClientSet.AppsV1().Deployments(ns).Create(context.Background(), &rs, metav1.CreateOptions{})
 	return create, err
 }
 
 // GetDeploy 获得指定namespace下的控制器
 func GetDeploy(ns, label string) (*common.DeployListResponse, error) {
-	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(metav1.ListOptions{LabelSelector: label})
+	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func GetDeploy(ns, label string) (*common.DeployListResponse, error) {
 
 // DeleteDeploy 删除指定namespace的控制器
 func DeleteDeploy(name, ns string) (*common.Response, error) {
-	err := dao.ClientSet.AppsV1().Deployments(ns).Delete(name, &metav1.DeleteOptions{})
+	err := dao.ClientSet.AppsV1().Deployments(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func DeleteDeploy(name, ns string) (*common.Response, error) {
 
 // UpdateDeploy 更新deploy
 func UpdateDeploy(deploy *appsv1.Deployment) (*common.Response, error) {
-	_, err := dao.ClientSet.AppsV1().Deployments(deploy.Namespace).Update(deploy)
+	_, err := dao.ClientSet.AppsV1().Deployments(deploy.Namespace).Update(context.Background(), deploy, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}

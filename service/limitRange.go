@@ -2,6 +2,7 @@ package service
 
 import (
 	"Kube-CC/dao"
+	"context"
 	"fmt"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -37,7 +38,7 @@ func CreateLimitRange(ns string, cpu, memory string, n int) error {
 			},
 		},
 	}
-	_, err = dao.ClientSet.CoreV1().LimitRanges(ns).Create(&limitRange)
+	_, err = dao.ClientSet.CoreV1().LimitRanges(ns).Create(context.Background(), &limitRange, metav1.CreateOptions{})
 	return err
 }
 
@@ -51,7 +52,7 @@ func CreateLimitRange(ns string, cpu, memory string, n int) error {
 //}
 
 func UpdateLimitRange(ns string, cpu, memory string, n int) error {
-	limit, err := dao.ClientSet.CoreV1().LimitRanges(ns).Get(ns+"-limitrange", metav1.GetOptions{})
+	limit, err := dao.ClientSet.CoreV1().LimitRanges(ns).Get(context.Background(), ns+"-limitrange", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func UpdateLimitRange(ns string, cpu, memory string, n int) error {
 	limit.Spec.Limits[0].Default[corev1.ResourceCPU] = resource.MustParse(cpu1)
 	limit.Spec.Limits[0].Default[corev1.ResourceMemory] = resource.MustParse(memory1)
 
-	_, err = dao.ClientSet.CoreV1().LimitRanges(ns).Update(limit)
+	_, err = dao.ClientSet.CoreV1().LimitRanges(ns).Update(context.Background(), limit, metav1.UpdateOptions{})
 	return err
 }
 

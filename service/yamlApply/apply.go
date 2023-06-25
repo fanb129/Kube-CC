@@ -4,6 +4,7 @@ import (
 	"Kube-CC/common"
 	"Kube-CC/dao"
 	"Kube-CC/service"
+	"context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,9 +14,9 @@ import (
 // NamespaceApply namespace的更新或新建
 func NamespaceApply(ns *corev1.Namespace) (*common.Response, error) {
 	name := ns.Name
-	if _, err := dao.ClientSet.CoreV1().Namespaces().Get(name, metav1.GetOptions{}); err != nil {
+	if _, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{}); err != nil {
 		if errors.IsNotFound(err) {
-			if _, err := dao.ClientSet.CoreV1().Namespaces().Create(ns); err != nil {
+			if _, err := dao.ClientSet.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{}); err != nil {
 				return nil, err
 			}
 			return &common.OK, nil
@@ -23,7 +24,7 @@ func NamespaceApply(ns *corev1.Namespace) (*common.Response, error) {
 			return nil, err
 		}
 	} else {
-		if _, err := dao.ClientSet.CoreV1().Namespaces().Update(ns); err != nil {
+		if _, err := dao.ClientSet.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{}); err != nil {
 			return nil, err
 		}
 		return &common.OK, nil
@@ -39,11 +40,11 @@ func DeployApply(deploy *appsv1.Deployment) (*common.Response, error) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	if _, err := dao.ClientSet.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{}); err != nil {
+	if _, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{}); err != nil {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，提取出uid的label
-			get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
 			if err != nil {
 				return nil, err
 			}
@@ -74,11 +75,11 @@ func ServiceApply(svc *corev1.Service) (*common.Response, error) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	if _, err := dao.ClientSet.CoreV1().Services(ns).Get(name, metav1.GetOptions{}); err != nil {
+	if _, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{}); err != nil {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，提取出uid的label
-			get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
 			if err != nil {
 				return nil, err
 			}
@@ -106,11 +107,11 @@ func PodApply(pod *corev1.Pod) (*common.Response, error) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	if _, err := dao.ClientSet.CoreV1().Pods(ns).Get(name, metav1.GetOptions{}); err != nil {
+	if _, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{}); err != nil {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，提取出uid的label
-			get, err := dao.ClientSet.CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+			get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
 			if err != nil {
 				return nil, err
 			}

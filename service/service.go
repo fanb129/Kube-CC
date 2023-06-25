@@ -4,13 +4,14 @@ import (
 	"Kube-CC/common"
 	"Kube-CC/conf"
 	"Kube-CC/dao"
+	"context"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetAService 获得指定deploy
 func GetAService(name, ns string) (*corev1.Service, error) {
-	get, err := dao.ClientSet.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+	get, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +25,7 @@ func CreateService(name, ns string, label map[string]string, spec corev1.Service
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, Labels: label},
 		Spec:       spec,
 	}
-	create, err := dao.ClientSet.CoreV1().Services(ns).Create(&service)
+	create, err := dao.ClientSet.CoreV1().Services(ns).Create(context.Background(), &service, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +34,7 @@ func CreateService(name, ns string, label map[string]string, spec corev1.Service
 
 // GetService 获得指定ns下的service
 func GetService(ns string, label string) (*common.ServiceListResponse, error) {
-	list, err := dao.ClientSet.CoreV1().Services(ns).List(metav1.ListOptions{LabelSelector: label})
+	list, err := dao.ClientSet.CoreV1().Services(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +58,7 @@ func GetService(ns string, label string) (*common.ServiceListResponse, error) {
 
 // DeleteService 删除指定service
 func DeleteService(name, ns string) (*common.Response, error) {
-	err := dao.ClientSet.CoreV1().Services(ns).Delete(name, &metav1.DeleteOptions{})
+	err := dao.ClientSet.CoreV1().Services(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,7 @@ func DeleteService(name, ns string) (*common.Response, error) {
 
 // UpdateService 更新service
 func UpdateService(service *corev1.Service) (*common.Response, error) {
-	_, err := dao.ClientSet.CoreV1().Services(service.Namespace).Update(service)
+	_, err := dao.ClientSet.CoreV1().Services(service.Namespace).Update(context.Background(), service, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"Kube-CC/service/ssh"
+	"context"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
@@ -36,7 +37,7 @@ func createToken() (string, error) {
 
 // GetNode 获得所有node
 func GetNode(label string) (*common.NodeListResponse, error) {
-	nodes, err := dao.ClientSet.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: label})
+	nodes, err := dao.ClientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func CreateNode(configs []ssh.Config) (*common.Response, error) {
 
 // DeleteNode 删除node节点
 func DeleteNode(name string) (*common.Response, error) {
-	err := dao.ClientSet.CoreV1().Nodes().Delete(name, &metav1.DeleteOptions{})
+	err := dao.ClientSet.CoreV1().Nodes().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
