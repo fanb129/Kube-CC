@@ -11,7 +11,7 @@
 
 1. 后端Go1.18，Gin，client-go， gorm，zap，jwt-go
 2. 前端vue2 + element，基于vue-admin-template模板
-3. kubernetes1.17
+3. kubernetes1.17 ([k8s1.17安装文档](./doc/k8s1.17安装.md))
 4. MySQL8
 
 ## 二、后端配置文件
