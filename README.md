@@ -9,18 +9,19 @@
 
 ## 一、环境
 
-1. 后端Go1.18，Gin，client-go， gorm，zap，jwt-go
+1. 后端Go1.18，Gin，client-go@0.25.0， gorm，zap，jwt-go
 2. 前端vue2 + element，基于vue-admin-template模板
-3. kubernetes1.17 ([k8s1.17安装文档](./doc/k8s1.17安装.md))
+3. kubernetes1.25.0 
 4. MySQL8
+5. [环境部署文档](./doc/环境部署1.25.md)
 
 ## 二、后端配置文件
 
 ### 1. k8s配置文件
-将kubernetes配置文件`admin.conf`(一般在`/etc/kubernetes/admin.conf`),拷贝到项目的conf目录
-
-### 2. /conf/conf.ini
-
+- 将kubernetes配置文件`admin.conf`(一般在`/etc/kubernetes/admin.conf`),拷贝到项目的conf目录
+- 如果此程序运行在k8s集群以外，admin.conf中的域名可能无法解析（如apiserver.cluster.local）,可替换为物理机具体的ip
+### 2. 后端配置文件
+创建`/conf/conf.ini`配置文件，以下为模板
 ```ini
 [server]
 AppMode = debug
@@ -29,7 +30,7 @@ PageSize = 10
 ProjectName = fanb.com
 
 [kubernetes]
-KubeConfig = E:\go\Kube-CC\conf\admin.conf
+KubeConfig = ./conf/admin.conf
 SparkImage = registry.cn-shanghai.aliyuncs.com/fanb/myspark:1.5.2_v1
 CentosImage = registry.cn-shanghai.aliyuncs.com/fanb/mycentos:7
 UbuntuImage = registry.cn-shanghai.aliyuncs.com/fanb/myubuntu:18.04
