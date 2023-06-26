@@ -1,6 +1,7 @@
 /.idea
 /.vscode
 conf/config.ini
+conf/admin.conf
 dao/main
 service/main
 /tmp
