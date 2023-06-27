@@ -1,7 +1,7 @@
 package deploy
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/labels"
@@ -22,7 +22,7 @@ func Index(c *gin.Context) {
 	}
 	deployListResponse, err := service.GetDeploy(ns, selector)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
 		c.JSON(http.StatusOK, deployListResponse)
 	}
@@ -34,7 +34,7 @@ func Delete(c *gin.Context) {
 	name := c.Query("name")
 	response, err := service.DeleteDeploy(name, ns)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
 		c.JSON(http.StatusOK, response)
 	}
@@ -46,10 +46,10 @@ func Info(c *gin.Context) {
 	name := c.Query("name")
 	res, err := service.GetADeploy(name, ns)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
-		c.JSON(http.StatusOK, common.DeployInfo{
-			Response: common.OK,
+		c.JSON(http.StatusOK, responses.DeployInfo{
+			Response: responses.OK,
 			Info:     *res,
 		})
 	}

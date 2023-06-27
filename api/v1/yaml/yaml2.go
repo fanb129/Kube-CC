@@ -1,7 +1,8 @@
 package yaml
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/forms"
+	"Kube-CC/common/responses"
 	"Kube-CC/service/yamlApply"
 	"encoding/json"
 	"errors"
@@ -17,9 +18,9 @@ func Apply2(c *gin.Context) {
 	//body := c.Request.Body
 	//bytes, _ := ioutil.ReadAll(body)
 	//fmt.Println((bytes))
-	form := common.YamlApplyForm{}
+	form := forms.YamlApplyForm{}
 	if err := c.ShouldBindJSON(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	yaml := form.Yaml.(map[string]interface{})
@@ -85,24 +86,24 @@ func Apply2(c *gin.Context) {
 		}
 		goto SUCCESS
 	default:
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  "类型不匹配",
 		})
 		return
 	}
 SUCCESS:
-	c.JSON(http.StatusOK, common.OK)
+	c.JSON(http.StatusOK, responses.OK)
 	return
 END:
-	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+	c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	return
 }
 
 func Create2(c *gin.Context) {
-	form := common.YamlCreateForm{}
+	form := forms.YamlCreateForm{}
 	if err := c.ShouldBindJSON(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	yaml := form.Yaml.(map[string]interface{})
@@ -191,7 +192,7 @@ func Create2(c *gin.Context) {
 		}
 		goto SUCCESS
 	default:
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  "类型不匹配",
 		})
@@ -199,13 +200,13 @@ func Create2(c *gin.Context) {
 	}
 
 SUCCESS:
-	c.JSON(http.StatusOK, common.OK)
+	c.JSON(http.StatusOK, responses.OK)
 	return
 END:
-	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+	c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	return
 }
 
 func Delete2(c *gin.Context) {
-	c.JSON(http.StatusOK, common.Response{1, "delete"})
+	c.JSON(http.StatusOK, responses.Response{1, "delete"})
 }

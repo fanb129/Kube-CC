@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -11,7 +11,7 @@ func Is2Role() gin.HandlerFunc {
 		r, _ := c.Get("role")
 		role := r.(uint)
 		if role < 2 {
-			c.JSON(http.StatusForbidden, common.NoRole)
+			c.JSON(http.StatusForbidden, responses.NoRole)
 			c.Abort()
 			return
 		}
@@ -24,7 +24,7 @@ func Is3Role() gin.HandlerFunc {
 		r, _ := c.Get("role")
 		role := r.(uint)
 		if role < 3 {
-			c.JSON(http.StatusForbidden, common.NoRole)
+			c.JSON(http.StatusForbidden, responses.NoRole)
 			c.Abort()
 			return
 		}

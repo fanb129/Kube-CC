@@ -20,12 +20,12 @@ var (
 )
 
 type Config struct {
-	Host     string `json:"host" form:"host"`
-	Port     int    `json:"port" form:"port"`
-	User     string `json:"user" form:"user"`
-	Type     string `json:"type" form:"type"` // password或者key
-	Password string `json:"password" form:"password"`
-	KeyPath  string `json:"key_path" form:"key_path"` // ssh id_rsa.id路径
+	Host     string `json:"host" forms:"host"`
+	Port     int    `json:"port" forms:"port"`
+	User     string `json:"user" forms:"user"`
+	Type     string `json:"type" forms:"type"` // password或者key
+	Password string `json:"password" forms:"password"`
+	KeyPath  string `json:"key_path" forms:"key_path"` // ssh id_rsa.id路径
 }
 
 type Ssh struct {

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
 	appsv1 "k8s.io/api/apps/v1"
@@ -33,15 +33,15 @@ func CreateDeploy(name, ns string, label map[string]string, spec appsv1.Deployme
 }
 
 // GetDeploy 获得指定namespace下的控制器
-func GetDeploy(ns, label string) (*common.DeployListResponse, error) {
+func GetDeploy(ns, label string) (*responses.DeployListResponse, error) {
 	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
 	num := len(list.Items)
-	deployList := make([]common.Deploy, num)
+	deployList := make([]responses.Deploy, num)
 	for i, deploy := range list.Items {
-		tmp := common.Deploy{
+		tmp := responses.Deploy{
 			Name:              deploy.Name,
 			Namespace:         deploy.Namespace,
 			CreatedAt:         deploy.CreationTimestamp.Format("2006-01-02 15:04:05"),
@@ -55,23 +55,23 @@ func GetDeploy(ns, label string) (*common.DeployListResponse, error) {
 		}
 		deployList[i] = tmp
 	}
-	return &common.DeployListResponse{Response: common.OK, Length: num, DeployList: deployList}, nil
+	return &responses.DeployListResponse{Response: responses.OK, Length: num, DeployList: deployList}, nil
 }
 
 // DeleteDeploy 删除指定namespace的控制器
-func DeleteDeploy(name, ns string) (*common.Response, error) {
+func DeleteDeploy(name, ns string) (*responses.Response, error) {
 	err := dao.ClientSet.AppsV1().Deployments(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // UpdateDeploy 更新deploy
-func UpdateDeploy(deploy *appsv1.Deployment) (*common.Response, error) {
+func UpdateDeploy(deploy *appsv1.Deployment) (*responses.Response, error) {
 	_, err := dao.ClientSet.AppsV1().Deployments(deploy.Namespace).Update(context.Background(), deploy, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }

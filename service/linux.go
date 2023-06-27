@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +19,7 @@ var cmd = [2][]string{{"/usr/sbin/init"}, {"/init.sh"}}
 var privileged = [2]bool{true, false}
 
 // CreateLinux 为uid创建linux 1-centos，2-ubuntu
-func CreateLinux(u_id, kind uint, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+func CreateLinux(u_id, kind uint, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
 
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
@@ -102,11 +102,11 @@ func CreateLinux(u_id, kind uint, expiredTime *time.Time, cpu, memory string) (*
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // GetLinux 获取uid用户下的所有kind类型的linux
-func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
+func GetLinux(u_id, kind uint) (*responses.LinuxListResponse, error) {
 	label := map[string]string{
 		"image": linuxImage[kind-1],
 	}
@@ -119,7 +119,7 @@ func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	LinuxList := make([]common.Linux, ns.Length)
+	LinuxList := make([]responses.Linux, ns.Length)
 
 	for i, linux := range ns.NsList {
 		//获取pod
@@ -137,7 +137,7 @@ func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 		if err != nil {
 			return nil, err
 		}
-		LinuxList[i] = common.Linux{
+		LinuxList[i] = responses.Linux{
 			Name:        linux.Name,
 			Uid:         u_id,
 			Username:    linux.Username,
@@ -154,8 +154,8 @@ func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 			UsedMemory:  linux.UsedMemory,
 		}
 	}
-	return &common.LinuxListResponse{
-		Response:  common.OK,
+	return &responses.LinuxListResponse{
+		Response:  responses.OK,
 		Length:    ns.Length,
 		Image:     linuxImage[kind-1],
 		LinuxList: LinuxList,
@@ -163,7 +163,7 @@ func GetLinux(u_id, kind uint) (*common.LinuxListResponse, error) {
 }
 
 // DeleteLinux 删除linux
-func DeleteLinux(ns string) (*common.Response, error) {
+func DeleteLinux(ns string) (*responses.Response, error) {
 	image := strings.Split(ns, "-")[0]
 	var err1 error
 	if _, err := DeleteService(image+"-service", ns); err != nil {
@@ -178,10 +178,10 @@ func DeleteLinux(ns string) (*common.Response, error) {
 	if err1 != nil {
 		return nil, err1
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
-func UpdateLinux(name, uid string, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+func UpdateLinux(name, uid string, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
 	res, err := UpdateNs(name, uid, expiredTime, cpu, memory, 1)
 	return res, err
 }

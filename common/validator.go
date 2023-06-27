@@ -61,7 +61,7 @@ func InitTrans(locale string) (err error) {
 //	return result
 //}
 
-func translate(err error) map[string]string {
+func Translate(err error) map[string]string {
 	errs := err.(validator.ValidationErrors)
 	rsp := map[string]string{}
 	for field, err := range errs.Translate(trans) {

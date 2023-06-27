@@ -1,7 +1,7 @@
 package pod
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/service"
 	"Kube-CC/service/ws/podSsh"
 	"fmt"
@@ -23,7 +23,7 @@ func Index(c *gin.Context) {
 	}
 	podListResponse, err := service.GetPod(ns, selector)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
 		c.JSON(http.StatusOK, podListResponse)
 	}
@@ -34,7 +34,7 @@ func Delete(c *gin.Context) {
 	name := c.Query("name")
 	response, err := service.DeletePod(name, ns)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
 		c.JSON(http.StatusOK, response)
 	}
@@ -50,10 +50,10 @@ func Info(c *gin.Context) {
 	name := c.Query("name")
 	res, err := service.GetAPod(name, ns)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
-		c.JSON(http.StatusOK, common.PodInfo{
-			Response: common.OK,
+		c.JSON(http.StatusOK, responses.PodInfo{
+			Response: responses.OK,
 			Info:     *res,
 		})
 	}

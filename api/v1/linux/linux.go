@@ -1,7 +1,8 @@
 package linux
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/forms"
+	"Kube-CC/common/responses"
 	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -18,7 +19,7 @@ func Index(c *gin.Context) {
 	if u_id != "" {
 		uid, err = strconv.Atoi(u_id)
 		if err != nil {
-			c.JSON(http.StatusOK, common.Response{
+			c.JSON(http.StatusOK, responses.Response{
 				StatusCode: -1,
 				StatusMsg:  err.Error(),
 			})
@@ -28,7 +29,7 @@ func Index(c *gin.Context) {
 	os := c.DefaultQuery("os", "")
 	os1, err := strconv.Atoi(os)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -37,7 +38,7 @@ func Index(c *gin.Context) {
 
 	linuxListResponse, err := service.GetLinux(uint(uid), uint(os1))
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -48,14 +49,14 @@ func Index(c *gin.Context) {
 
 // Add 创建指定类型的linux
 func Add(c *gin.Context) {
-	form := common.LinuxAddForm{}
+	form := forms.LinuxAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	response, err := service.CreateLinux(form.Uid, form.Kind, form.ExpiredTime, form.Cpu, form.Memory)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, response)
@@ -66,7 +67,7 @@ func Delete(c *gin.Context) {
 	ns := c.Param("name")
 	response, err := service.DeleteLinux(ns)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, response)
@@ -75,9 +76,9 @@ func Delete(c *gin.Context) {
 // BatchAdd 批量添加
 func BatchAdd(c *gin.Context) {
 	// 表单验证
-	form := common.BatchLinuxAddForm{}
+	form := forms.BatchLinuxAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	ids := form.Uid
@@ -92,14 +93,14 @@ func BatchAdd(c *gin.Context) {
 		}(id)
 	}
 	group.Wait()
-	c.JSON(http.StatusOK, common.OK)
+	c.JSON(http.StatusOK, responses.OK)
 }
 
 func Update(c *gin.Context) {
 	// 表单验证
-	form := common.LinuxUpdateForm{}
+	form := forms.LinuxUpdateForm{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	uid := ""
@@ -108,7 +109,7 @@ func Update(c *gin.Context) {
 	}
 	response, err := service.UpdateLinux(form.Name, uid, form.ExpiredTime, form.Cpu, form.Memory)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, response)
