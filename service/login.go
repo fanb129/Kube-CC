@@ -1,18 +1,18 @@
 package service
 
 import (
+	"Kube-CC/common/responses"
 	"errors"
 	"gorm.io/gorm"
 	"time"
 
-	"Kube-CC/common"
 	"Kube-CC/dao"
 	"Kube-CC/middleware"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(username, password string) (*common.LoginResponse, error) {
+func Login(username, password string) (*responses.LoginResponse, error) {
 	user, err := dao.GetUserByName(username)
 	if err != nil {
 		return nil, errors.New("获取用户失败")
@@ -27,10 +27,10 @@ func Login(username, password string) (*common.LoginResponse, error) {
 	if err != nil {
 		return nil, errors.New("token生成失败")
 	}
-	return &common.LoginResponse{Response: common.OK, UserID: user.ID, Token: token}, nil
+	return &responses.LoginResponse{Response: responses.OK, UserID: user.ID, Token: token}, nil
 }
 
-func Register(username, password, nickname string) (*common.Response, error) {
+func Register(username, password, nickname string) (*responses.Response, error) {
 	user, _ := dao.GetUserByName(username)
 	if user != nil {
 		return nil, errors.New("账号已注册")
@@ -62,7 +62,7 @@ func Register(username, password, nickname string) (*common.Response, error) {
 			return nil, errors.New("注册失败")
 		}
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // EncryptionPWD 对密码进行加密

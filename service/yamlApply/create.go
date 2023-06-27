@@ -1,7 +1,7 @@
 package yamlApply
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"Kube-CC/service"
 	"context"
@@ -10,15 +10,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func NamespaceCreate(ns *corev1.Namespace) (*common.Response, error) {
+func NamespaceCreate(ns *corev1.Namespace) (*responses.Response, error) {
 	if _, err := dao.ClientSet.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{}); err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // DeployCreate  deploy的创建
-func DeployCreate(deploy *appsv1.Deployment) (*common.Response, error) {
+func DeployCreate(deploy *appsv1.Deployment) (*responses.Response, error) {
 	name := deploy.Name
 	ns := deploy.Namespace
 	labels := deploy.Labels
@@ -38,11 +38,11 @@ func DeployCreate(deploy *appsv1.Deployment) (*common.Response, error) {
 	if _, err := service.CreateDeploy(name, ns, labels, deploy.Spec); err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // ServiceCreate service的更新或者创建
-func ServiceCreate(svc *corev1.Service) (*common.Response, error) {
+func ServiceCreate(svc *corev1.Service) (*responses.Response, error) {
 	name := svc.Name
 	ns := svc.Namespace
 	labels := svc.Labels
@@ -61,11 +61,11 @@ func ServiceCreate(svc *corev1.Service) (*common.Response, error) {
 	if _, err := service.CreateService(name, ns, labels, svc.Spec); err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // PodCreate 创建pod
-func PodCreate(pod *corev1.Pod) (*common.Response, error) {
+func PodCreate(pod *corev1.Pod) (*responses.Response, error) {
 	name := pod.Name
 	ns := pod.Namespace
 	labels := pod.Labels
@@ -84,5 +84,5 @@ func PodCreate(pod *corev1.Pod) (*common.Response, error) {
 	if _, err := service.CreatePod(name, ns, labels, pod.Spec); err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
@@ -24,7 +24,7 @@ const (
 )
 
 // CreateSpark 为uid创建spark，masterReplicas默认1， masterReplicas默认2
-func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
 	//fmt.Println(pwd)
@@ -204,11 +204,11 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredT
 		return nil, err
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // GetSpark 获取uid用户下的所有spark
-func GetSpark(u_id uint) (*common.SparkListResponse, error) {
+func GetSpark(u_id uint) (*responses.SparkListResponse, error) {
 	label := map[string]string{
 		"image": "spark",
 	}
@@ -221,7 +221,7 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	sparkList := make([]common.Spark, sparks.Length)
+	sparkList := make([]responses.Spark, sparks.Length)
 	for i, spark := range sparks.NsList {
 		// 获取pod
 		podList, err := GetPod(spark.Name, "")
@@ -252,7 +252,7 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 		if err != nil {
 			return nil, err
 		}
-		sparkList[i] = common.Spark{
+		sparkList[i] = responses.Spark{
 			Name:           spark.Name,
 			CreatedAt:      spark.CreatedAt,
 			Uid:            u_id,
@@ -273,15 +273,15 @@ func GetSpark(u_id uint) (*common.SparkListResponse, error) {
 		}
 	}
 
-	return &common.SparkListResponse{
-		Response:  common.OK,
+	return &responses.SparkListResponse{
+		Response:  responses.OK,
 		Length:    sparks.Length,
 		SparkList: sparkList,
 	}, nil
 }
 
 // DeleteSpark 删除spark
-func DeleteSpark(ns string) (*common.Response, error) {
+func DeleteSpark(ns string) (*responses.Response, error) {
 	var err1 error
 	if _, err := DeleteIngress(sparkIngressName, ns); err != nil {
 		err1 = err
@@ -304,11 +304,11 @@ func DeleteSpark(ns string) (*common.Response, error) {
 	if err1 != nil {
 		return nil, err1
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // UpdateSpark 更新spark的uid以及replicas
-func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
 	if _, err := UpdateNs(name, uid, expiredTime, cpu, memory, int(masterReplicas+workerReplicas)); err != nil {
 		return nil, err
 	}
@@ -333,5 +333,5 @@ func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, e
 		return nil, err
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }

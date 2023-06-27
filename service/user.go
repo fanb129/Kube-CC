@@ -1,7 +1,8 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/forms"
+	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"errors"
@@ -11,7 +12,7 @@ import (
 )
 
 // IndexUser  分页浏览用户信息
-func IndexUser(page int) (*common.UserListResponse, error) {
+func IndexUser(page int) (*responses.UserListResponse, error) {
 	u, total, err := dao.GetUserList(page, conf.PageSize)
 	if err != nil {
 		return nil, errors.New("获取用户列表失败")
@@ -24,9 +25,9 @@ func IndexUser(page int) (*common.UserListResponse, error) {
 			return nil, errors.New("获取用户列表失败")
 		}
 	}
-	userList := make([]common.UserInfo, len(u))
+	userList := make([]responses.UserInfo, len(u))
 	for i, v := range u {
-		tmp := common.UserInfo{
+		tmp := responses.UserInfo{
 			ID:        v.ID,
 			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
@@ -37,22 +38,22 @@ func IndexUser(page int) (*common.UserListResponse, error) {
 		}
 		userList[i] = tmp
 	}
-	return &common.UserListResponse{
-		Response: common.OK,
+	return &responses.UserListResponse{
+		Response: responses.OK,
 		Page:     page,
 		Total:    total,
 		UserList: userList,
 	}, nil
 }
 
-func UserInfo(u_id uint) (*common.UserInfoResponse, error) {
+func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 	user, err := dao.GetUserById(u_id)
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	return &common.UserInfoResponse{
-		Response: common.OK,
-		UserInfo: common.UserInfo{
+	return &responses.UserInfoResponse{
+		Response: responses.OK,
+		UserInfo: responses.UserInfo{
 			ID:        user.ID,
 			CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt: user.UpdatedAt.Format("2006-01-02 15:04:05"),
@@ -65,16 +66,16 @@ func UserInfo(u_id uint) (*common.UserInfoResponse, error) {
 }
 
 // DeleteUSer  删除用户
-func DeleteUSer(id uint) (*common.Response, error) {
+func DeleteUSer(id uint) (*responses.Response, error) {
 	row, err := dao.DeleteUserById(id)
 	if err != nil || row == 0 {
 		return nil, errors.New("删除失败")
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // EditUser 授权用户
-func EditUser(id, role uint) (*common.Response, error) {
+func EditUser(id, role uint) (*responses.Response, error) {
 	user, err := dao.GetUserById(id)
 	if err != nil {
 		return nil, errors.New("获取用户失败")
@@ -85,11 +86,11 @@ func EditUser(id, role uint) (*common.Response, error) {
 		return nil, errors.New("更新失败")
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // UpdateUser 更新用户信息
-func UpdateUser(id uint, data common.UpdateForm) (*common.Response, error) {
+func UpdateUser(id uint, data forms.UpdateForm) (*responses.Response, error) {
 	user, err := dao.GetUserById(id)
 	if err != nil {
 		return nil, errors.New("获取用户失败")
@@ -101,11 +102,11 @@ func UpdateUser(id uint, data common.UpdateForm) (*common.Response, error) {
 		return nil, errors.New("更新失败")
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // ResetPassUser 重置密码
-func ResetPassUser(id uint, password string) (*common.Response, error) {
+func ResetPassUser(id uint, password string) (*responses.Response, error) {
 	// 获取用户
 	user, err := dao.GetUserById(id)
 	if err != nil {
@@ -123,7 +124,7 @@ func ResetPassUser(id uint, password string) (*common.Response, error) {
 		return nil, errors.New("更新失败")
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 func CreatePWD(n int) string {

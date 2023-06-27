@@ -1,7 +1,8 @@
 package login
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/forms"
+	"Kube-CC/common/responses"
 	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
@@ -11,17 +12,17 @@ import (
 
 // CheckPass 验证密码
 func CheckPass(c *gin.Context) {
-	loginForm := common.LoginForm{}
+	loginForm := forms.LoginForm{}
 	// 参数绑定
 	if err := c.ShouldBind(&loginForm); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 
 	// 调用业务层登录
 	loginRes, err := service.Login(loginForm.Username, loginForm.Password)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: 0, // 返回0，前端不弹出错误提示框
 			StatusMsg:  err.Error(),
 		})
@@ -33,17 +34,17 @@ func CheckPass(c *gin.Context) {
 
 // Login 用户登录
 func Login(c *gin.Context) {
-	loginForm := common.LoginForm{}
+	loginForm := forms.LoginForm{}
 	// 参数绑定
 	if err := c.ShouldBind(&loginForm); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 
 	// 调用业务层登录
 	loginRes, err := service.Login(loginForm.Username, loginForm.Password)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -55,21 +56,21 @@ func Login(c *gin.Context) {
 
 // Logout 用户登出
 func Logout(c *gin.Context) {
-	c.JSON(200, common.OK)
+	c.JSON(200, responses.OK)
 }
 
 // Register 用户注册
 func Register(c *gin.Context) {
 	//fmt.Println("register")
 	// 表单验证，参数绑定
-	registerForm := common.RegisterForm{}
+	registerForm := forms.RegisterForm{}
 	if err := c.ShouldBind(&registerForm); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	registerRes, err := service.Register(registerForm.Username, registerForm.Password, registerForm.Nickname)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})

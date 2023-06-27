@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
 	"k8s.io/api/extensions/v1beta1"
@@ -23,33 +23,33 @@ func CreateIngress(name, ns string, label map[string]string, spec v1beta1.Ingres
 }
 
 // GetIngress 获得指定namespace下的ingress
-func GetIngress(ns string, label string) (*common.IngressListResponse, error) {
+func GetIngress(ns string, label string) (*responses.IngressListResponse, error) {
 	list, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
 	num := len(list.Items)
-	ingressList := make([]common.Ingress, num)
+	ingressList := make([]responses.Ingress, num)
 	for i, ing := range list.Items {
-		tmp := common.Ingress{
+		tmp := responses.Ingress{
 			Name:      ing.Name,
 			Namespace: ing.Namespace,
 			Rules:     ing.Spec.Rules,
 		}
 		ingressList[i] = tmp
 	}
-	return &common.IngressListResponse{
-		Response:    common.OK,
+	return &responses.IngressListResponse{
+		Response:    responses.OK,
 		Length:      num,
 		IngressList: ingressList,
 	}, nil
 }
 
 // DeleteIngress 删除指定ingress
-func DeleteIngress(name, ns string) (*common.Response, error) {
+func DeleteIngress(name, ns string) (*responses.Response, error) {
 	err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }

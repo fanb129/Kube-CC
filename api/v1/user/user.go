@@ -1,7 +1,8 @@
 package user
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/forms"
+	"Kube-CC/common/responses"
 	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -11,12 +12,12 @@ import (
 func Info(c *gin.Context) {
 	uid, ok := c.Get("u_id")
 	if !ok {
-		c.JSON(http.StatusOK, common.NoUid)
+		c.JSON(http.StatusOK, responses.NoUid)
 		return
 	}
 	rsp, err := service.UserInfo(uid.(uint))
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -28,7 +29,7 @@ func Index(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Param("page"))
 	userListResponse, err := service.IndexUser(page)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -44,7 +45,7 @@ func Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	response, err := service.DeleteUSer(uint(id))
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -58,14 +59,14 @@ func Delete(c *gin.Context) {
 func Edit(c *gin.Context) {
 	//fmt.Println("useredit")
 	id, _ := strconv.Atoi(c.Param("id"))
-	form := common.EditForm{}
+	form := forms.EditForm{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	response, err := service.EditUser(uint(id), form.Role)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -78,14 +79,14 @@ func Edit(c *gin.Context) {
 // Update 更新用户信息
 func Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	form := common.UpdateForm{}
+	form := forms.UpdateForm{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	response, err := service.UpdateUser(uint(id), form)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})
@@ -98,14 +99,14 @@ func Update(c *gin.Context) {
 // ResetPass 重置密码
 func ResetPass(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	form := common.ResetPassForm{}
+	form := forms.ResetPassForm{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	response, err := service.ResetPassUser(uint(id), form.Password)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{
+		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
 			StatusMsg:  err.Error(),
 		})

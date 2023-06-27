@@ -1,7 +1,8 @@
 package node
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/forms"
+	"Kube-CC/common/responses"
 	"Kube-CC/service"
 	"Kube-CC/service/ssh"
 	"Kube-CC/service/ws"
@@ -13,7 +14,7 @@ import (
 func Index(c *gin.Context) {
 	nodeListResponse, err := service.GetNode("")
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
 		c.JSON(http.StatusOK, nodeListResponse)
 	}
@@ -25,9 +26,9 @@ func WsSsh(c *gin.Context) {
 }
 
 func Add(c *gin.Context) {
-	form := common.NodeAddForm{}
+	form := forms.NodeAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, common.ValidatorResponse(err))
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
 	nodes := make([]ssh.Config, len(form.Nodes))
@@ -43,7 +44,7 @@ func Add(c *gin.Context) {
 	}
 	rsp, err := service.CreateNode(nodes)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, rsp)
@@ -53,7 +54,7 @@ func Delete(c *gin.Context) {
 	node := c.Param("name")
 	rsp, err := service.DeleteNode(node)
 	if err != nil {
-		c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, rsp)

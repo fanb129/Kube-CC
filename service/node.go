@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"Kube-CC/service/ssh"
@@ -36,18 +36,18 @@ func createToken() (string, error) {
 }
 
 // GetNode 获得所有node
-func GetNode(label string) (*common.NodeListResponse, error) {
+func GetNode(label string) (*responses.NodeListResponse, error) {
 	nodes, err := dao.ClientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
 
 	num := len(nodes.Items)
-	nodeList := make([]common.Node, num)
+	nodeList := make([]responses.Node, num)
 	//遍历所有node实列
 	for i, node := range nodes.Items {
 
-		tmp := common.Node{
+		tmp := responses.Node{
 			Name:           node.Name,
 			Ip:             node.Status.Addresses[0].Address,
 			Ready:          node.Status.Conditions[len(node.Status.Conditions)-1].Status,
@@ -59,11 +59,11 @@ func GetNode(label string) (*common.NodeListResponse, error) {
 		}
 		nodeList[i] = tmp
 	}
-	return &common.NodeListResponse{Response: common.OK, Length: num, NodeList: nodeList}, nil
+	return &responses.NodeListResponse{Response: responses.OK, Length: num, NodeList: nodeList}, nil
 }
 
 // CreateNode 添加node
-func CreateNode(configs []ssh.Config) (*common.Response, error) {
+func CreateNode(configs []ssh.Config) (*responses.Response, error) {
 	//node := corev1.Node{
 	//	ObjectMeta: metav1.ObjectMeta{
 	//		Name: name,
@@ -74,7 +74,7 @@ func CreateNode(configs []ssh.Config) (*common.Response, error) {
 	//	return nil, err
 	//}
 	//fmt.Println(create)
-	//return &common.OK, nil
+	//return &responses.OK, nil
 	token, err := createToken()
 	if err != nil {
 		zap.S().Errorln(err)
@@ -101,14 +101,14 @@ func CreateNode(configs []ssh.Config) (*common.Response, error) {
 		}(config)
 	}
 	group.Wait()
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // DeleteNode 删除node节点
-func DeleteNode(name string) (*common.Response, error) {
+func DeleteNode(name string) (*responses.Response, error) {
 	err := dao.ClientSet.CoreV1().Nodes().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }

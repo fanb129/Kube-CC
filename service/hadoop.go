@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,7 +28,7 @@ const (
 )
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
-func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
 	ns := "hadoop-" + string(uuid.NewUUID())
 	label := map[string]string{
 		"image": "hadoop",
@@ -371,11 +371,11 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 		return nil, err
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // GetHadoop 获取uid下的所有hadoop
-func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
+func GetHadoop(u_id uint) (*responses.HadoopListResponse, error) {
 	label := map[string]string{
 		"image": "hadoop",
 	}
@@ -388,7 +388,7 @@ func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	hadoopList := make([]common.Hadoop, hadoops.Length)
+	hadoopList := make([]responses.Hadoop, hadoops.Length)
 	for i, hadoop := range hadoops.NsList {
 		// 获取pod
 		podList, err := GetPod(hadoop.Name, "")
@@ -419,7 +419,7 @@ func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 		if err != nil {
 			return nil, err
 		}
-		hadoopList[i] = common.Hadoop{
+		hadoopList[i] = responses.Hadoop{
 			Name:               hadoop.Name,
 			Uid:                u_id,
 			Username:           hadoop.Username,
@@ -440,15 +440,15 @@ func GetHadoop(u_id uint) (*common.HadoopListResponse, error) {
 			UsedMemory:         hadoop.UsedMemory,
 		}
 	}
-	return &common.HadoopListResponse{
-		Response:   common.OK,
+	return &responses.HadoopListResponse{
+		Response:   responses.OK,
 		Length:     hadoops.Length,
 		HadoopList: hadoopList,
 	}, nil
 }
 
 // DeleteHadoop 删除指定hadoop
-func DeleteHadoop(ns string) (*common.Response, error) {
+func DeleteHadoop(ns string) (*responses.Response, error) {
 	var err1 error
 	if _, err := DeleteService(hadoopYarnNodeServiceName, ns); err != nil {
 		err1 = err
@@ -480,11 +480,11 @@ func DeleteHadoop(ns string) (*common.Response, error) {
 	if err1 != nil {
 		return nil, err1
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // UpdateHadoop 更新hadoop的uid，以及replicas
-func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, cpu, memory string) (*common.Response, error) {
+func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
 	if _, err := UpdateNs(name, uid, expiredTime, cpu, memory, int(hdfsMasterReplicas+datanodeReplicas+yarnMasterReplicas+yarnNodeReplicas)); err != nil {
 		return nil, err
 	}
@@ -529,5 +529,5 @@ func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMa
 		return nil, err
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }

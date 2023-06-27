@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"context"
@@ -33,15 +33,15 @@ func CreateService(name, ns string, label map[string]string, spec corev1.Service
 }
 
 // GetService 获得指定ns下的service
-func GetService(ns string, label string) (*common.ServiceListResponse, error) {
+func GetService(ns string, label string) (*responses.ServiceListResponse, error) {
 	list, err := dao.ClientSet.CoreV1().Services(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
 	num := len(list.Items)
-	serviceList := make([]common.Service, num)
+	serviceList := make([]responses.Service, num)
 	for i, sc := range list.Items {
-		tmp := common.Service{
+		tmp := responses.Service{
 			Name:      sc.Name,
 			Namespace: sc.Namespace,
 			CreatedAt: sc.CreationTimestamp.Format("2006-01-02 15:04:05"),
@@ -53,23 +53,23 @@ func GetService(ns string, label string) (*common.ServiceListResponse, error) {
 		}
 		serviceList[i] = tmp
 	}
-	return &common.ServiceListResponse{Response: common.OK, Length: num, ServiceList: serviceList}, nil
+	return &responses.ServiceListResponse{Response: responses.OK, Length: num, ServiceList: serviceList}, nil
 }
 
 // DeleteService 删除指定service
-func DeleteService(name, ns string) (*common.Response, error) {
+func DeleteService(name, ns string) (*responses.Response, error) {
 	err := dao.ClientSet.CoreV1().Services(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // UpdateService 更新service
-func UpdateService(service *corev1.Service) (*common.Response, error) {
+func UpdateService(service *corev1.Service) (*responses.Response, error) {
 	_, err := dao.ClientSet.CoreV1().Services(service.Namespace).Update(context.Background(), service, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }

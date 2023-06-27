@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
@@ -116,7 +116,7 @@ func JWTToken() gin.HandlerFunc {
 		var ok bool
 		// 提取token，若不存在
 		if token, ok = getToken(c); !ok {
-			c.JSON(http.StatusUnauthorized, common.NoToken)
+			c.JSON(http.StatusUnauthorized, responses.NoToken)
 			c.Abort()
 			return
 		}
@@ -127,12 +127,12 @@ func JWTToken() gin.HandlerFunc {
 		if err != nil {
 			// token过期
 			if err == TokenExpired {
-				c.JSON(http.StatusUnauthorized, common.TokenExpired)
+				c.JSON(http.StatusUnauthorized, responses.TokenExpired)
 				c.Abort()
 				return
 			}
 			// 其他错误(不是一个token）
-			c.JSON(http.StatusUnauthorized, common.NoToken)
+			c.JSON(http.StatusUnauthorized, responses.NoToken)
 			c.Abort()
 			return
 		}

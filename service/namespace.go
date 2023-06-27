@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
 	"go.uber.org/zap"
@@ -13,13 +13,13 @@ import (
 )
 
 // GetNs 获取所有namespace
-func GetNs(label string) (*common.NsListResponse, error) {
+func GetNs(label string) (*responses.NsListResponse, error) {
 	namespace, err := dao.ClientSet.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
 	num := len(namespace.Items)
-	namespaceList := make([]common.Ns, num)
+	namespaceList := make([]responses.Ns, num)
 	for i, ns := range namespace.Items {
 		//if ns.Name == "default" || ns.Name == "kube-node-lease" || ns.Name == "kube-public" || ns.Name == "kube-system" {
 		//	continue
@@ -67,7 +67,7 @@ func GetNs(label string) (*common.NsListResponse, error) {
 			usedMemory = usedLimitsMemory.String()
 		}
 
-		tmp := common.Ns{
+		tmp := responses.Ns{
 			Name:        ns.Name,
 			Status:      ns.Status.Phase,
 			CreatedAt:   ns.CreationTimestamp.Format("2006-01-02 15:04:05"),
@@ -82,11 +82,11 @@ func GetNs(label string) (*common.NsListResponse, error) {
 		}
 		namespaceList[i] = tmp
 	}
-	return &common.NsListResponse{Response: common.OK, Length: num, NsList: namespaceList}, nil
+	return &responses.NsListResponse{Response: responses.OK, Length: num, NsList: namespaceList}, nil
 }
 
 // CreateNs 新建属于指定用户的namespace，u_id == 0 则不添加标签
-func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu, memory string, n int) (*common.Response, error) {
+func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu, memory string, n int) (*responses.Response, error) {
 	ns := corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
@@ -129,11 +129,11 @@ func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu,
 		}
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // DeleteNs 删除指定namespace
-func DeleteNs(name string) (*common.Response, error) {
+func DeleteNs(name string) (*responses.Response, error) {
 	err := dao.ClientSet.CoreV1().Namespaces().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
@@ -141,11 +141,11 @@ func DeleteNs(name string) (*common.Response, error) {
 	if err = DeleteTtl(name); err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
 
 // UpdateNs 分配namespace
-func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n int) (*common.Response, error) {
+func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n int) (*responses.Response, error) {
 	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 	ns := get.Name
 	// 未改变
 	//if get.Labels["u_id"] == uid {
-	//	return &common.OK, nil
+	//	return &responses.OK, nil
 	//}
 
 	if get.Labels["u_id"] != uid {
@@ -253,5 +253,5 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 		}
 	}
 
-	return &common.OK, nil
+	return &responses.OK, nil
 }

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"Kube-CC/common"
+	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
 	corev1 "k8s.io/api/core/v1"
@@ -27,10 +27,10 @@ func CreateConfigMap(name, ns string, label, data map[string]string) (*corev1.Co
 }
 
 // DeleteConfigMap 删除指定namespace的configMap
-func DeleteConfigMap(name, ns string) (*common.Response, error) {
+func DeleteConfigMap(name, ns string) (*responses.Response, error) {
 	err := dao.ClientSet.CoreV1().ConfigMaps(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &common.OK, nil
+	return &responses.OK, nil
 }
