@@ -1,3 +1,5 @@
+// 暂时未使用mysql中的namespace表
+
 package dao
 
 import "Kube-CC/models"
