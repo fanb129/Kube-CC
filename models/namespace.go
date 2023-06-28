@@ -2,6 +2,7 @@ package models
 
 import "gorm.io/gorm"
 
+// Namespace 暂时未使用
 type Namespace struct {
 	gorm.Model
 	Uid   uint `gorm:"not null;index"`
