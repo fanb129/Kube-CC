@@ -33,7 +33,7 @@ func InitDB() (err error) {
 		panic(err)
 		return
 	}
-	err = mysqlDb.AutoMigrate(&models.User{}, &models.Ttl{}) // 数据库自动迁移
+	err = mysqlDb.AutoMigrate(&models.User{}, &models.Ttl{}, &models.Group{}) // 数据库自动迁移
 	if err != nil {
 		zap.S().Errorln("数据库自动迁移失败，err:", err)
 		panic(err)
