@@ -167,69 +167,92 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 			return nil, err
 		}
 
-		// 更新namespace下所有deploy的uid
-		deployList, err := GetDeploy(ns, "")
-		if err == nil {
-			for i := 0; i < deployList.Length; i++ {
-				name := deployList.DeployList[i].Name
-				deployment, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
-				if err != nil {
-					return nil, err
+		/*		// 更新namespace下所有deploy的uid
+				deployList, err := GetDeploy(ns, "")
+				if err == nil {
+					for i := 0; i < deployList.Length; i++ {
+						name := deployList.DeployList[i].Name
+						deployment, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
+						if err != nil {
+							return nil, err
+						}
+						if uid == "" {
+							//delete(deployment.Labels, "u_id")
+							delete(deployment.Spec.Template.Labels, "u_id")
+						} else {
+							deployment.Labels["u_id"] = uid
+							deployment.Spec.Template.Labels["u_id"] = uid
+						}
+						if _, err := UpdateDeploy(deployment); err != nil {
+							return nil, err
+						}
+					}
 				}
-				if uid == "" {
-					delete(deployment.Labels, "u_id")
-					delete(deployment.Spec.Template.Labels, "u_id")
-				} else {
-					deployment.Labels["u_id"] = uid
-					deployment.Spec.Template.Labels["u_id"] = uid
+				// 更新namespace下所有statefulSet的uid
+				statefulSetlist, err := GetStatefulSet(ns, "")
+				if err == nil {
+					for i := 0; i < statefulSetlist.Length; i++ {
+						name := statefulSetlist.StatefulSetList[i].Name
+						statefulSet, err := dao.ClientSet.AppsV1().StatefulSets(ns).Get(context.Background(), name, metav1.GetOptions{})
+						if err != nil {
+							return nil, err
+						}
+						if uid == "" {
+							delete(statefulSet.Labels, "u_id")
+							delete(statefulSet.Spec.Template.Labels, "u_id")
+						} else {
+							statefulSet.Labels["u_id"] = uid
+							statefulSet.Spec.Template.Labels["u_id"] = uid
+						}
+						if _, err := UpdateStatefulSet(statefulSet); err != nil {
+							return nil, err
+						}
+					}
 				}
-				if _, err := UpdateDeploy(deployment); err != nil {
-					return nil, err
-				}
-			}
-		}
 
-		// 更新namespace下所有service的uid
-		serviceList, err := GetService(ns, "")
-		if err == nil {
-			for i := 0; i < serviceList.Length; i++ {
-				name := serviceList.ServiceList[i].Name
-				service, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{})
-				if err != nil {
-					return nil, err
-				}
-				if uid == "" {
-					delete(service.Labels, "u_id")
-				} else {
-					service.Labels["u_id"] = uid
-				}
-				if _, err := UpdateService(service); err != nil {
-					return nil, err
-				}
-			}
-		}
 
-		// 更新namespace下所有pod的uid
-		podList, err := GetPod(ns, "")
-		if err == nil {
-			for i := 0; i < podList.Length; i++ {
-				name := podList.PodList[i].Name
-				pod, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
-				if err != nil {
-					return nil, err
+
+				// 更新namespace下所有service的uid
+				serviceList, err := GetService(ns, "")
+				if err == nil {
+					for i := 0; i < serviceList.Length; i++ {
+						name := serviceList.ServiceList[i].Name
+						service, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{})
+						if err != nil {
+							return nil, err
+						}
+						if uid == "" {
+							delete(service.Labels, "u_id")
+						} else {
+							service.Labels["u_id"] = uid
+						}
+						if _, err := UpdateService(service); err != nil {
+							return nil, err
+						}
+					}
 				}
-				if uid == "" {
-					delete(pod.Labels, "u_id")
-				} else {
-					pod.Labels["u_id"] = uid
+
+				// 更新namespace下所有pod的uid
+				podList, err := GetPod(ns, "")
+				if err == nil {
+					for i := 0; i < podList.Length; i++ {
+						name := podList.PodList[i].Name
+						pod, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
+						if err != nil {
+							return nil, err
+						}
+						if uid == "" {
+							delete(pod.Labels, "u_id")
+						} else {
+							pod.Labels["u_id"] = uid
+						}
+						if _, err := UpdatePod(pod); err != nil {
+							return nil, err
+						}
+					}
 				}
-				if _, err := UpdatePod(pod); err != nil {
-					return nil, err
-				}
-			}
-		}
+		*/
 	}
-
 	//更新resourceQuota
 	quota, err := GetResourceQuota(ns)
 	if err != nil {

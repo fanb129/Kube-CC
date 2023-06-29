@@ -64,6 +64,15 @@ func Apply(c *gin.Context) {
 			goto END
 		}
 		goto SUCCESS
+	case "statefulSet", "StatefulSet", "sts", "STS":
+		statefulSet := appsv1.StatefulSet{}
+		if err = json.Unmarshal(jsonYaml, &statefulSet); err != nil {
+			goto END
+		}
+		if _, err = yamlApply.StatefulSetApply(&statefulSet); err != nil {
+			goto END
+		}
+		goto SUCCESS
 	case "Service", "service":
 		svc := corev1.Service{}
 		if err = json.Unmarshal(jsonYaml, &svc); err != nil {
