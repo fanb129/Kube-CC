@@ -18,13 +18,13 @@ func GetADeploy(name, ns string) (*appsv1.Deployment, error) {
 }
 
 // CreateDeploy 创建自定义控制器
-func CreateDeploy(name, ns string, label map[string]string, spec appsv1.DeploymentSpec) (*appsv1.Deployment, error) {
+func CreateDeploy(name, ns string, spec appsv1.DeploymentSpec) (*appsv1.Deployment, error) { //此处去掉形参”label map[string]string“
 	rs := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
-			Labels:    label,
+			//Labels:    label,
 		},
 		Spec: spec,
 	}
