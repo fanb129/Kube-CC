@@ -1,6 +1,7 @@
 package service
 
 import (
+	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
@@ -86,7 +87,7 @@ func GetNs(label string) (*responses.NsListResponse, error) {
 }
 
 // CreateNs 新建属于指定用户的namespace，u_id == 0 则不添加标签
-func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu, memory string, n int) (*responses.Response, error) {
+func CreateNs(name string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
 	ns := corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
@@ -101,11 +102,11 @@ func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu,
 		Hard: corev1.ResourceList{
 			// CPU, in cores. (500m = .5 cores)
 			//corev1.ResourceRequestsCPU: resource.MustParse("100m"),
-			corev1.ResourceLimitsCPU: resource.MustParse(cpu),
+			corev1.ResourceLimitsCPU: resource.MustParse(resources.Cpu),
 
 			// Memory, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
 			//corev1.ResourceRequestsMemory: resource.MustParse("100Mi"),
-			corev1.ResourceLimitsMemory: resource.MustParse(memory),
+			corev1.ResourceLimitsMemory: resource.MustParse(resources.Memory),
 
 			// Volume size, in bytes (e,g. 5Gi = 5GiB = 5 * 1024 * 1024 * 1024)
 			//corev1.ResourceRequestsStorage: resource.MustParse("100m"),
@@ -118,9 +119,9 @@ func CreateNs(name string, expiredTime *time.Time, label map[string]string, cpu,
 		return nil, err
 	}
 
-	if err = CreateLimitRange(name, cpu, memory, n); err != nil {
-		return nil, err
-	}
+	//if err = CreateLimitRange(name, cpu, memory, n); err != nil {
+	//	return nil, err
+	//}
 
 	// 创建ttl
 	if expiredTime != nil {
@@ -145,7 +146,7 @@ func DeleteNs(name string) (*responses.Response, error) {
 }
 
 // UpdateNs 分配namespace
-func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n int) (*responses.Response, error) {
+func UpdateNs(name, uid string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
 	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -168,66 +169,66 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 		}
 
 		// 更新namespace下所有deploy的uid
-		deployList, err := GetDeploy(ns, "")
-		if err == nil {
-			for i := 0; i < deployList.Length; i++ {
-				name := deployList.DeployList[i].Name
-				deployment, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
-				if err != nil {
-					return nil, err
-				}
-				if uid == "" {
-					delete(deployment.Labels, "u_id")
-					delete(deployment.Spec.Template.Labels, "u_id")
-				} else {
-					deployment.Labels["u_id"] = uid
-					deployment.Spec.Template.Labels["u_id"] = uid
-				}
-				if _, err := UpdateDeploy(deployment); err != nil {
-					return nil, err
-				}
-			}
-		}
+		//deployList, err := GetDeploy(ns, "")
+		//if err == nil {
+		//	for i := 0; i < deployList.Length; i++ {
+		//		name := deployList.DeployList[i].Name
+		//		deployment, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
+		//		if err != nil {
+		//			return nil, err
+		//		}
+		//		if uid == "" {
+		//			delete(deployment.Labels, "u_id")
+		//			delete(deployment.Spec.Template.Labels, "u_id")
+		//		} else {
+		//			deployment.Labels["u_id"] = uid
+		//			deployment.Spec.Template.Labels["u_id"] = uid
+		//		}
+		//		if _, err := UpdateDeploy(deployment); err != nil {
+		//			return nil, err
+		//		}
+		//	}
+		//}
 
 		// 更新namespace下所有service的uid
-		serviceList, err := GetService(ns, "")
-		if err == nil {
-			for i := 0; i < serviceList.Length; i++ {
-				name := serviceList.ServiceList[i].Name
-				service, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{})
-				if err != nil {
-					return nil, err
-				}
-				if uid == "" {
-					delete(service.Labels, "u_id")
-				} else {
-					service.Labels["u_id"] = uid
-				}
-				if _, err := UpdateService(service); err != nil {
-					return nil, err
-				}
-			}
-		}
+		//serviceList, err := GetService(ns, "")
+		//if err == nil {
+		//	for i := 0; i < serviceList.Length; i++ {
+		//		name := serviceList.ServiceList[i].Name
+		//		service, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{})
+		//		if err != nil {
+		//			return nil, err
+		//		}
+		//		if uid == "" {
+		//			delete(service.Labels, "u_id")
+		//		} else {
+		//			service.Labels["u_id"] = uid
+		//		}
+		//		if _, err := UpdateService(service); err != nil {
+		//			return nil, err
+		//		}
+		//	}
+		//}
 
 		// 更新namespace下所有pod的uid
-		podList, err := GetPod(ns, "")
-		if err == nil {
-			for i := 0; i < podList.Length; i++ {
-				name := podList.PodList[i].Name
-				pod, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
-				if err != nil {
-					return nil, err
-				}
-				if uid == "" {
-					delete(pod.Labels, "u_id")
-				} else {
-					pod.Labels["u_id"] = uid
-				}
-				if _, err := UpdatePod(pod); err != nil {
-					return nil, err
-				}
-			}
-		}
+		//podList, err := GetPod(ns, "")
+		//if err == nil {
+		//	for i := 0; i < podList.Length; i++ {
+		//		name := podList.PodList[i].Name
+		//		pod, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
+		//		if err != nil {
+		//			return nil, err
+		//		}
+		//		if uid == "" {
+		//			delete(pod.Labels, "u_id")
+		//		} else {
+		//			pod.Labels["u_id"] = uid
+		//		}
+		//		if _, err := UpdatePod(pod); err != nil {
+		//			return nil, err
+		//		}
+		//	}
+		//}
 	}
 
 	//更新resourceQuota
@@ -235,16 +236,16 @@ func UpdateNs(name, uid string, expiredTime *time.Time, cpu, memory string, n in
 	if err != nil {
 		return nil, err
 	}
-	quota.Spec.Hard[corev1.ResourceLimitsCPU] = resource.MustParse(cpu)
-	quota.Spec.Hard[corev1.ResourceLimitsMemory] = resource.MustParse(memory)
+	quota.Spec.Hard[corev1.ResourceLimitsCPU] = resource.MustParse(resources.Cpu)
+	quota.Spec.Hard[corev1.ResourceLimitsMemory] = resource.MustParse(resources.Memory)
 	if err = UpdateResourceQuota(ns, quota); err != nil {
 		return nil, err
 	}
 
 	// 更新limitRange
-	if err = UpdateLimitRange(ns, cpu, memory, n); err != nil {
-		return nil, err
-	}
+	//if err = UpdateLimitRange(ns, cpu, memory, n); err != nil {
+	//	return nil, err
+	//}
 
 	// ttl
 	if expiredTime != nil {
