@@ -12,7 +12,7 @@ type User struct {
 	Avatar   string `gorm:"type:varchar(100)"`               // 头像地址
 
 	Role    uint `gorm:"not null;default:1"` // 权限状态 1普通用户 2组管理员 3超级管理员
-	GroupId uint // 所属组
+	GroupId uint `gorm:"not null;default:0"` // 所属组
 }
 
 //func (u *User) Create
