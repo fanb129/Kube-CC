@@ -29,6 +29,27 @@ func GetGroupUserList(page int, pageSize int, groupid uint) ([]models.User, int,
 	return users, int(total), nil
 }
 
+// GetGroupList 分页返回组列表(page第几页,pageSize每页几条数据)
+func GetGroupList(page int, pageSize int) ([]models.Group, int, error) {
+	var groups []models.Group
+	var total int64
+	mysqlDb.Find(&groups).Count(&total)
+	// 计算偏移量 Offset指定开始返回记录前要跳过的记录数。
+	offset := (page - 1) * pageSize
+	// 查看所有的user
+	result := mysqlDb.Offset(offset).Limit(pageSize).Find(&groups)
+
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+	//r := 0
+	//if int(total)%pageSize != 0 {
+	//	r = 1
+	//}
+	//return users, int(total)/pageSize + r, nil
+	return groups, int(total), nil
+}
+
 // GetGroupById 通过id获取group
 func GetGroupById(id uint) (*models.Group, error) {
 	group := models.Group{}
@@ -85,7 +106,7 @@ func UpdateUnscopedGroup(g *models.Group) (int, error) {
 	return int(rs.RowsAffected), rs.Error
 }
 
-// UpdateUserWithNil 更新user,包括零值
+// UpdateGroupWithNil 更新group,包括零值
 func UpdateGroupWithNil(g *models.Group) (int, error) {
 	result := mysqlDb.Save(g)
 	// result := mysqlDb.Model(g).Updates(models.Group{
@@ -96,7 +117,7 @@ func UpdateGroupWithNil(g *models.Group) (int, error) {
 	return int(result.RowsAffected), result.Error
 }
 
-// UpdateUser 更新user,零值不会更新
+// UpdateUser 更新Group,零值不会更新
 func UpdateGroup(g *models.Group) (int, error) {
 	result := mysqlDb.Model(g).Updates(models.Group{
 		Name:        g.Name,

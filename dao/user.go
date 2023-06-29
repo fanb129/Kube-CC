@@ -4,6 +4,8 @@ import (
 	"Kube-CC/models"
 
 	"gorm.io/gorm"
+
+	"regexp"
 )
 
 // GetUserList 分页返回用户列表(page第几页,pageSize每页几条数据)
@@ -139,4 +141,11 @@ func UpdateUser(u *models.User) (int, error) {
 		Avatar:   u.Avatar,
 	})
 	return int(result.RowsAffected), result.Error
+}
+
+// 匹配邮箱 <<新增>>
+func VerifyEmailFormat(email string) bool {
+	pattern := `\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*`
+	reg := regexp.MustCompile(pattern)
+	return reg.MatchString(email)
 }

@@ -58,7 +58,7 @@ func Add(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.CreateNs(form.Name, form.ExpiredTime, label, form.Cpu, form.Memory, form.Num)
+	response, err := service.CreateNs(form.Name, form.ExpiredTime, label, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
@@ -84,7 +84,7 @@ func Update(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.UpdateNs(form.Name, uid, form.ExpiredTime, form.Cpu, form.Memory, form.Num)
+	response, err := service.UpdateNs(form.Name, uid, form.ExpiredTime, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})

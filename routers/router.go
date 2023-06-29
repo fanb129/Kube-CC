@@ -41,6 +41,9 @@ func InitRouter() *gin.Engine {
 	// deploy路由
 	deployRouter(auth)
 
+	// statefulSet路由
+	statefulSetRouter(auth)
+
 	// service路由
 	serviceRouter(auth)
 

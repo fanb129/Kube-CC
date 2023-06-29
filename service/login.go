@@ -2,6 +2,7 @@ package service
 
 import (
 	"Kube-CC/common/responses"
+	"Kube-CC/models"
 	"errors"
 	"time"
 
@@ -16,17 +17,17 @@ import (
 // <<修改>>
 func Login(usernameoremail, password string) (*responses.LoginResponse, error) {
 	//分别通过用户名和邮箱查找用户
-	usern, errn := dao.GetUserByName(usernameoremail)
-	usere, erre := dao.GetUserByEmail(usernameoremail)
-	if errn != nil && erre != nil {
-		return nil, errors.New("获取用户失败")
+	var (
+		user *models.User
+		err  error
+	)
+	if dao.VerifyEmailFormat(usernameoremail) {
+		user, err = dao.GetUserByEmail(usernameoremail)
+	} else {
+		user, err = dao.GetUserByName(usernameoremail)
 	}
-	// 找到用户信息
-	user := usern
-	err := errn
-	if errn != nil {
-		user = usere
-		err = erre
+	if err != nil {
+		return nil, errors.New("获取用户失败")
 	}
 	// 验证密码
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
