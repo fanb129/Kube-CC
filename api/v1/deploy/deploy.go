@@ -4,23 +4,22 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
-	"k8s.io/apimachinery/pkg/labels"
 	"net/http"
 )
 
 // Index 展示所有deploy
 func Index(c *gin.Context) {
 	ns := c.DefaultQuery("ns", "")
-	u_id := c.DefaultQuery("u_id", "")
-	selector := ""
-	if u_id != "" {
-		label := map[string]string{
-			"u_id": u_id,
-		}
-		// 将map标签转换为string
-		selector = labels.SelectorFromSet(label).String()
-	}
-	deployListResponse, err := service.GetDeploy(ns, selector)
+	//u_id := c.DefaultQuery("u_id", "")
+	//selector := ""
+	//if u_id != "" {
+	//	label := map[string]string{
+	//		"u_id": u_id,
+	//	}
+	//	// 将map标签转换为string
+	//	selector = labels.SelectorFromSet(label).String()
+	//}
+	deployListResponse, err := service.GetDeploy(ns, "")
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {

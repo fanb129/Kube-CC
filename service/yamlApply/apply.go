@@ -48,7 +48,7 @@ func DeployApply(deploy *appsv1.Deployment) (*responses.Response, error) {
 			if err != nil {
 				return nil, err
 			}
-			if _, err := service.CreateDeploy(name, ns, deploy.Spec); err != nil {
+			if _, err := service.CreateDeploy(name, ns, labels, deploy.Spec); err != nil {
 				return nil, err
 			}
 			return &responses.OK, nil

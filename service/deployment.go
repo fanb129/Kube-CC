@@ -18,13 +18,13 @@ func GetADeploy(name, ns string) (*appsv1.Deployment, error) {
 }
 
 // CreateDeploy 创建自定义控制器
-func CreateDeploy(name, ns string, spec appsv1.DeploymentSpec) (*appsv1.Deployment, error) { //此处去掉形参”label map[string]string“
+func CreateDeploy(name, ns string, label map[string]string, spec appsv1.DeploymentSpec) (*appsv1.Deployment, error) {
 	rs := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
-			//Labels:    label,
+			Labels:    label,
 		},
 		Spec: spec,
 	}
@@ -49,7 +49,7 @@ func GetDeploy(ns, label string) (*responses.DeployListResponse, error) {
 			UpdatedReplicas:   deploy.Status.UpdatedReplicas,
 			ReadyReplicas:     deploy.Status.ReadyReplicas,
 			AvailableReplicas: deploy.Status.AvailableReplicas,
-			Uid:               deploy.Labels["u_id"],
+			//Uid:               deploy.Labels["u_id"],
 			//SshPwd:        deploy.Spec.Template.Spec.Containers[0].Args[0],
 			//SshPwd: deploy.Spec.Template.Spec.Containers[0].Env[0].Value,
 		}
