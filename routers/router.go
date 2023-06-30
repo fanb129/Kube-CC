@@ -5,6 +5,7 @@ import (
 	"Kube-CC/api/v1/pod"
 	"Kube-CC/conf"
 	"Kube-CC/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,6 +32,9 @@ func InitRouter() *gin.Engine {
 
 	//用户路由
 	userRouter(auth)
+
+	//组路由
+	groupRouter(auth)
 
 	// node路由
 	nodeRouter(auth)
