@@ -9,8 +9,7 @@ type HadoopAddForm struct {
 	YarnMasterReplicas int32      `forms:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1,lte=3"`
 	YarnNodeReplicas   int32      `forms:"yarn_node_replicas" json:"yarn_node_replicas" binding:"required,gte=2,lte=10"`
 	ExpiredTime        *time.Time `forms:"expired_time" json:"expired_time"`
-	Cpu                string     `json:"cpu" forms:"cpu" binding:"required"`
-	Memory             string     `json:"memory" forms:"memory" binding:"required"`
+	Resources
 }
 
 // BatchHadoopAddForm 批量添加
@@ -21,8 +20,7 @@ type BatchHadoopAddForm struct {
 	YarnMasterReplicas int32      `forms:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1,lte=3"`
 	YarnNodeReplicas   int32      `forms:"yarn_node_replicas" json:"yarn_node_replicas" binding:"required,gte=2,lte=10"`
 	ExpiredTime        *time.Time `forms:"expired_time" json:"expired_time"`
-	Cpu                string     `json:"cpu" forms:"cpu" binding:"required"`
-	Memory             string     `json:"memory" forms:"memory" binding:"required"`
+	Resources
 }
 
 type HadoopUpdateForm struct {
@@ -33,6 +31,5 @@ type HadoopUpdateForm struct {
 	YarnMasterReplicas int32      `forms:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1,lte=3"`
 	YarnNodeReplicas   int32      `forms:"yarn_node_replicas" json:"yarn_node_replicas" binding:"required,gte=2,lte=10"`
 	ExpiredTime        *time.Time `forms:"expired_time" json:"expired_time"`
-	Cpu                string     `json:"cpu" forms:"cpu" binding:"required"`
-	Memory             string     `json:"memory" forms:"memory" binding:"required"`
+	Resources
 }

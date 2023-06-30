@@ -46,7 +46,7 @@ func Add(c *gin.Context) {
 		return
 	}
 
-	res, err := service.CreateHadoop(form.Uid, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.Cpu, form.Memory)
+	res, err := service.CreateHadoop(form.Uid, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.Resources)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -82,7 +82,7 @@ func Update(c *gin.Context) {
 	if form.Uid != 0 {
 		uid = strconv.Itoa(int(form.Uid))
 	}
-	res, err := service.UpdateHadoop(form.Name, uid, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.Cpu, form.Memory)
+	res, err := service.UpdateHadoop(form.Name, uid, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.Resources)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -106,7 +106,7 @@ func BatchAdd(c *gin.Context) {
 	group.Add(len(ids))
 	for _, id := range ids {
 		go func(id uint) {
-			if _, err := service.CreateHadoop(id, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.Cpu, form.Memory); err != nil {
+			if _, err := service.CreateHadoop(id, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.Resources); err != nil {
 				zap.S().Errorln(err)
 			}
 			group.Done()
