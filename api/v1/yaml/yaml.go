@@ -82,6 +82,15 @@ func Apply(c *gin.Context) {
 			goto END
 		}
 		goto SUCCESS
+	case "Job", "job":
+		job := corev1.Pod{}
+		if err = json.Unmarshal(jsonYaml, &job); err != nil {
+			goto END
+		}
+		if _, err = yamlApply.JobApply(&job); err != nil {
+			goto END
+		}
+		goto SUCCESS
 	case "Pod", "pod":
 		pod := corev1.Pod{}
 		if err = json.Unmarshal(jsonYaml, &pod); err != nil {
