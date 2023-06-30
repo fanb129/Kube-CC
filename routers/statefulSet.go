@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"Kube-CC/api/v1/statefulSet"
+	"Kube-CC/api/v2/statefulSet"
 	"github.com/gin-gonic/gin"
 )
 
