@@ -59,5 +59,8 @@ func InitRouter() *gin.Engine {
 	// linux路由
 	linuxRouter(auth)
 
+	// docker路由
+	dockerRouter(auth)
+
 	return r
 }
