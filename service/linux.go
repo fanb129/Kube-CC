@@ -34,12 +34,15 @@ func CreateLinux(u_id, kind uint, expiredTime *time.Time, resources forms.Resour
 	label := map[string]string{
 		"image": linuxImage[kind-1],
 	}
+	nsLabel := map[string]string{
+		"image": linuxImage[kind-1],
+	}
 	if u_id != 0 {
 		uid := strconv.Itoa(int(u_id))
-		label["u_id"] = uid
+		nsLabel["u_id"] = uid
 	}
 	// 创建namespace
-	_, err := CreateNs(linuxImage[kind-1]+"-"+s, expiredTime, label, resources)
+	_, err := CreateNs(linuxImage[kind-1]+"-"+s, expiredTime, nsLabel, resources)
 	if err != nil {
 		return nil, err
 	}
