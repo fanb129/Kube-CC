@@ -60,6 +60,16 @@ func GetGroupById(id uint) (*models.Group, error) {
 	return &group, nil
 }
 
+// GetGroupUserById 通过id获取groupuser
+func GetGroupUserById(id uint) ([]models.User, error) {
+	users := []models.User{}
+	result := mysqlDb.Where("groupid = ?", id).Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
+
 // GetDeletedGroupByName 根据groupname查找软删除的group
 func GetDeletedGroupByName(name string) (*models.Group, error) {
 	group := models.Group{}

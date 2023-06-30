@@ -98,6 +98,13 @@ func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 
 // DeleteGroup  删除组
 func DeleteGroup(id uint) (*responses.Response, error) {
+	users, erru := dao.GetGroupUserById(id)
+	if erru != nil || users == nil {
+		return nil, errors.New("删除失败")
+	}
+	for _, v := range users {
+		v.GroupId = 0
+	}
 	row, err := dao.DeleteGroupById(id)
 	if err != nil || row == 0 {
 		return nil, errors.New("删除失败")

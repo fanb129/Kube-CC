@@ -17,7 +17,7 @@ func Info(c *gin.Context) {
 		return
 	}
 
-	rsp, err := docker.CreateImage(uid.(string))
+	rsp, err := docker.GetImage(uid.(string))
 
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
@@ -37,8 +37,8 @@ func Index(c *gin.Context) {
 			StatusMsg:  err.Error(),
 		})
 	}
-	return
 	c.JSON(http.StatusOK, imageListResponse)
+	return
 }
 
 // Delete 删除镜像信息
@@ -75,25 +75,32 @@ func Update(c *gin.Context) {
 }
 
 // TODO 后续完善备份镜像与拉取镜像的相关操作
-/*// Save备份镜像
-func Save(c *gin.Context) {
+// Save备份镜像
+/*func Save(c *gin.Context) {
 	id := c.Param("imageid")
 	form := forms.SaveForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	response, err := docker.SaveImage()
-}
+	response, err := docker.SaveImage(id)
+}*/
 
 // Pull拉取镜像
 func Pull(c *gin.Context) {
 	id := c.Param("imageid")
-	form := forms.PullForm{}
+	form := forms.PullSpecifiedForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	docker.PullImage()
+	response, err := docker.PullImage(id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
-*/
