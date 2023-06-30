@@ -49,7 +49,7 @@ func GetDeploy(ns, label string) (*responses.DeployListResponse, error) {
 			UpdatedReplicas:   deploy.Status.UpdatedReplicas,
 			ReadyReplicas:     deploy.Status.ReadyReplicas,
 			AvailableReplicas: deploy.Status.AvailableReplicas,
-			Uid:               deploy.Labels["u_id"],
+			//Uid:               deploy.Labels["u_id"],
 			//SshPwd:        deploy.Spec.Template.Spec.Containers[0].Args[0],
 			//SshPwd: deploy.Spec.Template.Spec.Containers[0].Env[0].Value,
 		}

@@ -2,7 +2,10 @@ package dao
 
 import (
 	"Kube-CC/models"
+
 	"gorm.io/gorm"
+
+	"regexp"
 )
 
 // GetUserList 分页返回用户列表(page第几页,pageSize每页几条数据)
@@ -46,10 +49,30 @@ func GetDeletedUserByName(name string) (*models.User, error) {
 	return &user, nil
 }
 
+// GetDeletedUserByEmail 根据email查找软删除的user <<新增>>
+func GetDeletedUserByEmail(email string) (*models.User, error) {
+	user := models.User{}
+	result := mysqlDb.Unscoped().Where("email = ?", email).First(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
+}
+
 // GetUserByName 通过name获取user
 func GetUserByName(name string) (*models.User, error) {
 	user := models.User{}
 	result := mysqlDb.Where("username = ?", name).First(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
+}
+
+// GetUserByEmail 通过Email获取user <<新增>>
+func GetUserByEmail(email string) (*models.User, error) {
+	user := models.User{}
+	result := mysqlDb.Where("email = ?", email).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -67,10 +90,20 @@ func DeleteUserById(id uint) (int, error) {
 	return int(result.RowsAffected), result.Error
 }
 
-// CreateUser 新增user
-func CreateUser(username, nickname, password string) (int, error) {
+// DeleteUserByEmail 根据email删除user <<新增>>
+func DeleteUserByEmail(email string) (int, error) {
+	user := models.User{
+		Email: email,
+	}
+	result := mysqlDb.Delete(&user)
+	return int(result.RowsAffected), result.Error
+}
+
+// CreateUser 新增user  <<修改>>
+func CreateUser(username, nickname, password, email string) (int, error) {
 	user := models.User{
 		Username: username,
+		Email:    email,
 		Nickname: nickname,
 		Password: password,
 	}
@@ -97,14 +130,22 @@ func UpdateUserWithNil(u *models.User) (int, error) {
 	return int(result.RowsAffected), result.Error
 }
 
-// UpdateUser 更新user,零值不会更新
+// UpdateUser 更新user,零值不会更新 <<修改>>
 func UpdateUser(u *models.User) (int, error) {
 	result := mysqlDb.Model(u).Updates(models.User{
 		Username: u.Username,
+		Email:    u.Email,
 		Nickname: u.Nickname,
 		Password: u.Password,
 		Role:     u.Role,
 		Avatar:   u.Avatar,
 	})
 	return int(result.RowsAffected), result.Error
+}
+
+// 匹配邮箱 <<新增>>
+func VerifyEmailFormat(email string) bool {
+	pattern := `\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*`
+	reg := regexp.MustCompile(pattern)
+	return reg.MatchString(email)
 }

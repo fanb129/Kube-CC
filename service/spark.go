@@ -1,6 +1,7 @@
 package service
 
 import (
+	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"fmt"
@@ -24,7 +25,7 @@ const (
 )
 
 // CreateSpark 为uid创建spark，masterReplicas默认1， masterReplicas默认2
-func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
+func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
 	//fmt.Println(pwd)
@@ -52,11 +53,11 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredT
 	if u_id != 0 {
 		uid := strconv.Itoa(int(u_id))
 		label["u_id"] = uid
-		masterLabel["u_id"] = uid
-		workerLabel["u_id"] = uid
+		//masterLabel["u_id"] = uid
+		//workerLabel["u_id"] = uid
 	}
 	// 创建namespace
-	_, err := CreateNs("spark-"+s, expiredTime, label, cpu, memory, int(masterReplicas+workerReplicas))
+	_, err := CreateNs("spark-"+s, expiredTime, label, resources)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredT
 			},
 		},
 	}
-	_, err = CreateDeploy(sparkMasterDeployName, "spark-"+s, label, masterSpec)
+	_, err = CreateDeploy(sparkMasterDeployName, "spark-"+s, map[string]string{}, masterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredT
 			{Name: "ssh", Port: 22, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 22}},
 		},
 	}
-	_, err = CreateService(sparkMasterServiceName, "spark-"+s, label, masterServiceSpec)
+	_, err = CreateService(sparkMasterServiceName, "spark-"+s, map[string]string{}, masterServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +148,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredT
 			},
 		},
 	}
-	_, err = CreateDeploy(sparkWorkerDeployName, "spark-"+s, label, workerSpec)
+	_, err = CreateDeploy(sparkWorkerDeployName, "spark-"+s, map[string]string{}, workerSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +162,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredT
 			{Name: "ssh", Port: 22, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 22}},
 		},
 	}
-	_, err = CreateService(sparkWorkerServiceName, "spark-"+s, label, workerServiceSpec)
+	_, err = CreateService(sparkWorkerServiceName, "spark-"+s, map[string]string{}, workerServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +200,7 @@ func CreateSpark(u_id uint, masterReplicas int32, workerReplicas int32, expiredT
 			},
 		},
 	}
-	_, err = CreateIngress(sparkIngressName, "spark-"+s, label, ingressSpec)
+	_, err = CreateIngress(sparkIngressName, "spark-"+s, map[string]string{}, ingressSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -308,8 +309,8 @@ func DeleteSpark(ns string) (*responses.Response, error) {
 }
 
 // UpdateSpark 更新spark的uid以及replicas
-func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
-	if _, err := UpdateNs(name, uid, expiredTime, cpu, memory, int(masterReplicas+workerReplicas)); err != nil {
+func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+	if _, err := UpdateNs(name, uid, expiredTime, resources); err != nil {
 		return nil, err
 	}
 

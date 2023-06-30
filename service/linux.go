@@ -1,6 +1,7 @@
 package service
 
 import (
+	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	appsv1 "k8s.io/api/apps/v1"
@@ -19,7 +20,7 @@ var cmd = [2][]string{{"/usr/sbin/init"}, {"/init.sh"}}
 var privileged = [2]bool{true, false}
 
 // CreateLinux 为uid创建linux 1-centos，2-ubuntu
-func CreateLinux(u_id, kind uint, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
+func CreateLinux(u_id, kind uint, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
 
 	// 随机生成ssh密码
 	//pwd := CreatePWD(8)
@@ -33,12 +34,15 @@ func CreateLinux(u_id, kind uint, expiredTime *time.Time, cpu, memory string) (*
 	label := map[string]string{
 		"image": linuxImage[kind-1],
 	}
+	nsLabel := map[string]string{
+		"image": linuxImage[kind-1],
+	}
 	if u_id != 0 {
 		uid := strconv.Itoa(int(u_id))
-		label["u_id"] = uid
+		nsLabel["u_id"] = uid
 	}
 	// 创建namespace
-	_, err := CreateNs(linuxImage[kind-1]+"-"+s, expiredTime, label, cpu, memory, 1)
+	_, err := CreateNs(linuxImage[kind-1]+"-"+s, expiredTime, nsLabel, resources)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +185,7 @@ func DeleteLinux(ns string) (*responses.Response, error) {
 	return &responses.OK, nil
 }
 
-func UpdateLinux(name, uid string, expiredTime *time.Time, cpu, memory string) (*responses.Response, error) {
-	res, err := UpdateNs(name, uid, expiredTime, cpu, memory, 1)
+func UpdateLinux(name, uid string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+	res, err := UpdateNs(name, uid, expiredTime, resources)
 	return res, err
 }

@@ -4,10 +4,11 @@ import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/service"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 // CheckPass 验证密码
@@ -20,7 +21,7 @@ func CheckPass(c *gin.Context) {
 	}
 
 	// 调用业务层登录
-	loginRes, err := service.Login(loginForm.Username, loginForm.Password)
+	loginRes, err := service.Login(loginForm.UsernameorEmail, loginForm.Password)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: 0, // 返回0，前端不弹出错误提示框
@@ -42,7 +43,7 @@ func Login(c *gin.Context) {
 	}
 
 	// 调用业务层登录
-	loginRes, err := service.Login(loginForm.Username, loginForm.Password)
+	loginRes, err := service.Login(loginForm.UsernameorEmail, loginForm.Password)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -68,7 +69,7 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	registerRes, err := service.Register(registerForm.Username, registerForm.Password, registerForm.Nickname)
+	registerRes, err := service.Register(registerForm.Username, registerForm.Password, registerForm.Nickname, registerForm.Email)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,

@@ -7,8 +7,7 @@ type SparkAddForm struct {
 	MasterReplicas int32      `forms:"master_replicas" json:"master_replicas" binding:"required,gte=1,lte=3"`
 	WorkerReplicas int32      `forms:"worker_replicas" json:"worker_replicas" binding:"required,gte=2,lte=10"`
 	ExpiredTime    *time.Time `forms:"expired_time" json:"expired_time"`
-	Cpu            string     `json:"cpu" forms:"cpu" binding:"required"`
-	Memory         string     `json:"memory" forms:"memory" binding:"required"`
+	Resources
 }
 
 // BatchSparkAddForm 支持批量添加
@@ -17,8 +16,7 @@ type BatchSparkAddForm struct {
 	MasterReplicas int32      `forms:"master_replicas" json:"master_replicas" binding:"required,gte=1,lte=3"`
 	WorkerReplicas int32      `forms:"worker_replicas" json:"worker_replicas" binding:"required,gte=2,lte=10"`
 	ExpiredTime    *time.Time `forms:"expired_time" json:"expired_time"`
-	Cpu            string     `json:"cpu" forms:"cpu" binding:"required"`
-	Memory         string     `json:"memory" forms:"memory" binding:"required"`
+	Resources
 }
 type SparkUpdateForm struct {
 	Name           string     `json:"name" forms:"name" binding:"required"`
@@ -26,6 +24,5 @@ type SparkUpdateForm struct {
 	MasterReplicas int32      `forms:"master_replicas" json:"master_replicas" binding:"required,gte=1,lte=3"`
 	WorkerReplicas int32      `forms:"worker_replicas" json:"worker_replicas" binding:"required,gte=2,lte=10"`
 	ExpiredTime    *time.Time `forms:"expired_time" json:"expired_time"`
-	Cpu            string     `json:"cpu" forms:"cpu" binding:"required"`
-	Memory         string     `json:"memory" forms:"memory" binding:"required"`
+	Resources
 }

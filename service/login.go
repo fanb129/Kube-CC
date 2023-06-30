@@ -2,9 +2,11 @@ package service
 
 import (
 	"Kube-CC/common/responses"
+	"Kube-CC/models"
 	"errors"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 
 	"Kube-CC/dao"
 	"Kube-CC/middleware"
@@ -12,8 +14,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(username, password string) (*responses.LoginResponse, error) {
-	user, err := dao.GetUserByName(username)
+// <<修改>>
+func Login(usernameoremail, password string) (*responses.LoginResponse, error) {
+	//分别通过用户名和邮箱查找用户
+	var (
+		user *models.User
+		err  error
+	)
+	if dao.VerifyEmailFormat(usernameoremail) {
+		user, err = dao.GetUserByEmail(usernameoremail)
+	} else {
+		user, err = dao.GetUserByName(usernameoremail)
+	}
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
@@ -30,10 +42,15 @@ func Login(username, password string) (*responses.LoginResponse, error) {
 	return &responses.LoginResponse{Response: responses.OK, UserID: user.ID, Token: token}, nil
 }
 
-func Register(username, password, nickname string) (*responses.Response, error) {
+// <<修改>>
+func Register(username, password, nickname, email string) (*responses.Response, error) {
 	user, _ := dao.GetUserByName(username)
 	if user != nil {
 		return nil, errors.New("账号已注册")
+	}
+	user, _ = dao.GetUserByEmail(email)
+	if user != nil {
+		return nil, errors.New("邮箱已使用")
 	}
 
 	// 密码加密
@@ -57,7 +74,7 @@ func Register(username, password, nickname string) (*responses.Response, error) 
 		}
 	} else {
 		// 当前用户名不存在时
-		row, err := dao.CreateUser(username, nickname, pwd)
+		row, err := dao.CreateUser(username, nickname, pwd, email)
 		if err != nil || row == 0 {
 			return nil, errors.New("注册失败")
 		}
