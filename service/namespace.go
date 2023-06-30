@@ -7,7 +7,6 @@ import (
 	"context"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strconv"
 	"time"
@@ -98,30 +97,13 @@ func CreateNs(name string, expiredTime *time.Time, label map[string]string, reso
 	}
 
 	//创建resourceQuota
-	spec := corev1.ResourceQuotaSpec{
-		Hard: corev1.ResourceList{
-			// CPU, in cores. (500m = .5 cores)
-			//corev1.ResourceRequestsCPU: resource.MustParse("100m"),
-			corev1.ResourceLimitsCPU: resource.MustParse(resources.Cpu),
-
-			// Memory, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
-			//corev1.ResourceRequestsMemory: resource.MustParse("100Mi"),
-			corev1.ResourceLimitsMemory: resource.MustParse(resources.Memory),
-
-			// Volume size, in bytes (e,g. 5Gi = 5GiB = 5 * 1024 * 1024 * 1024)
-			//corev1.ResourceRequestsStorage: resource.MustParse("100m"),
-			// Local ephemeral storage, in bytes. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
-			// The resource name for ResourceEphemeralStorage is alpha and it can change across releases.
-			//corev1.ResourceEphemeralStorage: resource.Quantity{},
-		},
-	}
-	if err = CreateResourceQuota(name, spec); err != nil {
+	if err = CreateResourceQuota(name, resources); err != nil {
 		return nil, err
 	}
 
-	//if err = CreateLimitRange(name, cpu, memory, n); err != nil {
-	//	return nil, err
-	//}
+	if err = CreateLimitRange(name); err != nil {
+		return nil, err
+	}
 
 	// 创建ttl
 	if expiredTime != nil {
@@ -232,13 +214,8 @@ func UpdateNs(name, uid string, expiredTime *time.Time, resources forms.Resource
 	}
 
 	//更新resourceQuota
-	quota, err := GetResourceQuota(ns)
+	err = UpdateResourceQuota(ns, resources)
 	if err != nil {
-		return nil, err
-	}
-	quota.Spec.Hard[corev1.ResourceLimitsCPU] = resource.MustParse(resources.Cpu)
-	quota.Spec.Hard[corev1.ResourceLimitsMemory] = resource.MustParse(resources.Memory)
-	if err = UpdateResourceQuota(ns, quota); err != nil {
 		return nil, err
 	}
 
