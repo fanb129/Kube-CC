@@ -24,7 +24,10 @@ func PullImage(imageName string) (*responses.PullingResponse, error) {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	// TODO written方法需要后续经过测试进行完善
+
+	// 读取所需要复制的内容
 	_, err = io.Copy(os.Stdout, reader)
 	if err != nil {
 		return nil, err

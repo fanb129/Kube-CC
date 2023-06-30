@@ -14,7 +14,7 @@ func dockerRouter(router *gin.RouterGroup) {
 		//TODO 待定补充镜像操作的一些权限管理
 		dockerRouters.GET("/remove/:id", docker.Remove)
 		dockerRouters.POST("/update/:id", docker.Update)
-		dockerRouters.POST("/save/:id", docker.Save)
+		//dockerRouters.POST("/save/:id", docker.Save)
 		dockerRouters.POST("/pull/:id", docker.Pull)
 	}
 }
