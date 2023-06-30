@@ -1,15 +1,7 @@
 package docker
 
-import (
-	"Kube-CC/common/responses"
-	"Kube-CC/dao"
-	"context"
-	"errors"
-	"io"
-	"os"
-)
-
-func SaveImage(imglist []string) (*responses.Response, error) {
+/*func SaveImage(imglist []string) (*responses.Response, error) {
+	// 获取同步
 	ctx := context.Background()
 
 	reader, err := cli.ImageSave(ctx, imglist)
@@ -17,7 +9,9 @@ func SaveImage(imglist []string) (*responses.Response, error) {
 	if err != nil {
 		return nil, errors.New("镜像备份失败")
 	}
+	// 读取所需要复制的内容
 
+	// TODO written方法需要后续经过测试进行完善
 	_, err = io.Copy(os.Stdout, reader)
 	if err != nil {
 		return nil, err
@@ -34,3 +28,4 @@ func SaveImage(imglist []string) (*responses.Response, error) {
 
 	return &responses.OK, nil
 }
+*/

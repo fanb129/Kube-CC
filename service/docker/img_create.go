@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-// 拉取现有镜像，创建成功则返回相应的表单
+// 获取要创建的镜像，创建成功则返回相应的表单
 func CreateImage(parent string) (*responses.ImageInfoResponse, error) {
 	ctx := context.Background()
 	reader, err := cli.ImageCreate(ctx, parent, types.ImageCreateOptions{})
@@ -27,8 +27,8 @@ func CreateImage(parent string) (*responses.ImageInfoResponse, error) {
 		Response: responses.OK,
 		ImageInfo: responses.ImageInfo{
 			ID:        image.ID,
-			CreatedAt: image.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt: image.UpdatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt: image.CreatedAt,
+			UpdatedAt: image.UpdatedAt,
 			ImageId:   image.ImageId,
 			UserId:    image.UserId,
 			Kind:      image.Kind,

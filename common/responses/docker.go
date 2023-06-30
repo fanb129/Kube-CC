@@ -1,13 +1,14 @@
 package responses
 
+import "time"
+
 type ImageInfo struct {
-	Response
-	ID        uint   `json:"id"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-	ImageId   string `json:"image_id"`
-	UserId    uint   `json:"user_id"`
-	Kind      int    `json:"kind"`
+	ID        uint      `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ImageId   string    `json:"image_id"`
+	UserId    uint      `json:"user_id"`
+	Kind      int       `json:"kind"`
 }
 
 type CreateResponse struct {
@@ -20,6 +21,8 @@ type UpdateTagResponse struct {
 }
 
 type PullingResponse struct {
+	Response
+	ImageInfo ImageInfo `json:"image_pullinginfo"`
 }
 
 type RemoveResponse struct {
@@ -41,3 +44,5 @@ type ImageListResponse struct {
 	Total     int         `json:"total"`
 	ImageList []ImageInfo `json:"user_list"`
 }
+
+var NoSuchImage = Response{StatusCode: -1, StatusMsg: "该镜像不存在"}

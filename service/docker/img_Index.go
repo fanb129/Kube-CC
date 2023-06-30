@@ -25,8 +25,8 @@ func IndexDocker(page int) (*responses.ImageListResponse, error) {
 	for i, v := range u {
 		tmp := responses.ImageInfo{
 			ID:        v.ID,
-			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt: v.CreatedAt,
+			UpdatedAt: v.UpdatedAt,
 			ImageId:   v.ImageId,
 			UserId:    v.UserId,
 			Kind:      v.Kind,
