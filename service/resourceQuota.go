@@ -86,13 +86,13 @@ func SplitRSC(rsc string, n int) (string, error) {
 	// 分割出数字与单位
 	index := 0
 	for _, v := range rsc {
-		index++
 		if (v < '0' || v > '9') && v != '.' {
 			break
 		}
+		index++
 	}
 	//转换为float
-	float, err := strconv.ParseFloat(rsc[:index-1], 64)
+	float, err := strconv.ParseFloat(rsc[:index], 64)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +104,7 @@ func SplitRSC(rsc string, n int) (string, error) {
 	} else {
 		m := int(float / float64(n))
 		str := strconv.Itoa(m)
-		return str + rsc[index-1:], nil
+		return str + rsc[index:], nil
 	}
 
 }
