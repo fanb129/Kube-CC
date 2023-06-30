@@ -51,6 +51,9 @@ func InitRouter() *gin.Engine {
 	// service路由
 	serviceRouter(auth)
 
+	// job路由
+	jobRouter(auth)
+
 	// pod路由
 	podRouter(auth)
 
