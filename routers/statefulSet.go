@@ -6,7 +6,7 @@ import (
 )
 
 func statefulSetRouter(router *gin.RouterGroup) {
-	statefulSetRouters := router.Group("/deploy")
+	statefulSetRouters := router.Group("/sts")
 	{
 		statefulSetRouters.GET("", StatefulSet.Index)
 		statefulSetRouters.GET("/delete", StatefulSet.Delete)
