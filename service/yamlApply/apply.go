@@ -156,3 +156,31 @@ func PodApply(pod *corev1.Pod) (*responses.Response, error) {
 		return res, err
 	}
 }
+
+func JobApply(job *corev1.Pod) (*responses.Response, error) {
+	name := job.Name
+	ns := job.Namespace
+	labels := job.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	if _, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{}); err != nil {
+		// 不存在则创建
+		if errors.IsNotFound(err) {
+			// 获取namespace，提取出uid的label
+			_, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			if _, err := service.CreateJob(name, ns, labels, job.Spec); err != nil {
+				return nil, err
+			}
+			return &responses.OK, nil
+		} else { // 其他错误直接返回
+			return nil, err
+		}
+	} else {
+		res, err := service.UpdateJob(job)
+		return res, err
+	}
+}
