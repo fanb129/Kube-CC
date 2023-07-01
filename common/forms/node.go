@@ -2,10 +2,10 @@ package forms
 
 type NodeAddForm struct {
 	Nodes []struct {
-		Host string `json:"host" forms:"host" binding:"required"`
-	} `json:"nodes" forms:"nodes" binding:"required"`
+		Host string `json:"host" form:"host" binding:"required"`
+	} `json:"nodes" form:"nodes" binding:"required"`
 
-	Port     int    `json:"port" forms:"port" binding:"required"`
-	User     string `json:"user" forms:"user" binding:"required"`
-	Password string `json:"password" forms:"password" binding:"required"`
+	Port     int    `json:"port" form:"port" binding:"required"`
+	User     string `json:"user" form:"user" binding:"required"`
+	Password string `json:"password" form:"password" binding:"required"`
 }
