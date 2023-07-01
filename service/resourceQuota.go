@@ -15,6 +15,12 @@ var ResourceGPU corev1.ResourceName = "requests.nvidia.com/gpu"
 
 // CreateResourceQuota 为namespace创建ResourceQuota，进行namespace总的资源限制
 func CreateResourceQuota(ns string, resouces forms.Resources) error {
+	if resouces.PvcStorage == "" {
+		resouces.PvcStorage = "0"
+	}
+	if resouces.Gpu == "" {
+		resouces.Cpu = "0"
+	}
 	resourceQuota := corev1.ResourceQuota{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -39,7 +45,7 @@ func CreateResourceQuota(ns string, resouces forms.Resources) error {
 				corev1.ResourceLimitsMemory:   resource.MustParse(resouces.Memory),
 
 				// TODO:GPU
-				//ResourceGPU: resource.MustParse(resouces.Gpu),
+				ResourceGPU: resource.MustParse(resouces.Gpu),
 			},
 		},
 	}
@@ -73,7 +79,7 @@ func UpdateResourceQuota(ns string, resouces forms.Resources) error {
 	quota.Spec.Hard[corev1.ResourceRequestsMemory] = resource.MustParse(resouces.Memory)
 	quota.Spec.Hard[corev1.ResourceLimitsMemory] = resource.MustParse(resouces.Memory)
 	// TODO:GPU
-	//quota.Spec.Hard[ResourceGPU] = resource.MustParse(resouces.Gpu)
+	quota.Spec.Hard[ResourceGPU] = resource.MustParse(resouces.Gpu)
 	_, err = dao.ClientSet.CoreV1().ResourceQuotas(ns).Update(context.Background(), quota, metav1.UpdateOptions{})
 	return err
 }

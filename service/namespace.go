@@ -49,22 +49,33 @@ func GetNs(label string) (*responses.NsListResponse, error) {
 		}
 
 		// 资源
-		cpu := ""
-		usedCpu := ""
-		memory := ""
-		usedMemory := ""
+		resources := responses.Resources{}
 		quota, err := GetResourceQuota(ns.Name)
 		if err != nil {
 			zap.S().Errorln(err)
 		} else {
 			limitsCpu := quota.Status.Hard[corev1.ResourceLimitsCPU]
 			limitsMemory := quota.Status.Hard[corev1.ResourceLimitsMemory]
+			limitsStorage := quota.Status.Hard[corev1.ResourceLimitsEphemeralStorage] // [add] 限制临时存储
+			requestPVC := quota.Status.Hard.Storage()                                 // [add] 限制PVC持久存储
+			requestGPU := quota.Status.Hard[ResourceGPU]
+
 			usedLimitsCpu := quota.Status.Used[corev1.ResourceLimitsCPU]
 			usedLimitsMemory := quota.Status.Used[corev1.ResourceLimitsMemory]
-			cpu = limitsCpu.String()
-			usedCpu = usedLimitsCpu.String()
-			memory = limitsMemory.String()
-			usedMemory = usedLimitsMemory.String()
+			usedSLimitsStorage := quota.Status.Used[corev1.ResourceLimitsEphemeralStorage] // [add] 已使用临时存储
+			usedRequestPVC := quota.Status.Used.Storage()                                  // [add] 已使用PVC持久存储
+			usedRequestGPU := quota.Status.Used[ResourceGPU]
+
+			resources.Cpu = limitsCpu.String()
+			resources.Memory = limitsMemory.String()
+			resources.Storage = limitsStorage.String()
+			resources.PVC = requestPVC.String()
+			resources.UsedCpu = usedLimitsCpu.String()
+			resources.UsedMemory = usedLimitsMemory.String()
+			resources.UsedStorage = usedSLimitsStorage.String()
+			resources.UsedPVC = usedRequestPVC.String()
+			resources.GPU = requestGPU.String()
+			resources.UsedGPU = usedRequestGPU.String()
 		}
 
 		tmp := responses.Ns{
@@ -75,10 +86,7 @@ func GetNs(label string) (*responses.NsListResponse, error) {
 			Nickname:    nickname,
 			Uid:         uint(uid),
 			ExpiredTime: expiredTime,
-			Cpu:         cpu,
-			UsedCpu:     usedCpu,
-			Memory:      memory,
-			UsedMemory:  usedMemory,
+			Resources:   resources,
 		}
 		namespaceList[i] = tmp
 	}
@@ -121,6 +129,8 @@ func DeleteNs(name string) (*responses.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	//TODO 会自动删除PVC吗？
+
 	if err = DeleteTtl(name); err != nil {
 		return nil, err
 	}
