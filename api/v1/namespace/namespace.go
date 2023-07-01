@@ -3,6 +3,7 @@ package namespace
 import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
+	"Kube-CC/dao"
 	"Kube-CC/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -13,17 +14,50 @@ import (
 
 // Index 展示所有namespace，
 func Index(c *gin.Context) {
+	g_id := c.DefaultQuery("g_id", "")
 	u_id := c.DefaultQuery("u_id", "")
-	selector := ""
-	if u_id != "" {
-		label := map[string]string{
-			"u_id": u_id,
+
+	var nsListResponse *responses.NsListResponse
+	var err error
+	//1. g_id为空的话就是查看所有组下面所有人的ns
+	if g_id == "" {
+		nsListResponse, err = service.GetNs("")
+	} else {
+		// 2. g_id不为空，u_id为空的话，就是查看该组下面所有人的ns
+		if u_id == "" {
+			gid, err := strconv.ParseUint(g_id, 64, 10)
+			if err != nil {
+				zap.S().Errorln("ns:index:", err)
+				c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+			}
+			users, err := dao.GetGroupUserById(uint(gid))
+			for _, user := range users {
+				label := map[string]string{
+					"u_id": strconv.Itoa(int(user.ID)),
+				}
+				// 将map标签转换为string
+				selector := labels.SelectorFromSet(label).String()
+				var ns *responses.NsListResponse
+				ns, err = service.GetNs(selector)
+				if err != nil {
+					zap.S().Errorln("ns:index:", err)
+					c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+				}
+				// 拼接该组所有用户的ns
+				nsListResponse.NsList = append(nsListResponse.NsList, ns.NsList...)
+			}
+
+		} else {
+			// 3. g_id和u_id都不为空，就是看指定用户的ns
+			label := map[string]string{
+				"u_id": u_id,
+			}
+			// 将map标签转换为string
+			selector := labels.SelectorFromSet(label).String()
+			nsListResponse, err = service.GetNs(selector)
 		}
-		// 将map标签转换为string
-		selector = labels.SelectorFromSet(label).String()
 	}
 
-	nsListResponse, err := service.GetNs(selector)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
