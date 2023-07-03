@@ -44,7 +44,7 @@ func DeployApply(deploy *appsv1.Deployment) (*responses.Response, error) {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，(不再)提取出uid的label
-			_, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+			//_, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
 			if err != nil {
 				return nil, err
 			}
@@ -74,11 +74,11 @@ func StatefulSetApply(statefulSet *appsv1.StatefulSet) (*responses.Response, err
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，提取出uid的label
-			_, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+			//_, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
 			if err != nil {
 				return nil, err
 			}
-			if _, err := service.CreateStatefulSet(name, ns, statefulSet.Spec); err != nil {
+			if _, err := service.CreateStatefulSet(name, ns, labels, statefulSet.Spec); err != nil {
 				return nil, err
 			}
 			return &responses.OK, nil
@@ -104,14 +104,14 @@ func ServiceApply(svc *corev1.Service) (*responses.Response, error) {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，提取出uid的label
-			get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
-			if err != nil {
-				return nil, err
-			}
-			uid, ok := get.Labels["u_id"]
-			if ok {
-				labels["u_id"] = uid //service的label
-			}
+			//get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+			//if err != nil {
+			//	return nil, err
+			//}
+			//uid, ok := get.Labels["u_id"]
+			//if ok {
+			//	labels["u_id"] = uid //service的label
+			//}
 			if _, err := service.CreateService(name, ns, labels, svc.Spec); err != nil {
 				return nil, err
 			}
@@ -136,14 +136,14 @@ func PodApply(pod *corev1.Pod) (*responses.Response, error) {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，提取出uid的label
-			get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
-			if err != nil {
-				return nil, err
-			}
-			uid, ok := get.Labels["u_id"]
-			if ok {
-				labels["u_id"] = uid //service的label
-			}
+			//get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+			//if err != nil {
+			//	return nil, err
+			//}
+			//uid, ok := get.Labels["u_id"]
+			//if ok {
+			//	labels["u_id"] = uid //service的label
+			//}
 			if _, err := service.CreatePod(name, ns, labels, pod.Spec); err != nil {
 				return nil, err
 			}
@@ -168,10 +168,10 @@ func JobApply(job *corev1.Pod) (*responses.Response, error) {
 		// 不存在则创建
 		if errors.IsNotFound(err) {
 			// 获取namespace，提取出uid的label
-			_, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
-			if err != nil {
-				return nil, err
-			}
+			//_, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+			//if err != nil {
+			//	return nil, err
+			//}
 			if _, err := service.CreateJob(name, ns, labels, job.Spec); err != nil {
 				return nil, err
 			}

@@ -18,14 +18,14 @@ func GetAStatefulSet(name, ns string) (*appsv1.StatefulSet, error) {
 }
 
 // CreateStatefulSet 创建自定义控制器
-func CreateStatefulSet(name, ns string, spec appsv1.StatefulSetSpec) (*appsv1.StatefulSet, error) {
+func CreateStatefulSet(name, ns string, label map[string]string, spec appsv1.StatefulSetSpec) (*appsv1.StatefulSet, error) {
 	rs := appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "StatefulSet"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			//ServiceName: serviceName,
 			Namespace: ns,
-			//Labels:    label,
+			Labels:    label,
 		},
 		Spec: spec,
 	}
@@ -43,15 +43,14 @@ func GetStatefulSet(ns, label string) (*responses.StatefulSetListResponse, error
 	stslist := make([]responses.StatefulSet, num)
 	for i, statefulSet := range list.Items {
 		tmp := responses.StatefulSet{
-			Name:            statefulSet.Name,
-			Namespace:       statefulSet.Namespace,
-			CreatedAt:       statefulSet.CreationTimestamp.Format("2006-01-02 15:04:05"),
-			Replicas:        statefulSet.Status.Replicas,
-			UpdatedReplicas: statefulSet.Status.UpdatedReplicas,
-			ReadyReplicas:   statefulSet.Status.ReadyReplicas,
-			CurrentReplicas: statefulSet.Status.CurrentReplicas,
-			CurrentRevision: statefulSet.Status.CurrentRevision,
-			Uid:             statefulSet.Labels["u_id"],
+			Name:              statefulSet.Name,
+			Namespace:         statefulSet.Namespace,
+			CreatedAt:         statefulSet.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			Replicas:          statefulSet.Status.Replicas,
+			UpdatedReplicas:   statefulSet.Status.UpdatedReplicas,
+			ReadyReplicas:     statefulSet.Status.ReadyReplicas,
+			AvailableReplicas: statefulSet.Status.AvailableReplicas,
+			//Uid:             statefulSet.Labels["u_id"],
 			//SshPwd:        deploy.Spec.Template.Spec.Containers[0].Args[0],
 			//SshPwd: deploy.Spec.Template.Spec.Containers[0].Env[0].Value,
 		}
