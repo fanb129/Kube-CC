@@ -139,6 +139,7 @@ func UpdateUser(u *models.User) (int, error) {
 		Password: u.Password,
 		Role:     u.Role,
 		Avatar:   u.Avatar,
+		Groupid:  u.Groupid,
 	})
 	return int(result.RowsAffected), result.Error
 }
