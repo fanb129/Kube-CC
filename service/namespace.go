@@ -57,14 +57,15 @@ func GetNs(label string) (*responses.NsListResponse, error) {
 			limitsCpu := quota.Status.Hard[corev1.ResourceLimitsCPU]
 			limitsMemory := quota.Status.Hard[corev1.ResourceLimitsMemory]
 			limitsStorage := quota.Status.Hard[corev1.ResourceLimitsEphemeralStorage] // [add] 限制临时存储
-			requestPVC := quota.Status.Hard.Storage()                                 // [add] 限制PVC持久存储
-			requestGPU := quota.Status.Hard[ResourceGPU]
+			requestPVC := quota.Status.Hard[corev1.ResourceRequestsStorage]           // [add] 限制PVC持久存储
+			requestGPU := quota.Status.Hard[LimitsNvidiaGpu]
 
 			usedLimitsCpu := quota.Status.Used[corev1.ResourceLimitsCPU]
 			usedLimitsMemory := quota.Status.Used[corev1.ResourceLimitsMemory]
 			usedSLimitsStorage := quota.Status.Used[corev1.ResourceLimitsEphemeralStorage] // [add] 已使用临时存储
-			usedRequestPVC := quota.Status.Used.Storage()                                  // [add] 已使用PVC持久存储
-			usedRequestGPU := quota.Status.Used[ResourceGPU]
+			usedRequestPVC := quota.Status.Used[corev1.ResourceRequestsStorage]            // [add] 已使用PVC持久存储
+			// TODO: GPU
+			usedRequestGPU := quota.Status.Used[LimitsNvidiaGpu]
 
 			resources.Cpu = limitsCpu.String()
 			resources.Memory = limitsMemory.String()
