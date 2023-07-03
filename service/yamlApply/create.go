@@ -111,7 +111,7 @@ func PodCreate(pod *corev1.Pod) (*responses.Response, error) {
 	return &responses.OK, nil
 }
 
-// PodCreate 创建job
+// JobCreate 创建job
 func JobCreate(job *corev1.Pod) (*responses.Response, error) {
 	name := job.Name
 	ns := job.Namespace

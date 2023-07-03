@@ -227,7 +227,7 @@ func Create(c *gin.Context) {
 		if err = json.Unmarshal(jsonYaml, &job); err != nil {
 			goto END
 		}
-		if _, err = yamlApply.PodCreate(&job); err != nil {
+		if _, err = yamlApply.JobCreate(&job); err != nil {
 			goto END
 		}
 		goto SUCCESS
