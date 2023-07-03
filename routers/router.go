@@ -69,5 +69,11 @@ func InitRouter() *gin.Engine {
 	// docker路由
 	dockerRouter(auth)
 
+	// pvc持久卷路由
+	pvcRouter(auth)
+
+	// sc存储类路由
+	scRouter(auth)
+
 	return r
 }
