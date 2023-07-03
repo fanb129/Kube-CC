@@ -26,11 +26,11 @@ func IndexGroup(page int, groupid uint) (*responses.GroupListResponse, error) {
 	groupList := make([]responses.GroupInfo, len(g))
 	for i, v := range g {
 		tmp := responses.GroupInfo{
-			GroupID:     v.ID,
+			Groupid:     v.ID,
 			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Name:        v.Name,
-			AdminID:     v.AdminId,
+			Adminid:     v.Adminid,
 			Description: v.Description,
 		}
 		groupList[i] = tmp
@@ -86,11 +86,11 @@ func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 	return &responses.GroupInfoResponse{
 		Response: responses.OK,
 		GroupInfo: responses.GroupInfo{
-			GroupID:     group.ID,
+			Groupid:     group.ID,
 			CreatedAt:   group.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   group.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Name:        group.Name,
-			AdminID:     group.AdminId,
+			Adminid:     group.Adminid,
 			Description: group.Description,
 		},
 	}, nil
@@ -103,7 +103,7 @@ func DeleteGroup(id uint) (*responses.Response, error) {
 		return nil, errors.New("删除失败")
 	}
 	for _, v := range users {
-		v.GroupId = 0
+		v.Groupid = 0
 	}
 	row, err := dao.DeleteGroupById(id)
 	if err != nil || row == 0 {
@@ -118,7 +118,7 @@ func RemoveUser(u_id uint) (*responses.Response, error) {
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	user.GroupId = 0
+	user.Groupid = 0
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("移出失败")
@@ -133,10 +133,10 @@ func AddUser(g_id, u_id uint) (*responses.Response, error) {
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	if user.GroupId != 0 {
+	if user.Groupid != 0 {
 		return nil, errors.New("该用户属于其他组")
 	}
-	user.GroupId = g_id
+	user.Groupid = g_id
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("添加失败")
@@ -172,17 +172,17 @@ func TransAdmin(g_id, odad_id, nwad_id uint) (*responses.Response, error) {
 	if erro != nil {
 		return nil, errors.New("获取旧管理员失败")
 	}
-	if group.AdminId != odad_id {
+	if group.Adminid != odad_id {
 		return nil, errors.New("旧管理员不是本组管理员")
 	}
 	nwad, errn := dao.GetUserById(nwad_id)
 	if errn != nil {
 		return nil, errors.New("获取新管理员失败")
 	}
-	if nwad.GroupId != g_id {
+	if nwad.Groupid != g_id {
 		return nil, errors.New("新管理员不属于本组")
 	}
-	group.AdminId = nwad_id
+	group.Adminid = nwad_id
 
 	return &responses.OK, nil
 }
