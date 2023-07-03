@@ -41,6 +41,30 @@ func DeployCreate(deploy *appsv1.Deployment) (*responses.Response, error) {
 	return &responses.OK, nil
 }
 
+// StatefulSetCreate  deploy的创建
+func StatefulSetCreate(sts *appsv1.StatefulSet) (*responses.Response, error) {
+	name := sts.Name
+	ns := sts.Namespace
+	labels := sts.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	// 获取namespace，提取出uid的label
+	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	uid, ok := get.Labels["u_id"]
+	if ok {
+		labels["u_id"] = uid //sts的label
+		sts.Spec.Template.Labels["u_id"] = uid
+	}
+	if _, err := service.CreateStatefulSet(name, ns, labels, sts.Spec); err != nil {
+		return nil, err
+	}
+	return &responses.OK, nil
+}
+
 // ServiceCreate service的更新或者创建
 func ServiceCreate(svc *corev1.Service) (*responses.Response, error) {
 	name := svc.Name
@@ -82,6 +106,29 @@ func PodCreate(pod *corev1.Pod) (*responses.Response, error) {
 		labels["u_id"] = uid //service的label
 	}
 	if _, err := service.CreatePod(name, ns, labels, pod.Spec); err != nil {
+		return nil, err
+	}
+	return &responses.OK, nil
+}
+
+// PodCreate 创建job
+func JobCreate(job *corev1.Pod) (*responses.Response, error) {
+	name := job.Name
+	ns := job.Namespace
+	labels := job.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	// 获取namespace，提取出uid的label
+	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	uid, ok := get.Labels["u_id"]
+	if ok {
+		labels["u_id"] = uid //service的label
+	}
+	if _, err := service.CreateJob(name, ns, labels, job.Spec); err != nil {
 		return nil, err
 	}
 	return &responses.OK, nil
