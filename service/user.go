@@ -61,6 +61,7 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 			Nickname:  user.Nickname,
 			Role:      user.Role,
 			Avatar:    user.Avatar,
+			Gid:       user.Groupid,
 		},
 	}, nil
 }

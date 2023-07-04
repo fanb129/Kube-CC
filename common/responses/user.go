@@ -8,6 +8,7 @@ type UserInfo struct {
 	Nickname  string `json:"nickname"`
 	Role      uint   `json:"role"`
 	Avatar    string `json:"avatar"`
+	Gid       uint   `json:"gid"`
 }
 
 type LoginResponse struct {
@@ -25,4 +26,8 @@ type UserListResponse struct {
 	Page     int        `json:"page"`
 	Total    int        `json:"total"`
 	UserList []UserInfo `json:"user_list"`
+}
+type GroupUser struct {
+	Response
+	UserList []UserInfo `json:"groupuser_list"`
 }

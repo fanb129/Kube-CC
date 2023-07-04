@@ -10,29 +10,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Info(c *gin.Context) {
-	gid, ok := c.Get("g_id")
-	if !ok {
-		c.JSON(http.StatusOK, responses.NoGid)
-		return
-	}
-	rsp, err := service.GroupInfo(gid.(uint))
-	if err != nil {
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-	}
-	c.JSON(http.StatusOK, rsp)
-}
+//	func Info(c *gin.Context) {
+//		gid, ok := c.Get("g_id")
+//		if !ok {
+//			c.JSON(http.StatusOK, responses.NoGid)
+//			return
+//		}
+//		rsp, err := service.GroupInfo(gid.(uint))
+//		if err != nil {
+//			c.JSON(http.StatusOK, responses.Response{
+//				StatusCode: -1,
+//				StatusMsg:  err.Error(),
+//			})
+//		}
+//		c.JSON(http.StatusOK, rsp)
+//	}
 func Index(c *gin.Context) {
 	//fmt.Println("userindex")
 	page, _ := strconv.Atoi(c.Param("page"))
-	gid, ok := c.Get("g_id")
-	if !ok {
-		c.JSON(http.StatusOK, responses.NoGid)
-	}
-	userListResponse, err := service.IndexGroup(page, gid.(uint))
+	groupListResponse, err := service.IndexGroup(page)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -40,7 +36,7 @@ func Index(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, userListResponse)
+	c.JSON(http.StatusOK, groupListResponse)
 }
 
 // Delete 删除组
@@ -58,6 +54,21 @@ func Delete(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response)
 
+}
+
+// ViewGroupUser 查看组内成员
+func ViewGroupUser(c *gin.Context) {
+	//fmt.Println("userindex")
+	gid, _ := strconv.Atoi(c.Param("id"))
+	groupuserListResponse, err := service.ViewGroupUser(uint(gid))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, groupuserListResponse)
 }
 
 // Remove 移出用户
