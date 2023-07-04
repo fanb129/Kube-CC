@@ -2,11 +2,11 @@ package responses
 
 // <<新增>>
 type GroupInfo struct {
-	GroupID     uint   `json:"groupid"`
+	Groupid     uint   `json:"groupid"`
 	CreatedAt   string `json:"group_created_at"`
 	UpdatedAt   string `json:"group_updated_at"`
 	Name        string `json:"name"`
-	AdminID     uint   `json:"adminid"`
+	Adminid     uint   `json:"adminid"`
 	Description string `json:"description"`
 }
 
