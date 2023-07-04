@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GetADeploy 获得指定deploy
-func GetADeploy(name, ns string) (*appsv1.Deployment, error) {
+// GetDeploy 获得指定deploy
+func GetDeploy(name, ns string) (*appsv1.Deployment, error) {
 	get, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -32,30 +32,13 @@ func CreateDeploy(name, ns string, label map[string]string, spec appsv1.Deployme
 	return create, err
 }
 
-// GetDeploy 获得指定namespace下的控制器
-func GetDeploy(ns, label string) (*responses.DeployListResponse, error) {
+// ListDeploy 获得指定namespace下的控制器
+func ListDeploy(ns, label string) ([]appsv1.Deployment, error) {
 	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
-	num := len(list.Items)
-	deployList := make([]responses.Deploy, num)
-	for i, deploy := range list.Items {
-		tmp := responses.Deploy{
-			Name:              deploy.Name,
-			Namespace:         deploy.Namespace,
-			CreatedAt:         deploy.CreationTimestamp.Format("2006-01-02 15:04:05"),
-			Replicas:          deploy.Status.Replicas,
-			UpdatedReplicas:   deploy.Status.UpdatedReplicas,
-			ReadyReplicas:     deploy.Status.ReadyReplicas,
-			AvailableReplicas: deploy.Status.AvailableReplicas,
-			//Uid:               deploy.Labels["u_id"],
-			//SshPwd:        deploy.Spec.Template.Spec.Containers[0].Args[0],
-			//SshPwd: deploy.Spec.Template.Spec.Containers[0].Env[0].Value,
-		}
-		deployList[i] = tmp
-	}
-	return &responses.DeployListResponse{Response: responses.OK, Length: num, DeployList: deployList}, nil
+	return list.Items, nil
 }
 
 // DeleteDeploy 删除指定namespace的控制器
@@ -68,10 +51,15 @@ func DeleteDeploy(name, ns string) (*responses.Response, error) {
 }
 
 // UpdateDeploy 更新deploy
-func UpdateDeploy(deploy *appsv1.Deployment) (*responses.Response, error) {
-	_, err := dao.ClientSet.AppsV1().Deployments(deploy.Namespace).Update(context.Background(), deploy, metav1.UpdateOptions{})
+func UpdateDeploy(name, ns string, spec appsv1.DeploymentSpec) (*appsv1.Deployment, error) {
+	deploy, err := GetDeploy(name, ns)
 	if err != nil {
 		return nil, err
 	}
-	return &responses.OK, nil
+	deploy.Spec = spec
+	update, err := dao.ClientSet.AppsV1().Deployments(deploy.Namespace).Update(context.Background(), deploy, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return update, nil
 }
