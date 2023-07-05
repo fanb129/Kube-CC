@@ -110,9 +110,12 @@ func Update(c *gin.Context) {
 // TransAdmin 更改管理员
 func TransAdmin(c *gin.Context) {
 	gid, _ := strconv.Atoi(c.Param("id"))
-	odid, _ := strconv.Atoi(c.Param("od_id"))
-	nwid, _ := strconv.Atoi(c.Param("nw_id"))
-	response, err := service.TransAdmin(uint(gid), uint(odid), uint(nwid))
+	form := forms.TransAdmin{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.TransAdmin(uint(gid), form.OldAdminID, form.NewAdminID)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,

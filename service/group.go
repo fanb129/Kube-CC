@@ -125,7 +125,7 @@ func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 func DeleteGroup(id uint) (*responses.Response, error) {
 	users, erru := dao.GetGroupUserById(id)
 	if erru != nil || users == nil {
-		return nil, errors.New("删除失败")
+		return nil, errors.New("获取组用户失败")
 	}
 	for _, v := range users {
 		v.Groupid = 0
@@ -208,6 +208,11 @@ func TransAdmin(g_id, odad_id, nwad_id uint) (*responses.Response, error) {
 		return nil, errors.New("新管理员不属于本组")
 	}
 	group.Adminid = nwad_id
+
+	row, err := dao.UpdateGroup(group)
+	if err != nil || row == 0 {
+		return nil, errors.New("更新失败")
+	}
 
 	return &responses.OK, nil
 }

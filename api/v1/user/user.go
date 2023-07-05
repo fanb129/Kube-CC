@@ -39,6 +39,19 @@ func Index(c *gin.Context) {
 	c.JSON(http.StatusOK, userListResponse)
 }
 
+// // GetAd 获取管理员用户
+// func GetAd(c *gin.Context) {
+// 	response, err := service.GetAdminUser()
+// 	if err != nil {
+// 		c.JSON(http.StatusOK, responses.Response{
+// 			StatusCode: -1,
+// 			StatusMsg:  err.Error(),
+// 		})
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, response)
+// }
+
 // Delete 删除用户
 func Delete(c *gin.Context) {
 	//fmt.Println("delete")

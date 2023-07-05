@@ -31,3 +31,12 @@ type GroupUser struct {
 	Response
 	UserList []UserInfo `json:"groupuser_list"`
 }
+type AdminUserResponse struct {
+	Response
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
+}
+type AdminUserListResponse struct {
+	Response
+	AdminUserList []AdminUserResponse `json:"adminuser_list"`
+}

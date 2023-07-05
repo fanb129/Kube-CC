@@ -2,7 +2,7 @@ package forms
 
 type TransAdmin struct {
 	//  Username string `form:"username" json:"username" binding:"required,min=1,max=16"`
-	GroupID    uint `form:"groupid" json:"groupid" binding:"required"`
+	//GroupID    uint `form:"groupid" json:"groupid" binding:"required"`
 	OldAdminID uint `form:"oldadminid" json:"oldadminid" binding:"required"`
 	NewAdminID uint `form:"newadminid" json:"newadminid" binding:"required"`
 }
