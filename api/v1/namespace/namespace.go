@@ -26,7 +26,7 @@ func Index(c *gin.Context) {
 		}
 		// 将map标签转换为string
 		selector := labels.SelectorFromSet(label).String()
-		nsListResponse, err = service.GetNs(selector)
+		nsListResponse, err = service.ListNs(selector)
 		goto END
 	}
 	// 2. g_id不为空，u_id为空的话，就是查看该组下面所有人的ns
@@ -49,7 +49,7 @@ func Index(c *gin.Context) {
 			// 将map标签转换为string
 			selector := labels.SelectorFromSet(label).String()
 			var ns *responses.NsListResponse
-			ns, err = service.GetNs(selector)
+			ns, err = service.ListNs(selector)
 			if err != nil {
 				zap.S().Errorln("ns:index:", err)
 				goto END
@@ -61,7 +61,7 @@ func Index(c *gin.Context) {
 		goto END
 	}
 	//3. g_id和u_id都为空的话就是查看所有组下面所有人的ns
-	nsListResponse, err = service.GetNs("")
+	nsListResponse, err = service.ListNs("")
 	goto END
 
 END:

@@ -1,16 +1,17 @@
-package service
+package application
 
 import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/conf"
+	"Kube-CC/service"
+	"errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"strconv"
 	"time"
 )
 
@@ -19,61 +20,81 @@ const (
 	HDOOP_YARN_MASTER           = "HDOOP_YARN_MASTER"
 	HADOOP_NODE_TYPE            = "HADOOP_NODE_TYPE"
 	hadoopConfigMapName         = "hadoop-configmap"
-	hadoopHdfsMasterDeployName  = "hadoop-hdfs-master-deploy"
+	hadoopHdfsMasterDeployName  = "hadoop-hdfs-master"
 	hadoopHdfsMasterServiceName = "hadoop-hdfs-master-service"
-	datanodeDeployName          = "hadoop-datanode-deploy"
-	hadoopYarnMasterDeployName  = "hadoop-yarn-master-deploy"
+	datanodeDeployName          = "hadoop-datanode"
+	hadoopYarnMasterDeployName  = "hadoop-yarn-master"
 	hadoopYarnMasterServiceName = "hadoop-yarn-master-service"
-	hadoopYarnNodeDeployName    = "hadoop-yarn-node-deploy"
+	hadoopYarnNodeDeployName    = "hadoop-yarn-node"
 	hadoopYarnNodeServiceName   = "hadoop-yarn-node-service"
 )
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
-func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
-	ns := "hadoop-" + string(uuid.NewUUID())
+func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+	newUuid := string(uuid.NewUUID())
+	ns := "hadoop-" + newUuid
 	label := map[string]string{
 		"image": "hadoop",
+		"uuid":  newUuid,
 	}
-	hdfsMasterSelector := map[string]string{
-		"name": "hdfs-master",
-	}
+	label["u_id"] = u_id
 	hdfsMasterLabel := map[string]string{
 		"name": "hdfs-master",
-	}
-	datanodeSelector := map[string]string{
-		"name": "hadoop-datanode",
+		"uuid": newUuid,
 	}
 	datanodeLabel := map[string]string{
 		"name": "hadoop-datanode",
-	}
-	yarnMasterSelector := map[string]string{
-		"name": "yarn-master",
+		"uuid": newUuid,
 	}
 	yarnMasterLabel := map[string]string{
 		"name": "yarn-master",
-	}
-	yarnNodeSelector := map[string]string{
-		"name": "yarn-node",
+		"uuid": newUuid,
 	}
 	yarnNodeLabel := map[string]string{
 		"name": "yarn-node",
-	}
-	if u_id != 0 {
-		uid := strconv.Itoa(int(u_id))
-		label["u_id"] = uid
-		//hdfsMasterLabel["u_id"] = uid
-		//datanodeLabel["u_id"] = uid
-		//yarnMasterLabel["u_id"] = uid
-		//yarnNodeLabel["u_id"] = uid
+		"uuid": newUuid,
 	}
 	// 创建namespace
-	_, err := CreateNs(ns, expiredTime, label, resources)
+	rsc := forms.Resources{
+		Cpu:        resources.Cpu,
+		Memory:     resources.Memory,
+		Storage:    resources.Storage,
+		PvcStorage: resources.PvcStorage,
+		Gpu:        resources.Gpu,
+	}
+	_, err := service.CreateNs(ns, expiredTime, label, rsc)
 	if err != nil {
 		return nil, err
 	}
-
+	// 创建PVC，持久存储
+	volumes := make([]corev1.Volume, 0)
+	volumeMounts := make([]corev1.VolumeMount, len(resources.PvcPath))
+	if resources.PvcStorage != "" {
+		if resources.StorageClassName == "" {
+			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
+		}
+		pvcName := ns + "-pvc"
+		_, err = service.CreatePVC(ns, pvcName, resources.StorageClassName, resources.PvcStorage, accessModes)
+		if err != nil {
+			return nil, err
+		}
+		volumes = append(volumes, corev1.Volume{
+			Name: pvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvcName,
+				},
+			},
+		})
+		for i, path := range resources.PvcPath {
+			volumeMounts[i] = corev1.VolumeMount{
+				Name:      pvcName,
+				MountPath: path,
+			}
+		}
+	}
 	// 创建configMap
-	_, err = CreateConfigMap(hadoopConfigMapName, ns, map[string]string{}, map[string]string{
+	_, err = service.CreateConfigMap(hadoopConfigMapName, ns, map[string]string{}, map[string]string{
 		HDFS_MASTER_SERVICE: "hadoop-hdfs-master",
 		HDOOP_YARN_MASTER:   "hadoop-yarn-master",
 	})
@@ -85,12 +106,13 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	//var hdfsMasterReplicas int32 = 1
 	hdfsMasterSpec := appsv1.DeploymentSpec{
 		Replicas: &hdfsMasterReplicas,
-		Selector: &metav1.LabelSelector{MatchLabels: hdfsMasterSelector},
+		Selector: &metav1.LabelSelector{MatchLabels: hdfsMasterLabel},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: hdfsMasterLabel,
 			},
 			Spec: corev1.PodSpec{
+				Volumes: volumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "hdfs-master",
@@ -100,12 +122,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 							{ContainerPort: 9000},
 							{ContainerPort: 50070},
 						},
-						//Resources: corev1.ResourceRequirements{
-						//	Limits: corev1.ResourceList{
-						//		corev1.ResourceCPU:    resource.MustParse(cpu),
-						//		corev1.ResourceMemory: resource.MustParse(memory),
-						//	},
-						//},
+						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "namenode"},
 							{Name: HDFS_MASTER_SERVICE, ValueFrom: &corev1.EnvVarSource{
@@ -131,7 +148,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(hadoopHdfsMasterDeployName, ns, map[string]string{}, hdfsMasterSpec)
+	_, err = service.CreateDeploy(hadoopHdfsMasterDeployName, ns, hdfsMasterLabel, hdfsMasterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -139,13 +156,13 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	// 创建hdfs-master的service
 	hdfsMasterServiceSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeNodePort,
-		Selector: hdfsMasterSelector,
+		Selector: hdfsMasterLabel,
 		Ports: []corev1.ServicePort{
 			{Name: "rpc", Port: 9000, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 9000}},
 			{Name: "http", Port: 50070, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 50070}},
 		},
 	}
-	_, err = CreateService(hadoopHdfsMasterServiceName, ns, map[string]string{}, hdfsMasterServiceSpec)
+	_, err = service.CreateService(hadoopHdfsMasterServiceName, ns, hdfsMasterLabel, hdfsMasterServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -154,12 +171,13 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	//var datanodeReplicas int32 = 3
 	datanodeSpec := appsv1.DeploymentSpec{
 		Replicas: &datanodeReplicas,
-		Selector: &metav1.LabelSelector{MatchLabels: datanodeSelector},
+		Selector: &metav1.LabelSelector{MatchLabels: datanodeLabel},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: datanodeLabel,
 			},
 			Spec: corev1.PodSpec{
+				Volumes: volumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "hadoop-datanode",
@@ -175,6 +193,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 						//		corev1.ResourceMemory: resource.MustParse(memory),
 						//	},
 						//},
+						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{
 								Name:  HADOOP_NODE_TYPE,
@@ -209,7 +228,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(datanodeDeployName, ns, map[string]string{}, datanodeSpec)
+	_, err = service.CreateDeploy(datanodeDeployName, ns, datanodeLabel, datanodeSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -219,13 +238,14 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	yarnMasterSpec := appsv1.DeploymentSpec{
 		Replicas: &yarnMasterReplicas,
 		Selector: &metav1.LabelSelector{
-			MatchLabels: yarnMasterSelector,
+			MatchLabels: yarnMasterLabel,
 		},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: yarnMasterLabel,
 			},
 			Spec: corev1.PodSpec{
+				Volumes: volumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "yarn-master",
@@ -241,6 +261,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 						//		corev1.ResourceMemory: resource.MustParse(memory),
 						//	},
 						//},
+						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{
 								Name:  HADOOP_NODE_TYPE,
@@ -275,7 +296,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(hadoopYarnMasterDeployName, ns, map[string]string{}, yarnMasterSpec)
+	_, err = service.CreateDeploy(hadoopYarnMasterDeployName, ns, yarnMasterLabel, yarnMasterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +304,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	// yarn-master的service
 	yarnMasterServiceSpec := corev1.ServiceSpec{
 		Type:     corev1.ServiceTypeNodePort,
-		Selector: yarnMasterSelector,
+		Selector: yarnMasterLabel,
 		Ports: []corev1.ServicePort{
 			{Name: "8030", Port: 8030},
 			{Name: "8031", Port: 8031},
@@ -291,7 +312,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			{Name: "http", Port: 8088, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 8088}},
 		},
 	}
-	_, err = CreateService(hadoopYarnMasterServiceName, ns, map[string]string{}, yarnMasterServiceSpec)
+	_, err = service.CreateService(hadoopYarnMasterServiceName, ns, yarnMasterLabel, yarnMasterServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -301,13 +322,14 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	yarnNodeSpec := appsv1.DeploymentSpec{
 		Replicas: &yarnNodeReplicas,
 		Selector: &metav1.LabelSelector{
-			MatchLabels: yarnNodeSelector,
+			MatchLabels: yarnNodeLabel,
 		},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: yarnNodeLabel,
 			},
 			Spec: corev1.PodSpec{
+				Volumes: volumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "yarn-node",
@@ -324,6 +346,7 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 						//		corev1.ResourceMemory: resource.MustParse(memory),
 						//	},
 						//},
+						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "yarnnode"},
 							{
@@ -355,19 +378,19 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 			},
 		},
 	}
-	_, err = CreateDeploy(hadoopYarnNodeDeployName, ns, map[string]string{}, yarnNodeSpec)
+	_, err = service.CreateDeploy(hadoopYarnNodeDeployName, ns, yarnNodeLabel, yarnNodeSpec)
 	if err != nil {
 		return nil, err
 	}
 
 	// yarn-node的service
 	yarnNodeServiceSpec := corev1.ServiceSpec{
-		Selector: yarnNodeSelector,
+		Selector: yarnNodeLabel,
 		Ports: []corev1.ServicePort{
 			{Port: 8040},
 		},
 	}
-	_, err = CreateService(hadoopYarnNodeServiceName, ns, map[string]string{}, yarnNodeServiceSpec)
+	_, err = service.CreateService(hadoopYarnNodeServiceName, ns, yarnNodeLabel, yarnNodeServiceSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -375,70 +398,39 @@ func CreateHadoop(u_id uint, hdfsMasterReplicas, datanodeReplicas, yarnMasterRep
 	return &responses.OK, nil
 }
 
-// GetHadoop 获取uid下的所有hadoop
-func GetHadoop(u_id uint) (*responses.HadoopListResponse, error) {
+// ListHadoop 获取uid下的所有hadoop
+func ListHadoop(u_id string) (*responses.HadoopListResponse, error) {
 	label := map[string]string{
 		"image": "hadoop",
 	}
-	if u_id > 0 {
-		label["u_id"] = strconv.Itoa(int(u_id))
+	if u_id != "" {
+		label["u_id"] = u_id
 	}
 	// 将map标签转换为string
 	selector := labels.SelectorFromSet(label).String()
-	hadoops, err := GetNs(selector)
+	hadoops, err := service.ListNs(selector)
 	if err != nil {
 		return nil, err
 	}
 	hadoopList := make([]responses.Hadoop, hadoops.Length)
 	for i, hadoop := range hadoops.NsList {
-		// 获取pod
-		podList, err := GetPod(hadoop.Name, "")
-		if err != nil {
-			return nil, err
-		}
 		// 获取deploy
-		deployList, err := GetDeploy(hadoop.Name, "")
+		deployList, err := service.ListDeploy(hadoop.Name, "")
 		if err != nil {
 			return nil, err
-		}
-		var hdfsMaster, datanode, yarnMaster, yarnNode int32
-		for j := 0; j < deployList.Length; j++ {
-			deploy := deployList.DeployList[j]
-			switch deploy.Name {
-			case hadoopHdfsMasterDeployName:
-				hdfsMaster = deploy.Replicas
-			case datanodeDeployName:
-				datanode = deploy.Replicas
-			case hadoopYarnMasterDeployName:
-				yarnMaster = deploy.Replicas
-			case hadoopYarnNodeDeployName:
-				yarnNode = deploy.Replicas
-			}
 		}
 		// 获取service
-		serviceList, err := GetService(hadoop.Name, "")
+		serviceList, err := service.ListService(hadoop.Name, "")
 		if err != nil {
 			return nil, err
 		}
+		// 获取pod
+		podList, err := service.ListPod(hadoop.Name, "")
 		hadoopList[i] = responses.Hadoop{
-			Name:               hadoop.Name,
-			Uid:                u_id,
-			Username:           hadoop.Username,
-			Nickname:           hadoop.Nickname,
-			CreatedAt:          hadoop.CreatedAt,
-			Status:             hadoop.Status,
-			PodList:            podList.PodList,
-			DeployList:         deployList.DeployList,
-			ServiceList:        serviceList.ServiceList,
-			HdfsMasterReplicas: hdfsMaster,
-			DatanodeReplicas:   datanode,
-			YarnMasterReplicas: yarnMaster,
-			YarnNodeReplicas:   yarnNode,
-			ExpiredTime:        hadoop.ExpiredTime,
-			Cpu:                hadoop.Cpu,
-			UsedCpu:            hadoop.UsedCpu,
-			Memory:             hadoop.Memory,
-			UsedMemory:         hadoop.UsedMemory,
+			Ns:          hadoop,
+			DeployList:  deployList,
+			ServiceList: serviceList,
+			PodList:     podList,
 		}
 	}
 	return &responses.HadoopListResponse{
@@ -451,31 +443,31 @@ func GetHadoop(u_id uint) (*responses.HadoopListResponse, error) {
 // DeleteHadoop 删除指定hadoop
 func DeleteHadoop(ns string) (*responses.Response, error) {
 	var err1 error
-	if _, err := DeleteService(hadoopYarnNodeServiceName, ns); err != nil {
+	if _, err := service.DeleteService(hadoopYarnNodeServiceName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteDeploy(hadoopYarnNodeDeployName, ns); err != nil {
+	if _, err := service.DeleteDeploy(hadoopYarnNodeDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteService(hadoopYarnMasterServiceName, ns); err != nil {
+	if _, err := service.DeleteService(hadoopYarnMasterServiceName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteDeploy(hadoopYarnMasterDeployName, ns); err != nil {
+	if _, err := service.DeleteDeploy(hadoopYarnMasterDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteDeploy(datanodeDeployName, ns); err != nil {
+	if _, err := service.DeleteDeploy(datanodeDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteService(hadoopHdfsMasterServiceName, ns); err != nil {
+	if _, err := service.DeleteService(hadoopHdfsMasterServiceName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteDeploy(hadoopHdfsMasterDeployName, ns); err != nil {
+	if _, err := service.DeleteDeploy(hadoopHdfsMasterDeployName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteConfigMap(hadoopConfigMapName, ns); err != nil {
+	if _, err := service.DeleteConfigMap(hadoopConfigMapName, ns); err != nil {
 		err1 = err
 	}
-	if _, err := DeleteNs(ns); err != nil {
+	if _, err := service.DeleteNs(ns); err != nil {
 		err1 = err
 	}
 	if err1 != nil {
@@ -485,48 +477,55 @@ func DeleteHadoop(ns string) (*responses.Response, error) {
 }
 
 // UpdateHadoop 更新hadoop的uid，以及replicas
-func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
-	if _, err := UpdateNs(name, uid, expiredTime, resources); err != nil {
+func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+	rsc := forms.Resources{
+		Cpu:        resources.Cpu,
+		Memory:     resources.Memory,
+		Storage:    resources.Storage,
+		PvcStorage: resources.PvcStorage,
+		Gpu:        resources.Gpu,
+	}
+	if _, err := service.UpdateNs(name, uid, expiredTime, rsc); err != nil {
 		return nil, err
 	}
 
 	// 更新hdfsMaster的Replicas
-	hdfsMaster, err := GetADeploy(hadoopHdfsMasterDeployName, name)
+	hdfsMaster, err := service.GetDeploy(hadoopHdfsMasterDeployName, name)
 	if err != nil {
 		return nil, err
 	}
 	hdfsMaster.Spec.Replicas = &hdfsMasterReplicas
-	if _, err := UpdateDeploy(hdfsMaster); err != nil {
+	if _, err := service.UpdateDeploy(hadoopHdfsMasterDeployName, name, hdfsMaster.Spec); err != nil {
 		return nil, err
 	}
 
 	// 更新datanode的Replicas
-	datanode, err := GetADeploy(datanodeDeployName, name)
+	datanode, err := service.GetDeploy(datanodeDeployName, name)
 	if err != nil {
 		return nil, err
 	}
 	datanode.Spec.Replicas = &datanodeReplicas
-	if _, err := UpdateDeploy(datanode); err != nil {
+	if _, err := service.UpdateDeploy(datanodeDeployName, name, datanode.Spec); err != nil {
 		return nil, err
 	}
 
 	// 更新yarnMaster的Replicas
-	yarnMaster, err := GetADeploy(hadoopYarnMasterDeployName, name)
+	yarnMaster, err := service.GetDeploy(hadoopYarnMasterDeployName, name)
 	if err != nil {
 		return nil, err
 	}
 	yarnMaster.Spec.Replicas = &yarnMasterReplicas
-	if _, err := UpdateDeploy(yarnMaster); err != nil {
+	if _, err := service.UpdateDeploy(hadoopYarnMasterDeployName, name, yarnMaster.Spec); err != nil {
 		return nil, err
 	}
 
 	// 更新yarnNode的Replicas
-	yarnNode, err := GetADeploy(hadoopYarnNodeDeployName, name)
+	yarnNode, err := service.GetDeploy(hadoopYarnNodeDeployName, name)
 	if err != nil {
 		return nil, err
 	}
 	yarnNode.Spec.Replicas = &yarnNodeReplicas
-	if _, err := UpdateDeploy(yarnNode); err != nil {
+	if _, err := service.UpdateDeploy(hadoopYarnNodeDeployName, name, yarnNode.Spec); err != nil {
 		return nil, err
 	}
 

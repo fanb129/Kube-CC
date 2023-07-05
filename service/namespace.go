@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// GetNs 获取所有namespace
-func GetNs(label string) (*responses.NsListResponse, error) {
+// ListNs 获取所有namespace
+func ListNs(label string) (*responses.NsListResponse, error) {
 	namespace, err := dao.ClientSet.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
