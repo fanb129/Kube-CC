@@ -12,13 +12,13 @@ type AppDeploy struct {
 	Image     string               `json:"image" form:"image" binding:"required"`
 	Ports     []corev1.ServicePort `json:"ports"`
 	Resources
-	PvcPath           []string `json:"pvc_path"`
-	Volume            string   `json:"volume"`
-	CreatedAt         string   `json:"created_at"`
-	UpdatedReplicas   int32    `json:"updated_replicas"`
-	ReadyReplicas     int32    `json:"ready_replicas"`
-	AvailableReplicas int32    `json:"available_replicas"`
-	PodList           []Pod    `json:"pod_list"`
+	PvcPath           []string    `json:"pvc_path"`
+	Volume            string      `json:"volume"`
+	CreatedAt         string      `json:"created_at"`
+	UpdatedReplicas   int32       `json:"updated_replicas"`
+	ReadyReplicas     int32       `json:"ready_replicas"`
+	AvailableReplicas int32       `json:"available_replicas"`
+	PodList           []DeployPod `json:"pod_list"`
 }
 
 type AppDeployList struct {
