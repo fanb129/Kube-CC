@@ -149,9 +149,20 @@ func Create(c *gin.Context) {
 			err = errors.New("yaml中kind必须为\"Service\"或\"service\"")
 			goto END
 		}
+	case "StatefulSet":
+		if yamlKind != "StatefulSet" && yamlKind != "statefulSet" {
+			err = errors.New("yaml中kind必须为\"StatefulSet\"或\"statefulSet\"")
+			goto END
+		}
+
 	case "Pod":
 		if yamlKind != "Pod" && yamlKind != "pod" {
 			err = errors.New("yaml中kind必须为\"Pod\"或\"pod\"")
+			goto END
+		}
+	case "Job":
+		if yamlKind != "Job" && yamlKind != "job" {
+			err = errors.New("yaml中kind必须为\"Job\"或\"job\"")
 			goto END
 		}
 	}
@@ -184,6 +195,15 @@ func Create(c *gin.Context) {
 			goto END
 		}
 		goto SUCCESS
+	case "StatefulSet", "statefulSet", "STS", "sts":
+		statefulSet := appsv1.StatefulSet{}
+		if err = json.Unmarshal(jsonYaml, &statefulSet); err != nil {
+			goto END
+		}
+		if _, err = yamlApply.StatefulSetCreate(&statefulSet); err != nil {
+			goto END
+		}
+		goto SUCCESS
 	case "Service", "service":
 		svc := corev1.Service{}
 		if err = json.Unmarshal(jsonYaml, &svc); err != nil {
@@ -199,6 +219,15 @@ func Create(c *gin.Context) {
 			goto END
 		}
 		if _, err = yamlApply.PodCreate(&pod); err != nil {
+			goto END
+		}
+		goto SUCCESS
+	case "Job", "job":
+		job := corev1.Pod{}
+		if err = json.Unmarshal(jsonYaml, &job); err != nil {
+			goto END
+		}
+		if _, err = yamlApply.JobCreate(&job); err != nil {
 			goto END
 		}
 		goto SUCCESS
