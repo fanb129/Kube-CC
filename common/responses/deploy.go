@@ -1,26 +1,28 @@
 package responses
 
-import appsv1 "k8s.io/api/apps/v1"
+import (
+	corev1 "k8s.io/api/core/v1"
+)
 
-type Deploy struct {
-	Name              string `json:"name"`
-	Namespace         string `json:"namespace"`
-	CreatedAt         string `json:"created_at"`
-	Replicas          int32  `json:"replicas"`
-	UpdatedReplicas   int32  `json:"updated_replicas"`
-	ReadyReplicas     int32  `json:"ready_replicas"`
-	AvailableReplicas int32  `json:"available_replicas"`
-	Uid               string `json:"u_id"`
+// AppDeploy appDeploy的信息,用于查看详细信息
+type AppDeploy struct {
+	Name      string               `json:"name" form:"name" binding:"required,min=3,max=16"`
+	Namespace string               `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
+	Replicas  int32                `json:"replicas" form:"replicas" binding:"required,gte=1"`
+	Image     string               `json:"image" form:"image" binding:"required"`
+	Ports     []corev1.ServicePort `json:"ports"`
+	Resources
+	PvcPath           []string `json:"pvc_path"`
+	Volume            string   `json:"volume"`
+	CreatedAt         string   `json:"created_at"`
+	UpdatedReplicas   int32    `json:"updated_replicas"`
+	ReadyReplicas     int32    `json:"ready_replicas"`
+	AvailableReplicas int32    `json:"available_replicas"`
+	PodList           []Pod    `json:"pod_list"`
 }
 
-// DeployListResponse pod控制器返回结果
-type DeployListResponse struct {
+type AppDeployList struct {
 	Response
-	Length     int      `json:"length"`
-	DeployList []Deploy `json:"deploy_list"`
-}
-
-type DeployInfo struct {
-	Response
-	Info appsv1.Deployment `json:"info"`
+	Length     int         `json:"length"`
+	DeployList []AppDeploy `json:"deploy_list"`
 }

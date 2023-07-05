@@ -27,9 +27,6 @@ func InitRouter() *gin.Engine {
 	// 需要鉴权
 	auth := apiRouter.Group("", middleware.JWTToken())
 
-	// yaml路由
-	yamlRouter(auth)
-
 	//用户路由
 	userRouter(auth)
 
@@ -42,32 +39,17 @@ func InitRouter() *gin.Engine {
 	// namespace路由
 	nsRouter(auth)
 
-	// deploy路由
-	deployRouter(auth)
-
-	// statefulSet路由
-	statefulSetRouter(auth)
-
-	// service路由
-	serviceRouter(auth)
-
-	// job路由
-	jobRouter(auth)
-
-	// pod路由
-	podRouter(auth)
-
-	// spark路由
-	sparkRouter(auth)
-
-	// hadoop路由
-	hadoopRouter(auth)
-
-	// linux路由
-	linuxRouter(auth)
-
 	// docker路由
 	dockerRouter(auth)
+
+	// pvc持久卷路由
+	pvcRouter(auth)
+
+	// sc存储类路由
+	scRouter(auth)
+
+	// application路由
+	appRouter(auth)
 
 	return r
 }
