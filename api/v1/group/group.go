@@ -43,7 +43,7 @@ func Index(c *gin.Context) {
 func Delete(c *gin.Context) {
 	//fmt.Println("delete")
 
-	gid, _ := strconv.Atoi(c.Param("g_id"))
+	gid, _ := strconv.Atoi(c.Param("id"))
 	response, err := service.DeleteGroup(uint(gid))
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
@@ -74,7 +74,7 @@ func ViewGroupUser(c *gin.Context) {
 // Remove 移出用户
 func Remove(c *gin.Context) {
 	//fmt.Println("useredit")
-	uid, _ := strconv.Atoi(c.Param("u_id"))
+	uid, _ := strconv.Atoi(c.Param("id"))
 	response, err := service.RemoveUser(uint(uid))
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
@@ -109,7 +109,7 @@ func Update(c *gin.Context) {
 
 // TransAdmin 更改管理员
 func TransAdmin(c *gin.Context) {
-	gid, _ := strconv.Atoi(c.Param("g_id"))
+	gid, _ := strconv.Atoi(c.Param("id"))
 	odid, _ := strconv.Atoi(c.Param("od_id"))
 	nwid, _ := strconv.Atoi(c.Param("nw_id"))
 	response, err := service.TransAdmin(uint(gid), uint(odid), uint(nwid))
