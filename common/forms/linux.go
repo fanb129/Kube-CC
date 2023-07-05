@@ -1,22 +1,22 @@
 package forms
 
-import "time"
-
 type LinuxAddForm struct {
-	Uid         uint       `form:"u_id" json:"u_id" binding:"required,gt=0"`
-	Kind        uint       `form:"kind" json:"kind" binding:"required,gt=0"`
-	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
-	Resources
+	Kind      uint   `form:"kind" json:"kind" binding:"required,gt=0"`
+	Name      string `json:"name" form:"name" binding:"required,min=3,max=16"`
+	Namespace string `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
+	ApplyResources
 }
-type BatchLinuxAddForm struct {
-	Uid         []uint     `form:"u_id" json:"u_id" binding:"required"`
-	Kind        uint       `form:"kind" json:"kind" binding:"required,gt=0"`
-	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
-	Resources
-}
+
+// LinuxUpdateForm
+//type BatchLinuxAddForm struct {
+//	Uid         []uint     `form:"u_id" json:"u_id" binding:"required"`
+//	Kind        uint       `form:"kind" json:"kind" binding:"required,gt=0"`
+//	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
+//	Resources
+//}
+
 type LinuxUpdateForm struct {
-	Name        string     `json:"name" form:"name" binding:"required"`
-	Uid         uint       `form:"u_id" json:"u_id" binding:"required,gt=0"`
-	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
-	Resources
+	Name      string `json:"name" form:"name" binding:"required,min=3,max=16"`
+	Namespace string `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
+	ApplyResources
 }

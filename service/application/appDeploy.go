@@ -7,6 +7,7 @@ import (
 	"Kube-CC/service"
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -197,8 +198,8 @@ func DeleteAppDeploy(name, ns string) (*responses.Response, error) {
 }
 
 // ListAppDeploy 列出ns下的所有appDeploy
-func ListAppDeploy(ns string) (*responses.AppDeployList, error) {
-	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{})
+func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
+	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -209,13 +210,15 @@ func ListAppDeploy(ns string) (*responses.AppDeployList, error) {
 		serviceName := deploy.Name + "-service"
 		svc, err := service.GetService(serviceName, ns)
 		if err != nil {
-			return nil, err
+			zap.S().Errorln("service/application/appDeploy:", err)
+			svc = &corev1.Service{}
 		}
 		// 获取对应pvc
 		pvcName := deploy.Name + "-pvc"
 		pvc, err := service.GetPVC(ns, pvcName)
 		if err != nil {
-			return nil, err
+			zap.S().Errorln("service/application/appDeploy:", err)
+			pvc = &corev1.PersistentVolumeClaim{}
 		}
 		// 获取挂载的路径
 		volumeMounts := deploy.Spec.Template.Spec.Containers[0].VolumeMounts
@@ -269,13 +272,18 @@ func GetAppDeploy(name, ns string) (*forms.DeployAddForm, error) {
 	pvcName := name + "-pvc"
 	configMap, err := service.GetConfigMap(configName, ns)
 	if err != nil {
-		return nil, err
+		zap.S().Errorln("service/application/appDeploy:", err)
+		configMap = &corev1.ConfigMap{}
 	}
 	pvc, err := service.GetPVC(ns, pvcName)
 	if err != nil {
-		return nil, err
+		zap.S().Errorln("service/application/appDeploy:", err)
+		pvc = &corev1.PersistentVolumeClaim{}
 	}
 	deploy, err := service.GetDeploy(name, ns)
+	if err != nil {
+		return nil, err
+	}
 
 	// 取出ports参数
 	portList := deploy.Spec.Template.Spec.Containers[0].Ports
