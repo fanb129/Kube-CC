@@ -56,6 +56,25 @@ func Delete(c *gin.Context) {
 
 }
 
+// Create 创建组
+func Create(c *gin.Context) {
+	adid, _ := strconv.Atoi(c.Param("id"))
+	form := forms.GroupUpdateForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.CreateNewGroup(uint(adid), form.Name, form.Description)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // ViewGroupUser 查看组内成员
 func ViewGroupUser(c *gin.Context) {
 	//fmt.Println("userindex")

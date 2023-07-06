@@ -103,6 +103,15 @@ func ViewGroupUser(groupid uint) (*responses.GroupUser, error) {
 	}, nil
 }
 
+// CreateNewGroup 创建新的组
+func CreateNewGroup(adminid uint, name, description string) (int, error) {
+	row, err := dao.CreateGroup(adminid, name, description)
+	if err != nil {
+		return row, errors.New("创建组失败")
+	}
+	return row, nil
+}
+
 func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 	group, err := dao.GetGroupById(g_id)
 	if err != nil {
