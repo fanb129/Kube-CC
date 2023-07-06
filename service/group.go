@@ -177,7 +177,7 @@ func RemoveUser(u_id uint) (*responses.Response, error) {
 		return nil, errors.New("获取用户失败")
 	}
 	user.Groupid = 0
-	row, err := dao.UpdateUser(user)
+	row, err := dao.UpdateUserWithNil(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("移出失败")
 	}

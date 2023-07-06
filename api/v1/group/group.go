@@ -90,6 +90,25 @@ func ViewGroupUser(c *gin.Context) {
 	c.JSON(http.StatusOK, groupuserListResponse)
 }
 
+// Add 添加用户
+func Add(c *gin.Context) {
+	u_id, _ := strconv.Atoi(c.Param("id"))
+	form := forms.AddUser{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.AddUser(form.GroupID, uint(u_id))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // Remove 移出用户
 func Remove(c *gin.Context) {
 	//fmt.Println("useredit")
