@@ -5,6 +5,7 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"Kube-CC/service"
+	"encoding/json"
 	"errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -32,7 +33,6 @@ const (
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
 func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
-
 	newUuid := string(uuid.NewUUID())
 	ns := "hadoop-" + newUuid
 	label := map[string]string{
@@ -92,7 +92,22 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		return nil, err
 	}
 
-	_, err = service.CreateNs(ns, expiredTime, label, rsc)
+	// 将form序列化为string，存入deploy的注释
+	form := forms.HadoopUpdateForm{
+		Name:               ns,
+		HdfsMasterReplicas: hdfsMasterReplicas,
+		DatanodeReplicas:   datanodeReplicas,
+		YarnMasterReplicas: yarnMasterReplicas,
+		YarnNodeReplicas:   yarnNodeReplicas,
+		ExpiredTime:        expiredTime,
+		ApplyResources:     resources,
+	}
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
+	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
 	if err != nil {
 		return nil, err
 	}
@@ -479,22 +494,13 @@ func ListHadoop(u_id string) (*responses.HadoopListResponse, error) {
 	hadoopList := make([]responses.Hadoop, hadoops.Length)
 	for i, hadoop := range hadoops.NsList {
 		// 获取deploy
-		deployList, err := service.ListDeploy(hadoop.Name, "")
+		deploy, err := ListAppDeploy(hadoop.Name, "")
 		if err != nil {
 			return nil, err
 		}
-		// 获取service
-		serviceList, err := service.ListService(hadoop.Name, "")
-		if err != nil {
-			return nil, err
-		}
-		// 获取pod
-		podList, err := service.ListPod(hadoop.Name, "")
 		hadoopList[i] = responses.Hadoop{
-			Ns:          hadoop,
-			DeployList:  deployList,
-			ServiceList: serviceList,
-			PodList:     podList,
+			Ns:         hadoop,
+			DeployList: deploy.DeployList,
 		}
 	}
 	return &responses.HadoopListResponse{
@@ -549,7 +555,22 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		PvcStorage: resources.PvcStorage,
 		Gpu:        resources.Gpu,
 	}
-	if _, err := service.UpdateNs(name, expiredTime, rsc); err != nil {
+	// 将form序列化为string，存入ns的注释
+	form := forms.HadoopUpdateForm{
+		Name:               name,
+		HdfsMasterReplicas: hdfsMasterReplicas,
+		DatanodeReplicas:   datanodeReplicas,
+		YarnMasterReplicas: yarnMasterReplicas,
+		YarnNodeReplicas:   yarnNodeReplicas,
+		ExpiredTime:        expiredTime,
+		ApplyResources:     resources,
+	}
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
+	if _, err := service.UpdateNs(name, strForm, expiredTime, rsc); err != nil {
 		return nil, err
 	}
 
@@ -674,4 +695,19 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 
 	return &responses.OK, nil
+}
+
+// GetHadoop  更新之前先获取信息
+func GetHadoop(name string) (*forms.HadoopUpdateForm, error) {
+	form := forms.HadoopUpdateForm{}
+	ns, err := service.GetNs(name)
+	if err != nil {
+		return nil, err
+	}
+	strForm := ns.Annotations["form"]
+	err = json.Unmarshal([]byte(strForm), &form)
+	if err != nil {
+		return nil, err
+	}
+	return &form, nil
 }

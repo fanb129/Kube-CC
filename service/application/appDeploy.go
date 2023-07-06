@@ -252,10 +252,10 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 		limitMemory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceMemory]
 		limitStorage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]
 		// 获取对应pod
-		label := map[string]string{
+		label1 := map[string]string{
 			"uuid": deploy.Labels["uuid"],
 		}
-		selector := labels.SelectorFromSet(label).String()
+		selector := labels.SelectorFromSet(label1).String()
 		podList, err := service.ListDeployPod(ns, selector)
 		if err != nil {
 			return nil, err

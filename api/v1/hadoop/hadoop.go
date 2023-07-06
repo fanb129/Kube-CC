@@ -137,3 +137,13 @@ func BatchAdd(c *gin.Context) {
 	group.Wait()
 	c.JSON(http.StatusOK, responses.OK)
 }
+
+func Info(c *gin.Context) {
+	name := c.Query("name")
+	response, err := application.GetHadoop(name)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
+	}
+}

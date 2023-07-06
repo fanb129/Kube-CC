@@ -20,7 +20,8 @@ func appRouter(router *gin.RouterGroup) {
 		sparkRouters.POST("/batchadd", middleware.Is2Role(), spark.BatchAdd) // 新建spark集群
 		sparkRouters.GET("/delete/:name", spark.Delete)
 		sparkRouters.GET("", spark.Index)
-		sparkRouters.POST("/update", middleware.Is2Role(), spark.Update)
+		sparkRouters.POST("/update", spark.Update)
+		sparkRouters.GET("/info", spark.Info)
 	}
 
 	// hadoop 路由
@@ -32,6 +33,7 @@ func appRouter(router *gin.RouterGroup) {
 		hadoopRouters.GET("/delete/:name", hadoop.Delete)
 		hadoopRouters.GET("", hadoop.Index)
 		hadoopRouters.POST("/update", hadoop.Update)
+		hadoopRouters.GET("/info", hadoop.Info)
 	}
 
 	// 云主机路由
@@ -42,7 +44,8 @@ func appRouter(router *gin.RouterGroup) {
 		linuxRouters.POST("/add", linux.Add)
 		// 批量添加
 		//linuxRouters.POST("/add", middleware.Is2Role(), linux.BatchAdd)
-		linuxRouters.POST("/update", middleware.Is2Role(), linux.Update)
+		linuxRouters.POST("/update", linux.Update)
+		linuxRouters.GET("/info", linux.Info)
 	}
 
 	// deploy app 无状态应用 路由

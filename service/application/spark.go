@@ -5,6 +5,7 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"Kube-CC/service"
+	"encoding/json"
 	"errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -50,7 +51,20 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 		PvcStorage: resources.PvcStorage,
 		Gpu:        resources.Gpu,
 	}
-	_, err := service.CreateNs(ns, expiredTime, label, rsc)
+	// 将form序列化为string，存入deploy的注释
+	form := forms.SparkUpdateForm{
+		Name:           ns,
+		MasterReplicas: masterReplicas,
+		WorkerReplicas: workerReplicas,
+		ExpiredTime:    expiredTime,
+		ApplyResources: resources,
+	}
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
+	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
 	if err != nil {
 		return nil, err
 	}
@@ -283,22 +297,13 @@ func ListSpark(u_id string) (*responses.SparkListResponse, error) {
 	sparkList := make([]responses.Spark, sparks.Length)
 	for i, spark := range sparks.NsList {
 		// 获取deploy
-		deployList, err := service.ListDeploy(spark.Name, "")
+		deploy, err := ListAppDeploy(spark.Name, "")
 		if err != nil {
 			return nil, err
 		}
-		// 获取service
-		serviceList, err := service.ListService(spark.Name, "")
-		if err != nil {
-			return nil, err
-		}
-		// 获取pod
-		podList, err := service.ListPod(spark.Name, "")
 		sparkList[i] = responses.Spark{
-			Ns:          spark,
-			DeployList:  deployList,
-			ServiceList: serviceList,
-			PodList:     podList,
+			Ns:         spark,
+			DeployList: deploy.DeployList,
 		}
 	}
 
@@ -337,7 +342,7 @@ func DeleteSpark(ns string) (*responses.Response, error) {
 }
 
 // UpdateSpark 更新spark的uid以及replicas
-func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
 	rsc := forms.Resources{
 		Cpu:        resources.Cpu,
 		Memory:     resources.Memory,
@@ -345,7 +350,20 @@ func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, e
 		PvcStorage: resources.PvcStorage,
 		Gpu:        resources.Gpu,
 	}
-	if _, err := service.UpdateNs(name, expiredTime, rsc); err != nil {
+	// 将form序列化为string，存入deploy的注释
+	form := forms.SparkUpdateForm{
+		Name:           name,
+		MasterReplicas: masterReplicas,
+		WorkerReplicas: workerReplicas,
+		ExpiredTime:    expiredTime,
+		ApplyResources: resources,
+	}
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
+	if _, err := service.UpdateNs(name, strForm, expiredTime, rsc); err != nil {
 		return nil, err
 	}
 	// 准备工作
@@ -422,4 +440,19 @@ func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, e
 	}
 
 	return &responses.OK, nil
+}
+
+// GetSpark 更新之前先获取信息
+func GetSpark(name string) (*forms.SparkUpdateForm, error) {
+	form := forms.SparkUpdateForm{}
+	ns, err := service.GetNs(name)
+	if err != nil {
+		return nil, err
+	}
+	strForm := ns.Annotations["form"]
+	err = json.Unmarshal([]byte(strForm), &form)
+	if err != nil {
+		return nil, err
+	}
+	return &form, nil
 }

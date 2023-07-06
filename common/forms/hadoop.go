@@ -25,7 +25,6 @@ type BatchHadoopAddForm struct {
 
 type HadoopUpdateForm struct {
 	Name               string     `json:"name" form:"name" binding:"required"`
-	Uid                string     `form:"u_id" json:"u_id" binding:"required"`
 	HdfsMasterReplicas int32      `form:"hdfs_master_replicas" json:"hdfs_master_replicas" binding:"required,gte=1"`
 	DatanodeReplicas   int32      `form:"datanode_replicas" json:"datanode_replicas" binding:"required,gte=1"`
 	YarnMasterReplicas int32      `form:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1"`

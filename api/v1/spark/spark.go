@@ -100,7 +100,7 @@ func Update(c *gin.Context) {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	res, err := application.UpdateSpark(form.Name, form.Uid, form.MasterReplicas, form.WorkerReplicas, form.ExpiredTime, form.ApplyResources)
+	res, err := application.UpdateSpark(form.Name, form.MasterReplicas, form.WorkerReplicas, form.ExpiredTime, form.ApplyResources)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -132,4 +132,14 @@ func BatchAdd(c *gin.Context) {
 	}
 	group.Wait()
 	c.JSON(http.StatusOK, responses.OK)
+}
+
+func Info(c *gin.Context) {
+	name := c.Query("name")
+	response, err := application.GetSpark(name)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
+	}
 }
