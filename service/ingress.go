@@ -22,27 +22,13 @@ func CreateIngress(name, ns string, label map[string]string, spec v1beta1.Ingres
 	return create, nil
 }
 
-// GetIngress 获得指定namespace下的ingress
-func GetIngress(ns string, label string) (*responses.IngressListResponse, error) {
+// ListIngress 获得指定namespace下的ingress
+func ListIngress(ns string, label string) ([]v1beta1.Ingress, error) {
 	list, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
-	num := len(list.Items)
-	ingressList := make([]responses.Ingress, num)
-	for i, ing := range list.Items {
-		tmp := responses.Ingress{
-			Name:      ing.Name,
-			Namespace: ing.Namespace,
-			Rules:     ing.Spec.Rules,
-		}
-		ingressList[i] = tmp
-	}
-	return &responses.IngressListResponse{
-		Response:    responses.OK,
-		Length:      num,
-		IngressList: ingressList,
-	}, nil
+	return list.Items, nil
 }
 
 // DeleteIngress 删除指定ingress
@@ -52,4 +38,27 @@ func DeleteIngress(name, ns string) (*responses.Response, error) {
 		return nil, err
 	}
 	return &responses.OK, nil
+}
+
+// GetIngress 更新之前获取ingress
+func GetIngress(name, ns string) (*v1beta1.Ingress, error) {
+	get, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return get, nil
+}
+
+// UpdateIngress 更新ingress
+func UpdateIngress(name, ns string, spec v1beta1.IngressSpec) (*v1beta1.Ingress, error) {
+	ingress, err := GetIngress(name, ns)
+	if err != nil {
+		return nil, err
+	}
+	ingress.Spec = spec
+	update, err := dao.ClientSet.ExtensionsV1beta1().Ingresses(ns).Update(context.Background(), ingress, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return update, nil
 }
