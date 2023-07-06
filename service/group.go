@@ -6,6 +6,9 @@ import (
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"errors"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 // <<新增>>
@@ -81,7 +84,7 @@ func IndexGroupUser(page int, groupid uint) (*responses.UserListResponse, error)
 // ViewGroupUser 查看组内成员
 func ViewGroupUser(groupid uint) (*responses.GroupUser, error) {
 	gu, err := dao.GetGroupUserById(groupid)
-	if err != nil || len(gu) == 0 {
+	if err != nil {
 		return nil, errors.New("获取该组用户列表失败")
 	}
 	groupuserList := make([]responses.UserInfo, len(gu))
@@ -104,12 +107,29 @@ func ViewGroupUser(groupid uint) (*responses.GroupUser, error) {
 }
 
 // CreateNewGroup 创建新的组
-func CreateNewGroup(adminid uint, name, description string) (int, error) {
-	row, err := dao.CreateGroup(adminid, name, description)
-	if err != nil {
-		return row, errors.New("创建组失败")
+func CreateNewGroup(adminid uint, name, description string) (*responses.Response, error) {
+	group, _ := dao.GetGroupByName(name)
+	if group != nil {
+		return nil, errors.New("组名已占用")
 	}
-	return row, nil
+	group, _ = dao.GetDeletedGroupByName(name)
+	if group != nil {
+		group.CreatedAt = time.Now()
+		group.DeletedAt = gorm.DeletedAt{}
+		group.Adminid = adminid
+		group.Name = name
+		group.Description = description
+		row, err := dao.UpdateUnscopedGroup(group)
+		if err != nil || row == 0 {
+			return nil, errors.New("创建组失败")
+		}
+	} else {
+		_, err := dao.CreateGroup(adminid, name, description)
+		if err != nil {
+			return nil, errors.New("创建组失败")
+		}
+	}
+	return &responses.OK, nil
 }
 
 func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
@@ -133,15 +153,19 @@ func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 // DeleteGroup  删除组
 func DeleteGroup(id uint) (*responses.Response, error) {
 	users, erru := dao.GetGroupUserById(id)
-	if erru != nil || users == nil {
+	if erru != nil {
 		return nil, errors.New("获取组用户失败")
 	}
 	for _, v := range users {
 		v.Groupid = 0
+		row, err := dao.UpdateUserWithNil(&v)
+		if err != nil || row == 0 {
+			return nil, errors.New("移出组内用户失败")
+		}
 	}
 	row, err := dao.DeleteGroupById(id)
 	if err != nil || row == 0 {
-		return nil, errors.New("删除失败")
+		return nil, errors.New("删除组失败")
 	}
 	return &responses.OK, nil
 }
