@@ -49,8 +49,8 @@ func Add(c *gin.Context) {
 
 // Delete 删除linux
 func Delete(c *gin.Context) {
-	name := c.Param("name")
-	ns := c.Param("ns")
+	name := c.DefaultQuery("name", "")
+	ns := c.DefaultQuery("ns", "")
 	response, err := application.DeleteLinux(name, ns)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})

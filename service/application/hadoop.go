@@ -8,6 +8,7 @@ import (
 	"errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -31,6 +32,7 @@ const (
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
 func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+
 	newUuid := string(uuid.NewUUID())
 	ns := "hadoop-" + newUuid
 	label := map[string]string{
@@ -62,7 +64,35 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		PvcStorage: resources.PvcStorage,
 		Gpu:        resources.Gpu,
 	}
-	_, err := service.CreateNs(ns, expiredTime, label, rsc)
+	// 准备工作
+	// 分割申请资源
+	m := int(hdfsMasterReplicas + yarnMasterReplicas + yarnNodeReplicas + datanodeReplicas)
+	requestCpu, err := service.SplitRSC(resources.Cpu, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestMemory, err := service.SplitRSC(resources.Memory, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestStorage, err := service.SplitRSC(resources.Storage, n*m)
+	if err != nil {
+		return nil, err
+	}
+	limitsCpu, err := service.SplitRSC(resources.Cpu, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsMemory, err := service.SplitRSC(resources.Memory, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsStorage, err := service.SplitRSC(resources.Storage, m)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = service.CreateNs(ns, expiredTime, label, rsc)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +152,19 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 							{ContainerPort: 9000},
 							{ContainerPort: 50070},
 						},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+								//TODO GPU
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+							},
+						},
 						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "namenode"},
@@ -148,7 +191,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			},
 		},
 	}
-	_, err = service.CreateDeploy(hadoopHdfsMasterDeployName, ns, hdfsMasterLabel, hdfsMasterSpec)
+	_, err = service.CreateDeploy(hadoopHdfsMasterDeployName, ns, "", hdfsMasterLabel, hdfsMasterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -187,12 +230,19 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 							{ContainerPort: 9000},
 							{ContainerPort: 50070},
 						},
-						//Resources: corev1.ResourceRequirements{
-						//	Limits: corev1.ResourceList{
-						//		corev1.ResourceCPU:    resource.MustParse(cpu),
-						//		corev1.ResourceMemory: resource.MustParse(memory),
-						//	},
-						//},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+								//TODO GPU
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+							},
+						},
 						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{
@@ -228,7 +278,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			},
 		},
 	}
-	_, err = service.CreateDeploy(datanodeDeployName, ns, datanodeLabel, datanodeSpec)
+	_, err = service.CreateDeploy(datanodeDeployName, ns, "", datanodeLabel, datanodeSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -255,12 +305,19 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 							{ContainerPort: 9000},
 							{ContainerPort: 50070},
 						},
-						//Resources: corev1.ResourceRequirements{
-						//	Limits: corev1.ResourceList{
-						//		corev1.ResourceCPU:    resource.MustParse(cpu),
-						//		corev1.ResourceMemory: resource.MustParse(memory),
-						//	},
-						//},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+								//TODO GPU
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+							},
+						},
 						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{
@@ -296,7 +353,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			},
 		},
 	}
-	_, err = service.CreateDeploy(hadoopYarnMasterDeployName, ns, yarnMasterLabel, yarnMasterSpec)
+	_, err = service.CreateDeploy(hadoopYarnMasterDeployName, ns, "", yarnMasterLabel, yarnMasterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -340,12 +397,19 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 							{ContainerPort: 8041},
 							{ContainerPort: 8042},
 						},
-						//Resources: corev1.ResourceRequirements{
-						//	Limits: corev1.ResourceList{
-						//		corev1.ResourceCPU:    resource.MustParse(cpu),
-						//		corev1.ResourceMemory: resource.MustParse(memory),
-						//	},
-						//},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+								//TODO GPU
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+							},
+						},
 						VolumeMounts: volumeMounts,
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "yarnnode"},
@@ -378,7 +442,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			},
 		},
 	}
-	_, err = service.CreateDeploy(hadoopYarnNodeDeployName, ns, yarnNodeLabel, yarnNodeSpec)
+	_, err = service.CreateDeploy(hadoopYarnNodeDeployName, ns, "", yarnNodeLabel, yarnNodeSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +541,7 @@ func DeleteHadoop(ns string) (*responses.Response, error) {
 }
 
 // UpdateHadoop 更新hadoop的uid，以及replicas
-func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
 	rsc := forms.Resources{
 		Cpu:        resources.Cpu,
 		Memory:     resources.Memory,
@@ -485,7 +549,35 @@ func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMa
 		PvcStorage: resources.PvcStorage,
 		Gpu:        resources.Gpu,
 	}
-	if _, err := service.UpdateNs(name, uid, expiredTime, rsc); err != nil {
+	if _, err := service.UpdateNs(name, expiredTime, rsc); err != nil {
+		return nil, err
+	}
+
+	// 准备工作
+	// 分割申请资源
+	m := int(hdfsMasterReplicas + yarnMasterReplicas + yarnNodeReplicas + datanodeReplicas)
+	requestCpu, err := service.SplitRSC(resources.Cpu, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestMemory, err := service.SplitRSC(resources.Memory, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestStorage, err := service.SplitRSC(resources.Storage, n*m)
+	if err != nil {
+		return nil, err
+	}
+	limitsCpu, err := service.SplitRSC(resources.Cpu, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsMemory, err := service.SplitRSC(resources.Memory, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsStorage, err := service.SplitRSC(resources.Storage, m)
+	if err != nil {
 		return nil, err
 	}
 
@@ -495,7 +587,20 @@ func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMa
 		return nil, err
 	}
 	hdfsMaster.Spec.Replicas = &hdfsMasterReplicas
-	if _, err := service.UpdateDeploy(hadoopHdfsMasterDeployName, name, hdfsMaster.Spec); err != nil {
+	hdfsMaster.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(requestCpu),
+			corev1.ResourceMemory:           resource.MustParse(requestMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+			//TODO GPU
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+			corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+		},
+	}
+	if _, err := service.UpdateDeploy(hadoopHdfsMasterDeployName, name, "", hdfsMaster.Spec); err != nil {
 		return nil, err
 	}
 
@@ -505,7 +610,20 @@ func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMa
 		return nil, err
 	}
 	datanode.Spec.Replicas = &datanodeReplicas
-	if _, err := service.UpdateDeploy(datanodeDeployName, name, datanode.Spec); err != nil {
+	datanode.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(requestCpu),
+			corev1.ResourceMemory:           resource.MustParse(requestMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+			//TODO GPU
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+			corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+		},
+	}
+	if _, err := service.UpdateDeploy(datanodeDeployName, name, "", datanode.Spec); err != nil {
 		return nil, err
 	}
 
@@ -515,7 +633,20 @@ func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMa
 		return nil, err
 	}
 	yarnMaster.Spec.Replicas = &yarnMasterReplicas
-	if _, err := service.UpdateDeploy(hadoopYarnMasterDeployName, name, yarnMaster.Spec); err != nil {
+	yarnMaster.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(requestCpu),
+			corev1.ResourceMemory:           resource.MustParse(requestMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+			//TODO GPU
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+			corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+		},
+	}
+	if _, err := service.UpdateDeploy(hadoopYarnMasterDeployName, name, "", yarnMaster.Spec); err != nil {
 		return nil, err
 	}
 
@@ -525,7 +656,20 @@ func UpdateHadoop(name, uid string, hdfsMasterReplicas, datanodeReplicas, yarnMa
 		return nil, err
 	}
 	yarnNode.Spec.Replicas = &yarnNodeReplicas
-	if _, err := service.UpdateDeploy(hadoopYarnNodeDeployName, name, yarnNode.Spec); err != nil {
+	yarnNode.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(requestCpu),
+			corev1.ResourceMemory:           resource.MustParse(requestMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+			//TODO GPU
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+			corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+		},
+	}
+	if _, err := service.UpdateDeploy(hadoopYarnNodeDeployName, name, "", yarnNode.Spec); err != nil {
 		return nil, err
 	}
 

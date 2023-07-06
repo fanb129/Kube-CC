@@ -8,6 +8,7 @@ import (
 	"errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -50,6 +51,33 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 		Gpu:        resources.Gpu,
 	}
 	_, err := service.CreateNs(ns, expiredTime, label, rsc)
+	if err != nil {
+		return nil, err
+	}
+	// 准备工作
+	// 分割申请资源
+	m := int(masterReplicas + workerReplicas)
+	requestCpu, err := service.SplitRSC(resources.Cpu, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestMemory, err := service.SplitRSC(resources.Memory, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestStorage, err := service.SplitRSC(resources.Storage, n*m)
+	if err != nil {
+		return nil, err
+	}
+	limitsCpu, err := service.SplitRSC(resources.Cpu, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsMemory, err := service.SplitRSC(resources.Memory, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsStorage, err := service.SplitRSC(resources.Storage, m)
 	if err != nil {
 		return nil, err
 	}
@@ -101,22 +129,26 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 							{ContainerPort: 22},
 						},
 						VolumeMounts: volumeMounts,
-						//Resources: corev1.ResourceRequirements{
-						//	Requests: corev1.ResourceList{
-						//		corev1.ResourceCPU: resource.MustParse("100m"),
-						//	},
-						//	Limits: corev1.ResourceList{
-						//		corev1.ResourceCPU:    resource.MustParse(cpu),
-						//		corev1.ResourceMemory: resource.MustParse(memory),
-						//	},
-						//},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+								//TODO GPU
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+							},
+						},
 					},
 				},
 				RestartPolicy: corev1.RestartPolicyAlways,
 			},
 		},
 	}
-	_, err = service.CreateDeploy(sparkMasterDeployName, ns, masterLabel, masterSpec)
+	_, err = service.CreateDeploy(sparkMasterDeployName, ns, "", masterLabel, masterSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -155,22 +187,26 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 							{ContainerPort: 22},
 						},
 						VolumeMounts: volumeMounts,
-						//Resources: corev1.ResourceRequirements{
-						//	Requests: corev1.ResourceList{
-						//		corev1.ResourceCPU: resource.MustParse("100m"),
-						//	},
-						//	Limits: corev1.ResourceList{
-						//		corev1.ResourceCPU:    resource.MustParse(cpu),
-						//		corev1.ResourceMemory: resource.MustParse(memory),
-						//	},
-						//},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+								//TODO GPU
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+							},
+						},
 					},
 				},
 				RestartPolicy: corev1.RestartPolicyAlways,
 			},
 		},
 	}
-	_, err = service.CreateDeploy(sparkWorkerDeployName, ns, workerLabel, workerSpec)
+	_, err = service.CreateDeploy(sparkWorkerDeployName, ns, "", workerLabel, workerSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -309,17 +345,56 @@ func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, e
 		PvcStorage: resources.PvcStorage,
 		Gpu:        resources.Gpu,
 	}
-	if _, err := service.UpdateNs(name, uid, expiredTime, rsc); err != nil {
+	if _, err := service.UpdateNs(name, expiredTime, rsc); err != nil {
 		return nil, err
 	}
-
+	// 准备工作
+	// 分割申请资源
+	m := int(masterReplicas + workerReplicas)
+	requestCpu, err := service.SplitRSC(resources.Cpu, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestMemory, err := service.SplitRSC(resources.Memory, n*m)
+	if err != nil {
+		return nil, err
+	}
+	requestStorage, err := service.SplitRSC(resources.Storage, n*m)
+	if err != nil {
+		return nil, err
+	}
+	limitsCpu, err := service.SplitRSC(resources.Cpu, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsMemory, err := service.SplitRSC(resources.Memory, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsStorage, err := service.SplitRSC(resources.Storage, m)
+	if err != nil {
+		return nil, err
+	}
 	// 更新master的Replicas
 	master, err := service.GetDeploy(sparkMasterDeployName, name)
 	if err != nil {
 		return nil, err
 	}
 	master.Spec.Replicas = &masterReplicas
-	if _, err := service.UpdateDeploy(sparkMasterDeployName, name, master.Spec); err != nil {
+	master.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(requestCpu),
+			corev1.ResourceMemory:           resource.MustParse(requestMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+			//TODO GPU
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+			corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+		},
+	}
+	if _, err := service.UpdateDeploy(sparkMasterDeployName, name, "", master.Spec); err != nil {
 		return nil, err
 	}
 
@@ -329,7 +404,20 @@ func UpdateSpark(name, uid string, masterReplicas int32, workerReplicas int32, e
 		return nil, err
 	}
 	worker.Spec.Replicas = &workerReplicas
-	if _, err := service.UpdateDeploy(sparkWorkerDeployName, name, worker.Spec); err != nil {
+	worker.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(requestCpu),
+			corev1.ResourceMemory:           resource.MustParse(requestMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
+			//TODO GPU
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+			corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+		},
+	}
+	if _, err := service.UpdateDeploy(sparkWorkerDeployName, name, "", worker.Spec); err != nil {
 		return nil, err
 	}
 

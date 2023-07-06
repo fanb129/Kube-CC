@@ -75,6 +75,12 @@ func GetResourceQuota(ns string) (*corev1.ResourceQuota, error) {
 
 // UpdateResourceQuota 更新
 func UpdateResourceQuota(ns string, resouces forms.Resources) error {
+	if resouces.PvcStorage == "" {
+		resouces.PvcStorage = "0"
+	}
+	if resouces.Gpu == "" {
+		resouces.Gpu = "0"
+	}
 	quota, err := GetResourceQuota(ns)
 	if err != nil {
 		return err

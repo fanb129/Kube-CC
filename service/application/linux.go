@@ -5,8 +5,8 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/conf"
 	"Kube-CC/service"
+	"encoding/json"
 	"errors"
-	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -22,6 +22,17 @@ var privileged = [2]bool{true, false}
 
 // CreateLinux 为uid创建linux 1-centos，2-ubuntu
 func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*responses.Response, error) {
+	// 将form序列化为string，存入deploy的注释
+	form := forms.LinuxUpdateForm{
+		Name:           name,
+		Namespace:      ns,
+		ApplyResources: resources,
+	}
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
 	// 准备工作
 	// 分割申请资源
 	requestCpu, err := service.SplitRSC(resources.Cpu, n)
@@ -95,15 +106,15 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								corev1.ResourceRequestsCPU:              resource.MustParse(requestCpu),
-								corev1.ResourceRequestsMemory:           resource.MustParse(requestMemory),
-								corev1.ResourceRequestsEphemeralStorage: resource.MustParse(requestStorage),
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
 								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
-								corev1.ResourceLimitsCPU:              resource.MustParse(resources.Cpu),
-								corev1.ResourceLimitsMemory:           resource.MustParse(resources.Memory),
-								corev1.ResourceLimitsEphemeralStorage: resource.MustParse(resources.Storage),
+								corev1.ResourceCPU:              resource.MustParse(resources.Cpu),
+								corev1.ResourceMemory:           resource.MustParse(resources.Memory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(resources.Storage),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -112,8 +123,9 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 			},
 		},
 	}
-	_, err = service.CreateDeploy(name, ns, label, deploySpec)
+	_, err = service.CreateDeploy(name, ns, strForm, label, deploySpec)
 	if err != nil {
+		DeleteLinux(name, ns)
 		return nil, err
 	}
 
@@ -127,6 +139,7 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 	}
 	_, err = service.CreateService(name+"-service", ns, label, serviceSpec)
 	if err != nil {
+		DeleteLinux(name, ns)
 		return nil, err
 	}
 	return &responses.OK, nil
@@ -158,43 +171,31 @@ func DeleteLinux(name, ns string) (*responses.Response, error) {
 
 // GetLinux 更新之前先get
 func GetLinux(name, ns string) (*forms.LinuxUpdateForm, error) {
-	pvcName := name + "-pvc"
-	pvc, err := service.GetPVC(ns, pvcName)
-	if err != nil {
-		zap.S().Errorln("service/application/appDeploy:", err)
-		pvc = &corev1.PersistentVolumeClaim{}
-	}
+	form := forms.LinuxUpdateForm{}
 	deploy, err := service.GetDeploy(name, ns)
 	if err != nil {
 		return nil, err
 	}
-	cpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU]
-	memory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory]
-	storage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage]
-	pvcStorage := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-	// 取出挂载路径
-	mounts := deploy.Spec.Template.Spec.Containers[0].VolumeMounts
-	paths := make([]string, len(mounts))
-	for i, mount := range mounts {
-		paths[i] = mount.MountPath
+	strForm := deploy.Annotations["form"]
+	err = json.Unmarshal([]byte(strForm), &form)
+	if err != nil {
+		return nil, err
 	}
-	linux := forms.LinuxUpdateForm{
-		Name:      name,
-		Namespace: ns,
-		ApplyResources: forms.ApplyResources{
-			Cpu:              cpu.String(),
-			Memory:           memory.String(),
-			Storage:          storage.String(),
-			PvcStorage:       pvcStorage.String(),
-			StorageClassName: *pvc.Spec.StorageClassName,
-			PvcPath:          paths,
-			// TODO GPU
-		},
-	}
-	return &linux, nil
+	return &form, nil
 }
 
 func UpdateLinux(name, ns string, resources forms.ApplyResources) (*responses.Response, error) {
+	// 将form序列化为string，存入deploy的注释
+	form := forms.LinuxUpdateForm{
+		Name:           name,
+		Namespace:      ns,
+		ApplyResources: resources,
+	}
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
 	// 准备工作
 	// 分割申请资源
 	requestCpu, err := service.SplitRSC(resources.Cpu, n)
@@ -243,21 +244,21 @@ func UpdateLinux(name, ns string, resources forms.ApplyResources) (*responses.Re
 	deploySpec := deploy.Spec
 	deploySpec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
-			corev1.ResourceRequestsCPU:              resource.MustParse(requestCpu),
-			corev1.ResourceRequestsMemory:           resource.MustParse(requestMemory),
-			corev1.ResourceRequestsEphemeralStorage: resource.MustParse(requestStorage),
+			corev1.ResourceCPU:              resource.MustParse(requestCpu),
+			corev1.ResourceMemory:           resource.MustParse(requestMemory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
 			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
-			corev1.ResourceLimitsCPU:              resource.MustParse(resources.Cpu),
-			corev1.ResourceLimitsMemory:           resource.MustParse(resources.Memory),
-			corev1.ResourceLimitsEphemeralStorage: resource.MustParse(resources.Storage),
+			corev1.ResourceCPU:              resource.MustParse(resources.Cpu),
+			corev1.ResourceMemory:           resource.MustParse(resources.Memory),
+			corev1.ResourceEphemeralStorage: resource.MustParse(resources.Storage),
 		},
 	}
 	deploySpec.Template.Spec.Containers[0].VolumeMounts = volumeMounts
 	deploySpec.Template.Spec.Volumes = volumes
 
-	if _, err := service.UpdateDeploy(name, ns, deploySpec); err != nil {
+	if _, err := service.UpdateDeploy(name, ns, strForm, deploySpec); err != nil {
 		return nil, err
 	}
 

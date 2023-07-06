@@ -12,7 +12,7 @@ import (
 // Index 展示所有pvc
 func Index(c *gin.Context) {
 	ns := c.DefaultQuery("ns", "")
-	pvcListRsp, err := service.ListPVC(ns)
+	pvcListRsp, err := service.ListPVC(ns, "")
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {

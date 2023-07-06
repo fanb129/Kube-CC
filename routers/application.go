@@ -38,10 +38,10 @@ func appRouter(router *gin.RouterGroup) {
 	linuxRouters := appRouters.Group("/linux")
 	{
 		linuxRouters.GET("", linux.Index)
-		linuxRouters.GET("delete/:name", linux.Delete)
-		//linuxRouters.POST("/add", middleware.Is2Role(), linux.Add)
+		linuxRouters.GET("/delete", linux.Delete)
+		linuxRouters.POST("/add", linux.Add)
 		// 批量添加
-		linuxRouters.POST("/add", middleware.Is2Role(), linux.BatchAdd)
+		//linuxRouters.POST("/add", middleware.Is2Role(), linux.BatchAdd)
 		linuxRouters.POST("/update", middleware.Is2Role(), linux.Update)
 	}
 
