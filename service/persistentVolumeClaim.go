@@ -75,8 +75,8 @@ func UpdatePVC(namespace, name, newStorageSize string) error {
 }
 
 // ListPVC 显示指定ns下的所有PVC
-func ListPVC(ns string) (*responses.PvcListResponse, error) {
-	list, err := dao.ClientSet.CoreV1().PersistentVolumeClaims(ns).List(context.Background(), metav1.ListOptions{})
+func ListPVC(ns, label string) (*responses.PvcListResponse, error) {
+	list, err := dao.ClientSet.CoreV1().PersistentVolumeClaims(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}

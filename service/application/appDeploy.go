@@ -6,7 +6,9 @@ import (
 	"Kube-CC/dao"
 	"Kube-CC/service"
 	"context"
+	"encoding/json"
 	"errors"
+	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -25,17 +27,36 @@ var (
 // CreateAppDeploy 创建deploy类型的整个应用app
 // 包括 configmap、pvc、deploy、service、TODO ingress
 func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
+	// 将form序列化为string，存入deploy的注释
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
 	// 准备工作
 	// 分割申请资源
-	requestCpu, err := service.SplitRSC(form.Cpu, n)
+	m := int(form.Replicas)
+	requestCpu, err := service.SplitRSC(form.Cpu, n*m)
 	if err != nil {
 		return nil, err
 	}
-	requestMemory, err := service.SplitRSC(form.Memory, n)
+	requestMemory, err := service.SplitRSC(form.Memory, n*m)
 	if err != nil {
 		return nil, err
 	}
-	requestStorage, err := service.SplitRSC(form.Storage, n)
+	requestStorage, err := service.SplitRSC(form.Storage, n*m)
+	if err != nil {
+		return nil, err
+	}
+	limitsCpu, err := service.SplitRSC(form.Cpu, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsMemory, err := service.SplitRSC(form.Memory, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsStorage, err := service.SplitRSC(form.Storage, m)
 	if err != nil {
 		return nil, err
 	}
@@ -125,15 +146,15 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 						Env:             env,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								corev1.ResourceRequestsCPU:              resource.MustParse(requestCpu),
-								corev1.ResourceRequestsMemory:           resource.MustParse(requestMemory),
-								corev1.ResourceRequestsEphemeralStorage: resource.MustParse(requestStorage),
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
 								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
-								corev1.ResourceLimitsCPU:              resource.MustParse(form.Cpu),
-								corev1.ResourceLimitsMemory:           resource.MustParse(form.Memory),
-								corev1.ResourceLimitsEphemeralStorage: resource.MustParse(form.Storage),
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -142,7 +163,7 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 			},
 		},
 	}
-	_, err = service.CreateDeploy(form.Name, form.Namespace, label, spec)
+	_, err = service.CreateDeploy(form.Name, form.Namespace, strForm, label, spec)
 	if err != nil {
 		DeleteAppDeploy(form.Name, form.Namespace)
 		return nil, err
@@ -197,8 +218,8 @@ func DeleteAppDeploy(name, ns string) (*responses.Response, error) {
 }
 
 // ListAppDeploy 列出ns下的所有appDeploy
-func ListAppDeploy(ns string) (*responses.AppDeployList, error) {
-	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{})
+func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
+	list, err := dao.ClientSet.AppsV1().Deployments(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
 	}
@@ -209,13 +230,15 @@ func ListAppDeploy(ns string) (*responses.AppDeployList, error) {
 		serviceName := deploy.Name + "-service"
 		svc, err := service.GetService(serviceName, ns)
 		if err != nil {
-			return nil, err
+			zap.S().Errorln("service/application/appDeploy:", err)
+			svc = &corev1.Service{}
 		}
 		// 获取对应pvc
 		pvcName := deploy.Name + "-pvc"
 		pvc, err := service.GetPVC(ns, pvcName)
 		if err != nil {
-			return nil, err
+			zap.S().Errorln("service/application/appDeploy:", err)
+			pvc = &corev1.PersistentVolumeClaim{}
 		}
 		// 获取挂载的路径
 		volumeMounts := deploy.Spec.Template.Spec.Containers[0].VolumeMounts
@@ -225,9 +248,9 @@ func ListAppDeploy(ns string) (*responses.AppDeployList, error) {
 			pvcPath[i2] = path.MountPath
 		}
 		// 获取资源信息
-		limitCpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU]
-		limitMemory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory]
-		limitStorage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage]
+		limitCpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceCPU]
+		limitMemory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceMemory]
+		limitStorage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]
 		// 获取对应pod
 		label := map[string]string{
 			"uuid": deploy.Labels["uuid"],
@@ -265,70 +288,50 @@ func ListAppDeploy(ns string) (*responses.AppDeployList, error) {
 
 // GetAppDeploy 更新之前先获取deployApp的信息
 func GetAppDeploy(name, ns string) (*forms.DeployAddForm, error) {
-	configName := name + "-configMap"
-	pvcName := name + "-pvc"
-	configMap, err := service.GetConfigMap(configName, ns)
-	if err != nil {
-		return nil, err
-	}
-	pvc, err := service.GetPVC(ns, pvcName)
-	if err != nil {
-		return nil, err
-	}
+	form := forms.DeployAddForm{}
 	deploy, err := service.GetDeploy(name, ns)
-
-	// 取出ports参数
-	portList := deploy.Spec.Template.Spec.Containers[0].Ports
-	ports := make([]int32, len(portList))
-	for i, port := range portList {
-		ports[i] = port.ContainerPort
+	if err != nil {
+		return nil, err
 	}
-
-	// 取出资源参数
-	cpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU]
-	memory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory]
-	storage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage]
-	pvcStorage := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-	// 取出挂载路径
-	mounts := deploy.Spec.Template.Spec.Containers[0].VolumeMounts
-	paths := make([]string, len(mounts))
-	for i, mount := range mounts {
-		paths[i] = mount.MountPath
+	strForm := deploy.Annotations["form"]
+	err = json.Unmarshal([]byte(strForm), &form)
+	if err != nil {
+		return nil, err
 	}
-	deployApp := forms.DeployAddForm{
-		Name:      name,
-		Namespace: ns,
-		Replicas:  *deploy.Spec.Replicas,
-		Image:     deploy.Spec.Template.Spec.Containers[0].Image,
-		Command:   deploy.Spec.Template.Spec.Containers[0].Command,
-		Args:      deploy.Spec.Template.Spec.Containers[0].Args,
-		Ports:     ports,
-		Env:       configMap.Data,
-		ApplyResources: forms.ApplyResources{
-			Cpu:              cpu.String(),
-			Memory:           memory.String(),
-			Storage:          storage.String(),
-			PvcStorage:       pvcStorage.String(),
-			StorageClassName: *pvc.Spec.StorageClassName,
-			PvcPath:          paths,
-			// TODO GPU
-		},
-	}
-	return &deployApp, nil
+	return &form, nil
 }
 
 func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
+	// 将form序列化为string，存入deploy的注释
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
 	// 准备工作
 	// 分割申请资源
-	requestCpu, err := service.SplitRSC(form.Cpu, n)
+	m := int(form.Replicas)
+	requestCpu, err := service.SplitRSC(form.Cpu, n*m)
 	if err != nil {
 		return nil, err
 	}
-	requestMemory, err := service.SplitRSC(form.Memory, n)
+	requestMemory, err := service.SplitRSC(form.Memory, n*m)
 	if err != nil {
 		return nil, err
 	}
-	requestStorage, err := service.SplitRSC(form.Storage, n)
+	requestStorage, err := service.SplitRSC(form.Storage, n*m)
+	if err != nil {
+		return nil, err
+	}
+	limitsCpu, err := service.SplitRSC(form.Cpu, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsMemory, err := service.SplitRSC(form.Memory, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsStorage, err := service.SplitRSC(form.Storage, m)
 	if err != nil {
 		return nil, err
 	}
@@ -410,15 +413,15 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 						Env:             env,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								corev1.ResourceRequestsCPU:              resource.MustParse(requestCpu),
-								corev1.ResourceRequestsMemory:           resource.MustParse(requestMemory),
-								corev1.ResourceRequestsEphemeralStorage: resource.MustParse(requestStorage),
+								corev1.ResourceCPU:              resource.MustParse(requestCpu),
+								corev1.ResourceMemory:           resource.MustParse(requestMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
 								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
-								corev1.ResourceLimitsCPU:              resource.MustParse(form.Cpu),
-								corev1.ResourceLimitsMemory:           resource.MustParse(form.Memory),
-								corev1.ResourceLimitsEphemeralStorage: resource.MustParse(form.Storage),
+								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
+								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
+								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -427,7 +430,7 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 			},
 		},
 	}
-	if _, err := service.UpdateDeploy(form.Name, ns, spec); err != nil {
+	if _, err := service.UpdateDeploy(form.Name, ns, strForm, spec); err != nil {
 		return nil, err
 	}
 

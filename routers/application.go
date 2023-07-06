@@ -15,9 +15,9 @@ func appRouter(router *gin.RouterGroup) {
 
 	sparkRouters := appRouters.Group("/spark")
 	{
-		//sparkRouter.POST("/add", middleware.Is2Role(), spark.Add) // 新建spark集群
+		sparkRouters.POST("/add", spark.Add) // 新建spark集群
 		// 批量添加
-		sparkRouters.POST("/add", middleware.Is2Role(), spark.BatchAdd) // 新建spark集群
+		sparkRouters.POST("/batchadd", middleware.Is2Role(), spark.BatchAdd) // 新建spark集群
 		sparkRouters.GET("/delete/:name", spark.Delete)
 		sparkRouters.GET("", spark.Index)
 		sparkRouters.POST("/update", middleware.Is2Role(), spark.Update)
@@ -26,22 +26,22 @@ func appRouter(router *gin.RouterGroup) {
 	// hadoop 路由
 	hadoopRouters := appRouters.Group("/hadoop")
 	{
-		//hadoopRouter.POST("/add", middleware.Is2Role(), hadoop.Add)
+		hadoopRouters.POST("/add", hadoop.Add)
 		// 批量添加
-		hadoopRouters.POST("/add", middleware.Is2Role(), hadoop.BatchAdd)
+		hadoopRouters.POST("/batchadd", middleware.Is2Role(), hadoop.BatchAdd)
 		hadoopRouters.GET("/delete/:name", hadoop.Delete)
 		hadoopRouters.GET("", hadoop.Index)
-		hadoopRouters.POST("/update", middleware.Is2Role(), hadoop.Update)
+		hadoopRouters.POST("/update", hadoop.Update)
 	}
 
 	// 云主机路由
 	linuxRouters := appRouters.Group("/linux")
 	{
 		linuxRouters.GET("", linux.Index)
-		linuxRouters.GET("delete/:name", linux.Delete)
-		//linuxRouters.POST("/add", middleware.Is2Role(), linux.Add)
+		linuxRouters.GET("/delete", linux.Delete)
+		linuxRouters.POST("/add", linux.Add)
 		// 批量添加
-		linuxRouters.POST("/add", middleware.Is2Role(), linux.BatchAdd)
+		//linuxRouters.POST("/add", middleware.Is2Role(), linux.BatchAdd)
 		linuxRouters.POST("/update", middleware.Is2Role(), linux.Update)
 	}
 

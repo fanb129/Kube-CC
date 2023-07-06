@@ -18,14 +18,20 @@ func GetStatefulSet(name, ns string) (*appsv1.StatefulSet, error) {
 }
 
 // CreateStatefulSet 创建自定义控制器
-func CreateStatefulSet(name, ns string, label map[string]string, spec appsv1.StatefulSetSpec) (*appsv1.StatefulSet, error) {
+func CreateStatefulSet(name, ns, form string, label map[string]string, spec appsv1.StatefulSetSpec) (*appsv1.StatefulSet, error) {
+	// 利用注释存储表单信息
+	annotation := map[string]string{}
+	if form != "" {
+		annotation["form"] = form
+	}
 	rs := appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "StatefulSet"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			//ServiceName: serviceName,
-			Namespace: ns,
-			Labels:    label,
+			Namespace:   ns,
+			Labels:      label,
+			Annotations: annotation,
 		},
 		Spec: spec,
 	}
@@ -52,11 +58,18 @@ func DeleteStatefulSet(name, ns string) (*responses.Response, error) {
 }
 
 // UpdateStatefulSet 更新statefulSet
-func UpdateStatefulSet(name, ns string, spec appsv1.StatefulSetSpec) (*appsv1.StatefulSet, error) {
+func UpdateStatefulSet(name, ns, form string, spec appsv1.StatefulSetSpec) (*appsv1.StatefulSet, error) {
+	// 利用注释存储表单信息
+	annotation := map[string]string{}
+	if form != "" {
+		annotation["form"] = form
+	}
 	set, err := GetStatefulSet(name, ns)
 	if err != nil {
 		return nil, err
 	}
+	set.Spec = spec
+	set.Annotations = annotation
 	update, err := dao.ClientSet.AppsV1().StatefulSets(ns).Update(context.Background(), set, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err

@@ -37,7 +37,7 @@ func Index(c *gin.Context) {
 	if ns == "" {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: "请选择namespace"})
 	}
-	response, err := application.ListAppDeploy(ns)
+	response, err := application.ListAppDeploy(ns, "")
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {

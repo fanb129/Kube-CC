@@ -13,12 +13,12 @@ type AppStatefulSet struct {
 	Ports     []corev1.ServicePort `json:"ports"`
 	Resources
 	PvcPath           []string `json:"pvc_path"`
-	Volume            string   `json:"volume"`
 	CreatedAt         string   `json:"created_at"`
 	UpdatedReplicas   int32    `json:"updated_replicas"`
 	ReadyReplicas     int32    `json:"ready_replicas"`
 	AvailableReplicas int32    `json:"available_replicas"`
 	PodList           []StsPod `json:"pod_list"`
+	PvcList           []Pvc    `json:"pvc_list"`
 }
 
 type AppStatefulSetList struct {
