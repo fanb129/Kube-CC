@@ -28,12 +28,14 @@ func IndexGroup(page int) (*responses.GroupListResponse, error) {
 	}
 	groupList := make([]responses.GroupInfo, len(g))
 	for i, v := range g {
+		aduser, _ := dao.GetUserById(v.Adminid)
 		tmp := responses.GroupInfo{
 			Groupid:     v.ID,
 			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Name:        v.Name,
 			Adminid:     v.Adminid,
+			Adminname:   aduser.Username,
 			Description: v.Description,
 		}
 		groupList[i] = tmp

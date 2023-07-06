@@ -7,6 +7,7 @@ type GroupInfo struct {
 	UpdatedAt   string `json:"group_updated_at"`
 	Name        string `json:"name"`
 	Adminid     uint   `json:"adminid"`
+	Adminname   string `json:"adminname"`
 	Description string `json:"description"`
 }
 
