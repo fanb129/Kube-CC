@@ -32,9 +32,9 @@ const (
 )
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
-func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
 	newUuid := string(uuid.NewUUID())
-	ns := "hadoop-" + newUuid
+	ns := name + "-" + newUuid
 	label := map[string]string{
 		"image": "hadoop",
 		"u_id":  u_id,
@@ -109,23 +109,26 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	// 创建namespace
 	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 	// 创建PVC，持久存储
-	hdfsMasterVolumes := make([]corev1.Volume, 1)
-	dataNodeVolumes := make([]corev1.Volume, 1)
-	yarnMasterVolumes := make([]corev1.Volume, 1)
-	yarnNodeVolumes := make([]corev1.Volume, 1)
-
-	hdfsMasterVolumeMounts := make([]corev1.VolumeMount, 1)
-	dataNodeVolumeMounts := make([]corev1.VolumeMount, 1)
-	yarnMasterVolumeMounts := make([]corev1.VolumeMount, 1)
-	yarnNodeVolumeMounts := make([]corev1.VolumeMount, 1)
+	var hdfsMasterVolumes, dataNodeVolumes, yarnMasterVolumes, yarnNodeVolumes []corev1.Volume
+	var hdfsMasterVolumeMounts, dataNodeVolumeMounts, yarnMasterVolumeMounts, yarnNodeVolumeMounts []corev1.VolumeMount
 	if resources.PvcStorage != "" {
+		hdfsMasterVolumes = make([]corev1.Volume, 1)
+		dataNodeVolumes = make([]corev1.Volume, 1)
+		yarnMasterVolumes = make([]corev1.Volume, 1)
+		yarnNodeVolumes = make([]corev1.Volume, 1)
+
+		hdfsMasterVolumeMounts = make([]corev1.VolumeMount, 1)
+		dataNodeVolumeMounts = make([]corev1.VolumeMount, 1)
+		yarnMasterVolumeMounts = make([]corev1.VolumeMount, 1)
+		yarnNodeVolumeMounts = make([]corev1.VolumeMount, 1)
 		// 分割资源
 		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 4)
 		if err != nil {
-			DeleteSpark(ns)
+			DeleteHadoop(ns)
 			return nil, err
 		}
 		if resources.StorageClassName == "" {
@@ -140,6 +143,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		_, err = service.CreatePVC(ns, yarnMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
 		_, err = service.CreatePVC(ns, yarnNodePvcName, resources.StorageClassName, pvcStorage, accessModes)
 		if err != nil {
+			DeleteHadoop(ns)
 			return nil, err
 		}
 		hdfsMasterVolumes[0] = corev1.Volume{
@@ -198,6 +202,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		HDOOP_YARN_MASTER:   hadoopYarnMasterServiceName,
 	})
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -262,6 +267,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 	_, err = service.CreateDeploy(hadoopHdfsMasterDeployName, ns, "", hdfsMasterLabel, hdfsMasterSpec)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -276,6 +282,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 	_, err = service.CreateService(hadoopHdfsMasterServiceName, ns, hdfsMasterLabel, hdfsMasterServiceSpec)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -349,6 +356,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 	_, err = service.CreateDeploy(datanodeDeployName, ns, "", datanodeLabel, datanodeSpec)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -424,6 +432,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 	_, err = service.CreateDeploy(hadoopYarnMasterDeployName, ns, "", yarnMasterLabel, yarnMasterSpec)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -440,6 +449,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 	_, err = service.CreateService(hadoopYarnMasterServiceName, ns, yarnMasterLabel, yarnMasterServiceSpec)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -513,6 +523,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 	_, err = service.CreateDeploy(hadoopYarnNodeDeployName, ns, "", yarnNodeLabel, yarnNodeSpec)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -525,6 +536,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	}
 	_, err = service.CreateService(hadoopYarnNodeServiceName, ns, yarnNodeLabel, yarnNodeServiceSpec)
 	if err != nil {
+		DeleteHadoop(ns)
 		return nil, err
 	}
 
@@ -656,16 +668,18 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		return nil, err
 	}
 	// 创建PVC，持久存储
-	hdfsMasterVolumes := make([]corev1.Volume, 1)
-	dataNodeVolumes := make([]corev1.Volume, 1)
-	yarnMasterVolumes := make([]corev1.Volume, 1)
-	yarnNodeVolumes := make([]corev1.Volume, 1)
-
-	hdfsMasterVolumeMounts := make([]corev1.VolumeMount, 1)
-	dataNodeVolumeMounts := make([]corev1.VolumeMount, 1)
-	yarnMasterVolumeMounts := make([]corev1.VolumeMount, 1)
-	yarnNodeVolumeMounts := make([]corev1.VolumeMount, 1)
+	var hdfsMasterVolumes, dataNodeVolumes, yarnMasterVolumes, yarnNodeVolumes []corev1.Volume
+	var hdfsMasterVolumeMounts, dataNodeVolumeMounts, yarnMasterVolumeMounts, yarnNodeVolumeMounts []corev1.VolumeMount
 	if resources.PvcStorage != "" {
+		hdfsMasterVolumes = make([]corev1.Volume, 1)
+		dataNodeVolumes = make([]corev1.Volume, 1)
+		yarnMasterVolumes = make([]corev1.Volume, 1)
+		yarnNodeVolumes = make([]corev1.Volume, 1)
+
+		hdfsMasterVolumeMounts = make([]corev1.VolumeMount, 1)
+		dataNodeVolumeMounts = make([]corev1.VolumeMount, 1)
+		yarnMasterVolumeMounts = make([]corev1.VolumeMount, 1)
+		yarnNodeVolumeMounts = make([]corev1.VolumeMount, 1)
 		// 分割资源
 		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 4)
 		if err != nil {

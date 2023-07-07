@@ -92,14 +92,17 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 	// 创建namespace
 	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
 	if err != nil {
+		DeleteSpark(ns)
 		return nil, err
 	}
 	// 创建PVC，持久存储
-	masterVolumes := make([]corev1.Volume, 1)
-	workerVolumes := make([]corev1.Volume, 1)
-	masterVolumeMounts := make([]corev1.VolumeMount, 1)
-	workerVolumeMounts := make([]corev1.VolumeMount, 1)
+	var masterVolumes, workerVolumes []corev1.Volume
+	var masterVolumeMounts, workerVolumeMounts []corev1.VolumeMount
 	if resources.PvcStorage != "" {
+		masterVolumes = make([]corev1.Volume, 1)
+		workerVolumes = make([]corev1.Volume, 1)
+		masterVolumeMounts = make([]corev1.VolumeMount, 1)
+		workerVolumeMounts = make([]corev1.VolumeMount, 1)
 		// 分割资源
 		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 2)
 		if err != nil {
@@ -431,11 +434,14 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 		return nil, err
 	}
 	// 创建PVC，持久存储
-	masterVolumes := make([]corev1.Volume, 1)
-	workerVolumes := make([]corev1.Volume, 1)
-	masterVolumeMounts := make([]corev1.VolumeMount, 1)
-	workerVolumeMounts := make([]corev1.VolumeMount, 1)
+	var masterVolumes, workerVolumes []corev1.Volume
+	var masterVolumeMounts, workerVolumeMounts []corev1.VolumeMount
+	// pvc不为空，更新或创建,为空则删除，但是删不掉，哈哈哈
 	if resources.PvcStorage != "" {
+		masterVolumes = make([]corev1.Volume, 1)
+		workerVolumes = make([]corev1.Volume, 1)
+		masterVolumeMounts = make([]corev1.VolumeMount, 1)
+		workerVolumeMounts = make([]corev1.VolumeMount, 1)
 		// 分割资源
 		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 2)
 		if err != nil {

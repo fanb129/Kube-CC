@@ -55,9 +55,11 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 		"uuid":  newUuid,
 	}
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 1)
-	volumeMounts := make([]corev1.VolumeMount, 1)
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
 	if resources.PvcStorage != "" {
+		volumes = make([]corev1.Volume, 1)
+		volumeMounts = make([]corev1.VolumeMount, 1)
 		if resources.StorageClassName == "" {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
 		}
@@ -217,9 +219,11 @@ func UpdateLinux(name, ns string, resources forms.ApplyResources) (*responses.Re
 		return nil, err
 	}
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 1)
-	volumeMounts := make([]corev1.VolumeMount, 1)
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
 	if resources.PvcStorage != "" {
+		volumes = make([]corev1.Volume, 1)
+		volumeMounts = make([]corev1.VolumeMount, 1)
 		_, err = service.UpdateOrCreatePvc(ns, pvcName, resources.StorageClassName, resources.PvcStorage, accessModes)
 		if err != nil {
 			return nil, err
