@@ -1,7 +1,7 @@
 package forms
 
 // 修改镜像的tag
-type ImageUpdateForm struct {
+type ImageCreateByTagForm struct {
 	OldRepositoryName string `form:"image_old_name"json:"image_old_name" binding:"required,min=1,max=255"`
 	OldTag            string `form:"image_old_tag" json:"image_old_tag" binding:"required,min=1,max=64"`
 	NewRepositoryName string `form:"image_new_name"json:"image_new_name" binding:"required,min=1,max=255"`
@@ -12,7 +12,7 @@ type SaveForm struct {
 	Imglist []string `form:"image_list" json:"image_list" binding:"required"`
 }
 
-type PullFromRepositoryPrivate struct {
+type PullFromRepositoryPrivateForm struct {
 	RepositoryName string `form:"image_name" json:"image_name" binding:"required,min=1,max=255"`
 	Tag            string `form:"tag" json:"tag" binding:"required,min=1,max=64"`
 	Uid            uint   `form:"uid" json:"uid"`
@@ -21,10 +21,10 @@ type PullFromRepositoryPrivate struct {
 	Passwd         string `form:"passwd"json:"passwd"binding:"required min=1,max=64"`
 }
 
-type PullFromRepositoryPublic struct {
-	RepositoryName string `form:"image_name" json:"image_name" binding:"required,min=1,max=255"`
+type PullFromRepositoryPublicForm struct {
+	RepositoryName string `form:"image_names" json:"image_name" binding:"required,min=1,max=255"`
 	Tag            string `form:"tag" json:"tag" binding:"required,min=1,max=64"`
-	Uid            uint   `form:"uid" json:"uid"`
+	Uid            uint   `form:"user_id" json:"user_id"`
 	Kind           int    `form:"kind" json:"kind"`
 }
 
@@ -35,4 +35,8 @@ type ImageCreateForm struct {
 	Tag      string `form:"tag" json:"tag" binding:"required,min=1,max=64"`
 	Uid      uint   `form:"uid" json:"uid"`
 	Kind     int    `form:"kind" json:"kind"`
+}
+
+type RemoveImageForm struct {
+	ImageId string `form:"image_id" json:"image_id" binding:"required,min=1,max=64"`
 }

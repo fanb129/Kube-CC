@@ -4,28 +4,27 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
-	"errors"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"io"
 	"os"
 )
 
 // PullImage
-// 拉取指定镜像
+// 拉取指定公有仓库镜像
 
-// TODO 后续将方法规范重构
-func PullImage(imageName string) (*responses.PullingResponse, error) {
+func PullImage(repositoryName, tag string, uid uint, kind int) (*responses.Response, error) {
 	// 创建同步
 	ctx := context.Background()
 
-	reader, err := cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
+	reader, err := cli.ImagePull(ctx, repositoryName+":"+tag, types.ImagePullOptions{})
 
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	// TODO written方法需要后续经过测试进行完善
 
 	// 读取所需要复制的内容
 	_, err = io.Copy(os.Stdout, reader)
@@ -33,28 +32,21 @@ func PullImage(imageName string) (*responses.PullingResponse, error) {
 		return nil, err
 	}
 
-	image, err := dao.GetImgById(imageName)
+	id, size, err := GetIDandSize(repositoryName + ":" + tag)
 	if err != nil {
-		return nil, errors.New("镜像拉取失败")
+		return nil, err
 	}
+	_, err = dao.CreateImage(repositoryName, id, uid, kind, tag, size)
 
-	return &responses.PullingResponse{
-		Response: responses.OK,
-		ImageInfo: responses.ImageInfo{
-			ID:        image.ID,
-			CreatedAt: image.CreatedAt,
-			UpdatedAt: image.UpdatedAt,
-			ImageId:   image.ImageId,
-			UserId:    image.UserId,
-			Kind:      image.Kind,
-		},
-	}, nil
+	if err != nil {
+		return nil, err
+	}
+	return &responses.OK, nil
 }
 
 // PullPrivateImage
-// 拉取私有仓库的镜像
-// TODO 测试后进行完善
-/*func PullPrivateImage(imageName string, username string, passwd string) (*responses.Response, error) {
+// 拉取指定私有仓库的镜像
+func PullPrivateImage(repositoryName, tag, username, passwd string, uid uint, kind int) (*responses.Response, error) {
 	ctx := context.Background()
 	authConf := registry.AuthConfig{
 		Username: username,
@@ -62,17 +54,27 @@ func PullImage(imageName string) (*responses.PullingResponse, error) {
 	}
 	encodeJson, _ := json.Marshal(authConf)
 	authStr := base64.StdEncoding.EncodeToString(encodeJson)
-	out, err := cli.ImagePull(ctx, imageName, types.ImagePullOptions{RegistryAuth: authStr})
+	out, err := cli.ImagePull(ctx, repositoryName, types.ImagePullOptions{RegistryAuth: authStr})
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return nil, err
 	}
 	defer out.Close()
 	_, err = io.Copy(os.Stdout, out)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	// 确保imagepull正确进行后进行数据库的写入操作
+
+	id, size, err := GetIDandSize(repositoryName)
+	if err != nil {
+		return nil, err
+	}
+	_, err = dao.CreateImage(repositoryName, id, uid, kind, tag, size)
+
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return &responses.OK, nil
 }
-*/

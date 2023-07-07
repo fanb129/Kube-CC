@@ -7,8 +7,11 @@ type ImageInfo struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	ImageId   string    `json:"image_id"`
+	ImageName string    `json:"image_name"`
 	UserId    uint      `json:"user_id"`
 	Kind      int       `json:"kind"`
+	Tag       string    `json:"tag"`
+	Size      string    `json:"size"`
 }
 
 type CreateResponse struct {
@@ -40,9 +43,12 @@ type ImageInfoResponse struct {
 }
 type ImageListResponse struct {
 	Response
-	Page      int         `json:"page"`
-	Total     int         `json:"total"`
-	ImageList []ImageInfo `json:"user_list"`
+	Page             int         `json:"page"`
+	Total            int         `json:"total"`
+	ImageListPBULIC  []ImageInfo `json:"user_list_public"`
+	ImageListPRIVATE []ImageInfo `json:"user_list_private"`
+}
+type EmptyList struct {
 }
 
 var NoSuchImage = Response{StatusCode: -1, StatusMsg: "该镜像不存在"}
