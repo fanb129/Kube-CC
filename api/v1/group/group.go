@@ -127,13 +127,13 @@ func Remove(c *gin.Context) {
 
 // Update 更新用户信息
 func Update(c *gin.Context) {
-	uid, _ := strconv.Atoi(c.Param("u_id"))
+	gid, _ := strconv.Atoi(c.Param("id"))
 	form := forms.GroupUpdateForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	response, err := service.UpdateGroup(uint(uid), form)
+	response, err := service.UpdateGroup(uint(gid), form)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,

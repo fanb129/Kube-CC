@@ -211,6 +211,10 @@ func UpdateGroup(g_id uint, data forms.GroupUpdateForm) (*responses.Response, er
 	if err != nil {
 		return nil, errors.New("获取组失败")
 	}
+	groupn, _ := dao.GetGroupByName(data.Name)
+	if groupn != nil && groupn.ID != group.ID {
+		return nil, errors.New("组名已占用")
+	}
 	group.Description = data.Description
 	group.Name = data.Name
 	row, err := dao.UpdateGroup(group)
