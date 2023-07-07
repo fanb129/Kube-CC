@@ -79,6 +79,16 @@ func GetUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
+// // GetAdmin 获取所有管理员用户
+// func GetAdmin() ([]models.User, error) {
+// 	var users []models.User
+// 	result := mysqlDb.Where("role = ?", 2).Find(&users)
+// 	if result.Error != nil {
+// 		return nil, result.Error
+// 	}
+// 	return users, nil
+// }
+
 // DeleteUserById 根据id删除user
 func DeleteUserById(id uint) (int, error) {
 	user := models.User{
@@ -139,6 +149,7 @@ func UpdateUser(u *models.User) (int, error) {
 		Password: u.Password,
 		Role:     u.Role,
 		Avatar:   u.Avatar,
+		Groupid:  u.Groupid,
 	})
 	return int(result.RowsAffected), result.Error
 }

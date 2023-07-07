@@ -11,7 +11,18 @@ import (
 )
 
 //var n = 1 // request == limit
-var ResourceGPU corev1.ResourceName = "requests.nvidia.com/gpu"
+var (
+	NvidiaGPU       corev1.ResourceName = "nvidia.com/gpu"
+	LimitsNvidiaGpu corev1.ResourceName = "limits.nvidia.com/gpu"
+	AmdGpu          corev1.ResourceName = "amd.com/gpu"
+	LimitsAmdGpu    corev1.ResourceName = "limits.amd.com/gpu"
+)
+
+//GPU 只能在 limits 部分指定，这意味着：
+//
+//你可以指定 GPU 的 limits 而不指定其 requests，因为 Kubernetes 将默认使用限制值作为请求值。
+//你可以同时指定 limits 和 requests，不过这两个值必须相等。
+//你不可以仅指定 requests 而不指定 limits。
 
 // CreateResourceQuota 为namespace创建ResourceQuota，进行namespace总的资源限制
 func CreateResourceQuota(ns string, resouces forms.Resources) error {
@@ -19,7 +30,7 @@ func CreateResourceQuota(ns string, resouces forms.Resources) error {
 		resouces.PvcStorage = "0"
 	}
 	if resouces.Gpu == "" {
-		resouces.Cpu = "0"
+		resouces.Gpu = "0"
 	}
 	resourceQuota := corev1.ResourceQuota{
 		TypeMeta: metav1.TypeMeta{
@@ -44,8 +55,8 @@ func CreateResourceQuota(ns string, resouces forms.Resources) error {
 				corev1.ResourceRequestsMemory: resource.MustParse(resouces.Memory),
 				corev1.ResourceLimitsMemory:   resource.MustParse(resouces.Memory),
 
-				// TODO:GPU
-				ResourceGPU: resource.MustParse(resouces.Gpu),
+				//TODO:GPU
+				LimitsNvidiaGpu: resource.MustParse(resouces.Gpu),
 			},
 		},
 	}
@@ -64,6 +75,12 @@ func GetResourceQuota(ns string) (*corev1.ResourceQuota, error) {
 
 // UpdateResourceQuota 更新
 func UpdateResourceQuota(ns string, resouces forms.Resources) error {
+	if resouces.PvcStorage == "" {
+		resouces.PvcStorage = "0"
+	}
+	if resouces.Gpu == "" {
+		resouces.Gpu = "0"
+	}
 	quota, err := GetResourceQuota(ns)
 	if err != nil {
 		return err
@@ -79,7 +96,7 @@ func UpdateResourceQuota(ns string, resouces forms.Resources) error {
 	quota.Spec.Hard[corev1.ResourceRequestsMemory] = resource.MustParse(resouces.Memory)
 	quota.Spec.Hard[corev1.ResourceLimitsMemory] = resource.MustParse(resouces.Memory)
 	// TODO:GPU
-	quota.Spec.Hard[ResourceGPU] = resource.MustParse(resouces.Gpu)
+	quota.Spec.Hard[LimitsNvidiaGpu] = resource.MustParse(resouces.Gpu)
 	_, err = dao.ClientSet.CoreV1().ResourceQuotas(ns).Update(context.Background(), quota, metav1.UpdateOptions{})
 	return err
 }

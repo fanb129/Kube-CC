@@ -102,9 +102,9 @@ func DeleteGroupById(id uint) (int, error) {
 }
 
 // CreateGroup 新增group
-func CreateGroup(name, description string, adminid uint) (int, error) {
+func CreateGroup(adminid uint, name, description string) (int, error) {
 	group := models.Group{
-		AdminId:     adminid,
+		Adminid:     adminid,
 		Name:        name,
 		Description: description,
 	}
@@ -131,7 +131,7 @@ func UpdateGroupWithNil(g *models.Group) (int, error) {
 func UpdateGroup(g *models.Group) (int, error) {
 	result := mysqlDb.Model(g).Updates(models.Group{
 		Name:        g.Name,
-		AdminId:     g.AdminId,
+		Adminid:     g.Adminid,
 		Description: g.Description,
 	})
 	return int(result.RowsAffected), result.Error

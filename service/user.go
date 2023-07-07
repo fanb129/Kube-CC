@@ -61,9 +61,30 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 			Nickname:  user.Nickname,
 			Role:      user.Role,
 			Avatar:    user.Avatar,
+			Gid:       user.Groupid,
 		},
 	}, nil
 }
+
+// // GetAdminUser 获取管理员用户
+// func GetAdminUser() (*responses.AdminUserListResponse, error) {
+// 	u, err := dao.GetAdmin()
+// 	if err != nil {
+// 		return nil, errors.New("获取管理员用户失败")
+// 	}
+// 	adminuserList := make([]responses.AdminUserResponse, len(u))
+// 	for i, v := range u {
+// 		tmp := responses.AdminUserResponse{
+// 			ID:       v.ID,
+// 			Username: v.Username,
+// 		}
+// 		adminuserList[i] = tmp
+// 	}
+// 	return &responses.AdminUserListResponse{
+// 		Response:      responses.OK,
+// 		AdminUserList: adminuserList,
+// 	}, nil
+// }
 
 // DeleteUSer  删除用户
 func DeleteUSer(id uint) (*responses.Response, error) {

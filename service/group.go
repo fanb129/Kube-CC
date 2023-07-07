@@ -6,11 +6,14 @@ import (
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"errors"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 // <<新增>>
 // IndexGroup  分页浏览组信息
-func IndexGroup(page int, groupid uint) (*responses.GroupListResponse, error) {
+func IndexGroup(page int) (*responses.GroupListResponse, error) {
 	g, total, err := dao.GetGroupList(page, conf.PageSize)
 	if err != nil {
 		return nil, errors.New("获取组列表失败")
@@ -26,11 +29,11 @@ func IndexGroup(page int, groupid uint) (*responses.GroupListResponse, error) {
 	groupList := make([]responses.GroupInfo, len(g))
 	for i, v := range g {
 		tmp := responses.GroupInfo{
-			GroupID:     v.ID,
+			Groupid:     v.ID,
 			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Name:        v.Name,
-			AdminID:     v.AdminId,
+			Adminid:     v.Adminid,
 			Description: v.Description,
 		}
 		groupList[i] = tmp
@@ -78,6 +81,57 @@ func IndexGroupUser(page int, groupid uint) (*responses.UserListResponse, error)
 	}, nil
 }
 
+// ViewGroupUser 查看组内成员
+func ViewGroupUser(groupid uint) (*responses.GroupUser, error) {
+	gu, err := dao.GetGroupUserById(groupid)
+	if err != nil {
+		return nil, errors.New("获取该组用户列表失败")
+	}
+	groupuserList := make([]responses.UserInfo, len(gu))
+	for i, v := range gu {
+		tmp := responses.UserInfo{
+			ID:        v.ID,
+			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:  v.Username,
+			Nickname:  v.Nickname,
+			Role:      v.Role,
+			Avatar:    v.Avatar,
+		}
+		groupuserList[i] = tmp
+	}
+	return &responses.GroupUser{
+		Response: responses.OK,
+		UserList: groupuserList,
+	}, nil
+}
+
+// CreateNewGroup 创建新的组
+func CreateNewGroup(adminid uint, name, description string) (*responses.Response, error) {
+	group, _ := dao.GetGroupByName(name)
+	if group != nil {
+		return nil, errors.New("组名已占用")
+	}
+	group, _ = dao.GetDeletedGroupByName(name)
+	if group != nil {
+		group.CreatedAt = time.Now()
+		group.DeletedAt = gorm.DeletedAt{}
+		group.Adminid = adminid
+		group.Name = name
+		group.Description = description
+		row, err := dao.UpdateUnscopedGroup(group)
+		if err != nil || row == 0 {
+			return nil, errors.New("创建组失败")
+		}
+	} else {
+		_, err := dao.CreateGroup(adminid, name, description)
+		if err != nil {
+			return nil, errors.New("创建组失败")
+		}
+	}
+	return &responses.OK, nil
+}
+
 func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 	group, err := dao.GetGroupById(g_id)
 	if err != nil {
@@ -86,11 +140,11 @@ func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 	return &responses.GroupInfoResponse{
 		Response: responses.OK,
 		GroupInfo: responses.GroupInfo{
-			GroupID:     group.ID,
+			Groupid:     group.ID,
 			CreatedAt:   group.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   group.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Name:        group.Name,
-			AdminID:     group.AdminId,
+			Adminid:     group.Adminid,
 			Description: group.Description,
 		},
 	}, nil
@@ -99,15 +153,19 @@ func GroupInfo(g_id uint) (*responses.GroupInfoResponse, error) {
 // DeleteGroup  删除组
 func DeleteGroup(id uint) (*responses.Response, error) {
 	users, erru := dao.GetGroupUserById(id)
-	if erru != nil || users == nil {
-		return nil, errors.New("删除失败")
+	if erru != nil {
+		return nil, errors.New("获取组用户失败")
 	}
 	for _, v := range users {
-		v.GroupId = 0
+		v.Groupid = 0
+		row, err := dao.UpdateUserWithNil(&v)
+		if err != nil || row == 0 {
+			return nil, errors.New("移出组内用户失败")
+		}
 	}
 	row, err := dao.DeleteGroupById(id)
 	if err != nil || row == 0 {
-		return nil, errors.New("删除失败")
+		return nil, errors.New("删除组失败")
 	}
 	return &responses.OK, nil
 }
@@ -118,7 +176,7 @@ func RemoveUser(u_id uint) (*responses.Response, error) {
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	user.GroupId = 0
+	user.Groupid = 0
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("移出失败")
@@ -133,10 +191,10 @@ func AddUser(g_id, u_id uint) (*responses.Response, error) {
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	if user.GroupId != 0 {
+	if user.Groupid != 0 {
 		return nil, errors.New("该用户属于其他组")
 	}
-	user.GroupId = g_id
+	user.Groupid = g_id
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("添加失败")
@@ -172,17 +230,22 @@ func TransAdmin(g_id, odad_id, nwad_id uint) (*responses.Response, error) {
 	if erro != nil {
 		return nil, errors.New("获取旧管理员失败")
 	}
-	if group.AdminId != odad_id {
+	if group.Adminid != odad_id {
 		return nil, errors.New("旧管理员不是本组管理员")
 	}
 	nwad, errn := dao.GetUserById(nwad_id)
 	if errn != nil {
 		return nil, errors.New("获取新管理员失败")
 	}
-	if nwad.GroupId != g_id {
+	if nwad.Groupid != g_id {
 		return nil, errors.New("新管理员不属于本组")
 	}
-	group.AdminId = nwad_id
+	group.Adminid = nwad_id
+
+	row, err := dao.UpdateGroup(group)
+	if err != nil || row == 0 {
+		return nil, errors.New("更新失败")
+	}
 
 	return &responses.OK, nil
 }
