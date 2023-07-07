@@ -55,8 +55,8 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 		"uuid":  newUuid,
 	}
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(resources.PvcPath))
+	volumes := make([]corev1.Volume, 1)
+	volumeMounts := make([]corev1.VolumeMount, 1)
 	if resources.PvcStorage != "" {
 		if resources.StorageClassName == "" {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
@@ -66,19 +66,18 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 		if err != nil {
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
+		volumes[0] = corev1.Volume{
 			Name: pvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
 				},
 			},
-		})
-		for i, path := range resources.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
+		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
 		}
 	}
 	// 创建centos的控制器
@@ -218,26 +217,25 @@ func UpdateLinux(name, ns string, resources forms.ApplyResources) (*responses.Re
 		return nil, err
 	}
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(resources.PvcPath))
+	volumes := make([]corev1.Volume, 1)
+	volumeMounts := make([]corev1.VolumeMount, 1)
 	if resources.PvcStorage != "" {
-		err = service.UpdatePVC(ns, pvcName, resources.PvcStorage)
+		_, err = service.UpdateOrCreatePvc(ns, pvcName, resources.StorageClassName, resources.PvcStorage, accessModes)
 		if err != nil {
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
+		volumes[0] = corev1.Volume{
 			Name: pvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
 				},
 			},
-		})
-		for i, path := range resources.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
+		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
 		}
 	}
 

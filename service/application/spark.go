@@ -20,30 +20,28 @@ import (
 const (
 	sparkMasterDeployName  = "spark-master"
 	sparkWorkerDeployName  = "spark-worker"
-	sparkMasterServiceName = "spark-master-service"
-	sparkWorkerServiceName = "spark-worker-service"
+	sparkMasterServiceName = "spark-master"         // 特定名字，不能改，与spark镜像关联
+	sparkWorkerServiceName = "spark-worker-service" // 特定名字，不能改，与spark镜像关联
 	sparkIngressName       = "spark-ingress"
 )
 
 // CreateSpark 为uid创建spark，masterReplicas默认1， masterReplicas默认2
-func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
 	// uuid
 	newUuid := string(uuid.NewUUID())
-	ns := "spark-" + newUuid
+	ns := name + "-" + newUuid
 	label := map[string]string{
 		"image": "spark",
-		"uuid":  newUuid,
+		"u_id":  u_id,
 	}
-	label["u_id"] = u_id
 	masterLabel := map[string]string{
 		"component": "spark-master",
-		"uuid":      newUuid,
+		"uuid":      newUuid + "1",
 	}
 	workerLabel := map[string]string{
 		"component": "spark-worker",
-		"uuid":      newUuid,
+		"uuid":      newUuid + "2",
 	}
-	// 创建namespace
 	rsc := forms.Resources{
 		Cpu:        resources.Cpu,
 		Memory:     resources.Memory,
@@ -64,10 +62,6 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 		return nil, err
 	}
 	strForm := string(jsonBytes)
-	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
-	if err != nil {
-		return nil, err
-	}
 	// 准备工作
 	// 分割申请资源
 	m := int(masterReplicas + workerReplicas)
@@ -95,31 +89,64 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 	if err != nil {
 		return nil, err
 	}
+	// 创建namespace
+	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
+	if err != nil {
+		return nil, err
+	}
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(resources.PvcPath))
+	masterVolumes := make([]corev1.Volume, 1)
+	workerVolumes := make([]corev1.Volume, 1)
+	masterVolumeMounts := make([]corev1.VolumeMount, 1)
+	workerVolumeMounts := make([]corev1.VolumeMount, 1)
 	if resources.PvcStorage != "" {
-		if resources.StorageClassName == "" {
-			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
-		}
-		pvcName := ns + "-pvc"
-		_, err = service.CreatePVC(ns, pvcName, resources.StorageClassName, resources.PvcStorage, accessModes)
+		// 分割资源
+		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 2)
 		if err != nil {
+			DeleteSpark(ns)
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
-			Name: pvcName,
+
+		if resources.StorageClassName == "" {
+			DeleteSpark(ns)
+			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
+		}
+		masterPvcName := sparkMasterDeployName + "-pvc"
+		workerPvcName := sparkWorkerDeployName + "-pvc"
+		_, err = service.CreatePVC(ns, masterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		if err != nil {
+			DeleteSpark(ns)
+			return nil, err
+		}
+		_, err = service.CreatePVC(ns, workerPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		if err != nil {
+			DeleteSpark(ns)
+			return nil, err
+		}
+		masterVolumes[0] = corev1.Volume{
+			Name: masterPvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvcName,
+					ClaimName: masterPvcName,
 				},
 			},
-		})
-		for i, path := range resources.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
+		}
+		workerVolumes[0] = corev1.Volume{
+			Name: workerPvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: workerPvcName,
+				},
+			},
+		}
+		// 写死为/data目录
+		masterVolumeMounts[0] = corev1.VolumeMount{
+			Name:      masterPvcName,
+			MountPath: "/data",
+		}
+		workerVolumeMounts[0] = corev1.VolumeMount{
+			Name:      workerPvcName,
+			MountPath: "/data",
 		}
 	}
 	// spark的master控制器
@@ -129,7 +156,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{Labels: masterLabel},
 			Spec: corev1.PodSpec{
-				Volumes: volumes,
+				Volumes: masterVolumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "spark-master",
@@ -142,7 +169,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 							{ContainerPort: 8080},
 							{ContainerPort: 22},
 						},
-						VolumeMounts: volumeMounts,
+						VolumeMounts: masterVolumeMounts,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
@@ -164,6 +191,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 	}
 	_, err = service.CreateDeploy(sparkMasterDeployName, ns, "", masterLabel, masterSpec)
 	if err != nil {
+		DeleteSpark(ns)
 		return nil, err
 	}
 
@@ -179,6 +207,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 	}
 	_, err = service.CreateService(sparkMasterServiceName, ns, masterLabel, masterServiceSpec)
 	if err != nil {
+		DeleteSpark(ns)
 		return nil, err
 	}
 
@@ -189,7 +218,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{Labels: workerLabel},
 			Spec: corev1.PodSpec{
-				Volumes: volumes,
+				Volumes: workerVolumes,
 				Containers: []corev1.Container{
 					{Name: "spark-worker",
 						Image:           conf.SparkImage,
@@ -200,7 +229,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 							{ContainerPort: 8081},
 							{ContainerPort: 22},
 						},
-						VolumeMounts: volumeMounts,
+						VolumeMounts: workerVolumeMounts,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
@@ -222,6 +251,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 	}
 	_, err = service.CreateDeploy(sparkWorkerDeployName, ns, "", workerLabel, workerSpec)
 	if err != nil {
+		DeleteSpark(ns)
 		return nil, err
 	}
 
@@ -236,6 +266,7 @@ func CreateSpark(u_id string, masterReplicas int32, workerReplicas int32, expire
 	}
 	_, err = service.CreateService(sparkWorkerServiceName, ns, workerLabel, workerServiceSpec)
 	if err != nil {
+		DeleteSpark(ns)
 		return nil, err
 	}
 
@@ -332,6 +363,12 @@ func DeleteSpark(ns string) (*responses.Response, error) {
 	if _, err := service.DeleteDeploy(sparkMasterDeployName, ns); err != nil {
 		err1 = err
 	}
+	if _, err := service.DeletePVC(ns, sparkMasterDeployName+"-pvc"); err != nil {
+		err1 = err
+	}
+	if _, err := service.DeletePVC(ns, sparkWorkerDeployName+"-pvc"); err != nil {
+		err1 = err
+	}
 	if _, err := service.DeleteNs(ns); err != nil {
 		err1 = err
 	}
@@ -341,7 +378,7 @@ func DeleteSpark(ns string) (*responses.Response, error) {
 	return &responses.OK, nil
 }
 
-// UpdateSpark 更新spark的uid以及replicas
+// UpdateSpark 更新spark以及replicas
 func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
 	rsc := forms.Resources{
 		Cpu:        resources.Cpu,
@@ -393,6 +430,57 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 	if err != nil {
 		return nil, err
 	}
+	// 创建PVC，持久存储
+	masterVolumes := make([]corev1.Volume, 1)
+	workerVolumes := make([]corev1.Volume, 1)
+	masterVolumeMounts := make([]corev1.VolumeMount, 1)
+	workerVolumeMounts := make([]corev1.VolumeMount, 1)
+	if resources.PvcStorage != "" {
+		// 分割资源
+		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 2)
+		if err != nil {
+			return nil, err
+		}
+
+		if resources.StorageClassName == "" {
+			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
+		}
+		masterPvcName := sparkMasterDeployName + "-pvc"
+		workerPvcName := sparkWorkerDeployName + "-pvc"
+		_, err = service.UpdateOrCreatePvc(name, masterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		if err != nil {
+			return nil, err
+		}
+		_, err = service.UpdateOrCreatePvc(name, workerPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		if err != nil {
+			return nil, err
+		}
+		masterVolumes[0] = corev1.Volume{
+			Name: masterPvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: masterPvcName,
+				},
+			},
+		}
+		workerVolumes[0] = corev1.Volume{
+			Name: workerPvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: workerPvcName,
+				},
+			},
+		}
+		// 写死为/data目录
+		masterVolumeMounts[0] = corev1.VolumeMount{
+			Name:      masterPvcName,
+			MountPath: "/data",
+		}
+		workerVolumeMounts[0] = corev1.VolumeMount{
+			Name:      workerPvcName,
+			MountPath: "/data",
+		}
+	}
 	// 更新master的Replicas
 	master, err := service.GetDeploy(sparkMasterDeployName, name)
 	if err != nil {
@@ -412,6 +500,8 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 		},
 	}
+	master.Spec.Template.Spec.Volumes = masterVolumes
+	master.Spec.Template.Spec.Containers[0].VolumeMounts = masterVolumeMounts
 	if _, err := service.UpdateDeploy(sparkMasterDeployName, name, "", master.Spec); err != nil {
 		return nil, err
 	}
@@ -435,6 +525,8 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 		},
 	}
+	worker.Spec.Template.Spec.Volumes = workerVolumes
+	worker.Spec.Template.Spec.Containers[0].VolumeMounts = workerVolumeMounts
 	if _, err := service.UpdateDeploy(sparkWorkerDeployName, name, "", worker.Spec); err != nil {
 		return nil, err
 	}

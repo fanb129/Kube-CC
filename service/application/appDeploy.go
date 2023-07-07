@@ -68,8 +68,9 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	}
 
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+	volumes := make([]corev1.Volume, 1)
+	//volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+	volumeMounts := make([]corev1.VolumeMount, 1)
 	if form.PvcStorage != "" {
 		if form.StorageClassName == "" {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
@@ -79,20 +80,25 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 		if err != nil {
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
+		volumes[0] = corev1.Volume{
 			Name: pvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
 				},
 			},
-		})
-		for i, path := range form.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
 		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
+		}
+		//for i, path := range form.PvcPath {
+		//	volumeMounts[i] = corev1.VolumeMount{
+		//		Name:      pvcName,
+		//		MountPath: path,
+		//	}
+		//}
 	}
 
 	// 0.创建configMap，存储环境变量
@@ -228,6 +234,10 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 	for i, deploy := range list.Items {
 		// 获取对应service
 		serviceName := deploy.Name + "-service"
+		// 针对spark定制化
+		if deploy.Name == sparkMasterDeployName {
+			serviceName = sparkMasterServiceName
+		}
 		svc, err := service.GetService(serviceName, ns)
 		if err != nil {
 			zap.S().Errorln("service/application/appDeploy:", err)
@@ -373,27 +383,32 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	}
 	label := deploy.Labels
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+	volumes := make([]corev1.Volume, 1)
+	volumeMounts := make([]corev1.VolumeMount, 1)
 	if form.PvcStorage != "" {
-		err = service.UpdatePVC(form.Namespace, pvcName, form.PvcStorage)
+		_, err = service.UpdateOrCreatePvc(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, accessModes)
 		if err != nil {
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
+		volumes[0] = corev1.Volume{
 			Name: pvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
 				},
 			},
-		})
-		for i, path := range form.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
 		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
+		}
+		//for i, path := range form.PvcPath {
+		//	volumeMounts[i] = corev1.VolumeMount{
+		//		Name:      pvcName,
+		//		MountPath: path,
+		//	}
+		//}
 	}
 	spec := appsv1.DeploymentSpec{
 		Replicas: &form.Replicas,

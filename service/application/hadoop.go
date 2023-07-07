@@ -37,24 +37,23 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	ns := "hadoop-" + newUuid
 	label := map[string]string{
 		"image": "hadoop",
-		"uuid":  newUuid,
+		"u_id":  u_id,
 	}
-	label["u_id"] = u_id
 	hdfsMasterLabel := map[string]string{
 		"name": "hdfs-master",
-		"uuid": newUuid,
+		"uuid": newUuid + "1",
 	}
 	datanodeLabel := map[string]string{
 		"name": "hadoop-datanode",
-		"uuid": newUuid,
+		"uuid": newUuid + "2",
 	}
 	yarnMasterLabel := map[string]string{
 		"name": "yarn-master",
-		"uuid": newUuid,
+		"uuid": newUuid + "3",
 	}
 	yarnNodeLabel := map[string]string{
 		"name": "yarn-node",
-		"uuid": newUuid,
+		"uuid": newUuid + "4",
 	}
 	// 创建namespace
 	rsc := forms.Resources{
@@ -64,6 +63,21 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		PvcStorage: resources.PvcStorage,
 		Gpu:        resources.Gpu,
 	}
+	// 将form序列化为string，存入deploy的注释
+	form := forms.HadoopUpdateForm{
+		Name:               ns,
+		HdfsMasterReplicas: hdfsMasterReplicas,
+		DatanodeReplicas:   datanodeReplicas,
+		YarnMasterReplicas: yarnMasterReplicas,
+		YarnNodeReplicas:   yarnNodeReplicas,
+		ExpiredTime:        expiredTime,
+		ApplyResources:     resources,
+	}
+	jsonBytes, err := json.Marshal(form)
+	if err != nil {
+		return nil, err
+	}
+	strForm := string(jsonBytes)
 	// 准备工作
 	// 分割申请资源
 	m := int(hdfsMasterReplicas + yarnMasterReplicas + yarnNodeReplicas + datanodeReplicas)
@@ -92,56 +106,96 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		return nil, err
 	}
 
-	// 将form序列化为string，存入deploy的注释
-	form := forms.HadoopUpdateForm{
-		Name:               ns,
-		HdfsMasterReplicas: hdfsMasterReplicas,
-		DatanodeReplicas:   datanodeReplicas,
-		YarnMasterReplicas: yarnMasterReplicas,
-		YarnNodeReplicas:   yarnNodeReplicas,
-		ExpiredTime:        expiredTime,
-		ApplyResources:     resources,
-	}
-	jsonBytes, err := json.Marshal(form)
-	if err != nil {
-		return nil, err
-	}
-	strForm := string(jsonBytes)
+	// 创建namespace
 	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
 	if err != nil {
 		return nil, err
 	}
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(resources.PvcPath))
+	hdfsMasterVolumes := make([]corev1.Volume, 1)
+	dataNodeVolumes := make([]corev1.Volume, 1)
+	yarnMasterVolumes := make([]corev1.Volume, 1)
+	yarnNodeVolumes := make([]corev1.Volume, 1)
+
+	hdfsMasterVolumeMounts := make([]corev1.VolumeMount, 1)
+	dataNodeVolumeMounts := make([]corev1.VolumeMount, 1)
+	yarnMasterVolumeMounts := make([]corev1.VolumeMount, 1)
+	yarnNodeVolumeMounts := make([]corev1.VolumeMount, 1)
 	if resources.PvcStorage != "" {
+		// 分割资源
+		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 4)
+		if err != nil {
+			DeleteSpark(ns)
+			return nil, err
+		}
 		if resources.StorageClassName == "" {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
 		}
-		pvcName := ns + "-pvc"
-		_, err = service.CreatePVC(ns, pvcName, resources.StorageClassName, resources.PvcStorage, accessModes)
+		hdfsMasterPvcName := hadoopHdfsMasterDeployName + "-pvc"
+		datenodePvcName := datanodeDeployName + "-pvc"
+		yarnMasterPvcName := hadoopYarnMasterDeployName + "-pvc"
+		yarnNodePvcName := hadoopYarnNodeDeployName + "-pvc"
+		_, err = service.CreatePVC(ns, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, datenodePvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, yarnMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, yarnNodePvcName, resources.StorageClassName, pvcStorage, accessModes)
 		if err != nil {
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
-			Name: pvcName,
+		hdfsMasterVolumes[0] = corev1.Volume{
+			Name: hdfsMasterPvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvcName,
+					ClaimName: hdfsMasterPvcName,
 				},
 			},
-		})
-		for i, path := range resources.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
+		}
+		dataNodeVolumes[0] = corev1.Volume{
+			Name: datenodePvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: datenodePvcName,
+				},
+			},
+		}
+		yarnMasterVolumes[0] = corev1.Volume{
+			Name: yarnMasterPvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: yarnMasterPvcName,
+				},
+			},
+		}
+		yarnNodeVolumes[0] = corev1.Volume{
+			Name: yarnNodePvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: yarnNodePvcName,
+				},
+			},
+		}
+		// 写死为/data目录
+		hdfsMasterVolumeMounts[0] = corev1.VolumeMount{
+			Name:      hdfsMasterPvcName,
+			MountPath: "/data",
+		}
+		dataNodeVolumeMounts[0] = corev1.VolumeMount{
+			Name:      datenodePvcName,
+			MountPath: "/data",
+		}
+		yarnMasterVolumeMounts[0] = corev1.VolumeMount{
+			Name:      yarnMasterPvcName,
+			MountPath: "/data",
+		}
+		yarnNodeVolumeMounts[0] = corev1.VolumeMount{
+			Name:      yarnNodePvcName,
+			MountPath: "/data",
 		}
 	}
 	// 创建configMap
 	_, err = service.CreateConfigMap(hadoopConfigMapName, ns, map[string]string{}, map[string]string{
-		HDFS_MASTER_SERVICE: "hadoop-hdfs-master",
-		HDOOP_YARN_MASTER:   "hadoop-yarn-master",
+		HDFS_MASTER_SERVICE: hadoopHdfsMasterServiceName,
+		HDOOP_YARN_MASTER:   hadoopYarnMasterServiceName,
 	})
 	if err != nil {
 		return nil, err
@@ -157,7 +211,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 				Labels: hdfsMasterLabel,
 			},
 			Spec: corev1.PodSpec{
-				Volumes: volumes,
+				Volumes: hdfsMasterVolumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "hdfs-master",
@@ -180,7 +234,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 							},
 						},
-						VolumeMounts: volumeMounts,
+						VolumeMounts: hdfsMasterVolumeMounts,
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "namenode"},
 							{Name: HDFS_MASTER_SERVICE, ValueFrom: &corev1.EnvVarSource{
@@ -235,7 +289,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 				Labels: datanodeLabel,
 			},
 			Spec: corev1.PodSpec{
-				Volumes: volumes,
+				Volumes: dataNodeVolumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "hadoop-datanode",
@@ -258,7 +312,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 							},
 						},
-						VolumeMounts: volumeMounts,
+						VolumeMounts: dataNodeVolumeMounts,
 						Env: []corev1.EnvVar{
 							{
 								Name:  HADOOP_NODE_TYPE,
@@ -310,7 +364,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 				Labels: yarnMasterLabel,
 			},
 			Spec: corev1.PodSpec{
-				Volumes: volumes,
+				Volumes: yarnMasterVolumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "yarn-master",
@@ -333,7 +387,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 							},
 						},
-						VolumeMounts: volumeMounts,
+						VolumeMounts: yarnMasterVolumeMounts,
 						Env: []corev1.EnvVar{
 							{
 								Name:  HADOOP_NODE_TYPE,
@@ -401,7 +455,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 				Labels: yarnNodeLabel,
 			},
 			Spec: corev1.PodSpec{
-				Volumes: volumes,
+				Volumes: yarnNodeVolumes,
 				Containers: []corev1.Container{
 					{
 						Name:            "yarn-node",
@@ -425,7 +479,7 @@ func CreateHadoop(u_id string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 							},
 						},
-						VolumeMounts: volumeMounts,
+						VolumeMounts: yarnNodeVolumeMounts,
 						Env: []corev1.EnvVar{
 							{Name: HADOOP_NODE_TYPE, Value: "yarnnode"},
 							{
@@ -601,7 +655,86 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 	if err != nil {
 		return nil, err
 	}
+	// 创建PVC，持久存储
+	hdfsMasterVolumes := make([]corev1.Volume, 1)
+	dataNodeVolumes := make([]corev1.Volume, 1)
+	yarnMasterVolumes := make([]corev1.Volume, 1)
+	yarnNodeVolumes := make([]corev1.Volume, 1)
 
+	hdfsMasterVolumeMounts := make([]corev1.VolumeMount, 1)
+	dataNodeVolumeMounts := make([]corev1.VolumeMount, 1)
+	yarnMasterVolumeMounts := make([]corev1.VolumeMount, 1)
+	yarnNodeVolumeMounts := make([]corev1.VolumeMount, 1)
+	if resources.PvcStorage != "" {
+		// 分割资源
+		pvcStorage, err := service.SplitRSC(resources.PvcStorage, 4)
+		if err != nil {
+			return nil, err
+		}
+		if resources.StorageClassName == "" {
+			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
+		}
+		hdfsMasterPvcName := hadoopHdfsMasterDeployName + "-pvc"
+		datenodePvcName := datanodeDeployName + "-pvc"
+		yarnMasterPvcName := hadoopYarnMasterDeployName + "-pvc"
+		yarnNodePvcName := hadoopYarnNodeDeployName + "-pvc"
+		_, err = service.UpdateOrCreatePvc(name, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, datenodePvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, yarnMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, yarnNodePvcName, resources.StorageClassName, pvcStorage, accessModes)
+		if err != nil {
+			return nil, err
+		}
+		hdfsMasterVolumes[0] = corev1.Volume{
+			Name: hdfsMasterPvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: hdfsMasterPvcName,
+				},
+			},
+		}
+		dataNodeVolumes[0] = corev1.Volume{
+			Name: datenodePvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: datenodePvcName,
+				},
+			},
+		}
+		yarnMasterVolumes[0] = corev1.Volume{
+			Name: yarnMasterPvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: yarnMasterPvcName,
+				},
+			},
+		}
+		yarnNodeVolumes[0] = corev1.Volume{
+			Name: yarnNodePvcName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: yarnNodePvcName,
+				},
+			},
+		}
+		// 写死为/data目录
+		hdfsMasterVolumeMounts[0] = corev1.VolumeMount{
+			Name:      hdfsMasterPvcName,
+			MountPath: "/data",
+		}
+		dataNodeVolumeMounts[0] = corev1.VolumeMount{
+			Name:      datenodePvcName,
+			MountPath: "/data",
+		}
+		yarnMasterVolumeMounts[0] = corev1.VolumeMount{
+			Name:      yarnMasterPvcName,
+			MountPath: "/data",
+		}
+		yarnNodeVolumeMounts[0] = corev1.VolumeMount{
+			Name:      yarnNodePvcName,
+			MountPath: "/data",
+		}
+	}
 	// 更新hdfsMaster的Replicas
 	hdfsMaster, err := service.GetDeploy(hadoopHdfsMasterDeployName, name)
 	if err != nil {
@@ -621,6 +754,8 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 		},
 	}
+	hdfsMaster.Spec.Template.Spec.Volumes = hdfsMasterVolumes
+	hdfsMaster.Spec.Template.Spec.Containers[0].VolumeMounts = hdfsMasterVolumeMounts
 	if _, err := service.UpdateDeploy(hadoopHdfsMasterDeployName, name, "", hdfsMaster.Spec); err != nil {
 		return nil, err
 	}
@@ -644,6 +779,8 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 		},
 	}
+	datanode.Spec.Template.Spec.Volumes = dataNodeVolumes
+	datanode.Spec.Template.Spec.Containers[0].VolumeMounts = dataNodeVolumeMounts
 	if _, err := service.UpdateDeploy(datanodeDeployName, name, "", datanode.Spec); err != nil {
 		return nil, err
 	}
@@ -667,6 +804,8 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 		},
 	}
+	yarnMaster.Spec.Template.Spec.Volumes = yarnMasterVolumes
+	yarnMaster.Spec.Template.Spec.Containers[0].VolumeMounts = yarnMasterVolumeMounts
 	if _, err := service.UpdateDeploy(hadoopYarnMasterDeployName, name, "", yarnMaster.Spec); err != nil {
 		return nil, err
 	}
@@ -690,6 +829,8 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
 		},
 	}
+	yarnNode.Spec.Template.Spec.Volumes = yarnNodeVolumes
+	yarnNode.Spec.Template.Spec.Containers[0].VolumeMounts = yarnNodeVolumeMounts
 	if _, err := service.UpdateDeploy(hadoopYarnNodeDeployName, name, "", yarnNode.Spec); err != nil {
 		return nil, err
 	}
