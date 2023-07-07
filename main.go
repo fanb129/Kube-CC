@@ -7,6 +7,7 @@ import (
 	"Kube-CC/log"
 	"Kube-CC/routers"
 	"Kube-CC/service"
+	"Kube-CC/service/docker"
 	"go.uber.org/zap"
 	"time"
 
@@ -30,9 +31,9 @@ func main() {
 	}
 
 	// 初始化连接docker
-	//if err := docker.ConnectDocker(); err != nil {
-	//	zap.S().Panicln(err)
-	//}
+	if err := docker.ConnectDocker(); err != nil {
+		zap.S().Panicln(err)
+	}
 
 	// TODO login提交完毕后对功能进行本地测试
 	//docker.CreateImage()

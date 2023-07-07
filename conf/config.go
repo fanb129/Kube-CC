@@ -29,6 +29,7 @@ var (
 	RedisHost        string    // redis服务器
 	RedisPort        int
 	MasterInfo       ssh.Config // master的ssh信息
+	DockerHost       string     // docker的host地址
 )
 
 func init() {
@@ -60,6 +61,7 @@ func loadKubernetes(file *ini.File) {
 	HadoopImage = s.Key("HadoopImage").MustString("")
 	LinuxImage[0] = s.Key("CentosImage").MustString("")
 	LinuxImage[1] = s.Key("UbuntuImage").MustString("")
+	DockerHost = s.Key("DockerHost").MustString("")
 }
 
 // 加载数据库相关配置
