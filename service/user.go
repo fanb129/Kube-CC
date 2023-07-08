@@ -35,6 +35,7 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 			Nickname:  v.Nickname,
 			Role:      v.Role,
 			Avatar:    v.Avatar,
+			Gid:       v.Groupid,
 		}
 		userList[i] = tmp
 	}

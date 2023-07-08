@@ -13,8 +13,8 @@ type RemoveUser struct {
 }
 
 type AddUser struct {
-	GroupID uint
-	UserID  uint `form:"userid" json:"userid" binding:"required"`
+	GroupID uint `form:"groupid" json:"groupid" binding:"required"`
+	//UserID  uint `form:"userid" json:"userid" binding:"required"`
 }
 
 type GroupUpdateForm struct {

@@ -28,12 +28,14 @@ func IndexGroup(page int) (*responses.GroupListResponse, error) {
 	}
 	groupList := make([]responses.GroupInfo, len(g))
 	for i, v := range g {
+		aduser, _ := dao.GetUserById(v.Adminid)
 		tmp := responses.GroupInfo{
 			Groupid:     v.ID,
 			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Name:        v.Name,
 			Adminid:     v.Adminid,
+			Adminname:   aduser.Username,
 			Description: v.Description,
 		}
 		groupList[i] = tmp
@@ -177,7 +179,7 @@ func RemoveUser(u_id uint) (*responses.Response, error) {
 		return nil, errors.New("获取用户失败")
 	}
 	user.Groupid = 0
-	row, err := dao.UpdateUser(user)
+	row, err := dao.UpdateUserWithNil(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("移出失败")
 	}
@@ -208,6 +210,10 @@ func UpdateGroup(g_id uint, data forms.GroupUpdateForm) (*responses.Response, er
 	group, err := dao.GetGroupById(g_id)
 	if err != nil {
 		return nil, errors.New("获取组失败")
+	}
+	groupn, _ := dao.GetGroupByName(data.Name)
+	if groupn != nil && groupn.ID != group.ID {
+		return nil, errors.New("组名已占用")
 	}
 	group.Description = data.Description
 	group.Name = data.Name
