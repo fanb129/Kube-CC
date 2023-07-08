@@ -141,10 +141,29 @@ func SplitRSC(rsc string, n int) (string, error) {
 	}
 }
 
+func VerifyCpu(rsc string) (string, error) {
+	quantity, err := resource.ParseQuantity(rsc)
+	if err != nil {
+		return "", errors.New("failed to parse resource quantity: " + err.Error())
+	}
+	// 获取该资源的数量单位
+	unit := quantity.Format
+	// 如果不是十进制，即cpu的单位
+	if unit != resource.DecimalSI {
+		return "", errors.New("please use DecimalSI")
+	}
+	return quantity.String(), nil
+}
 func VerifyResource(rsc string) (string, error) {
 	quantity, err := resource.ParseQuantity(rsc)
 	if err != nil {
 		return "", errors.New("failed to parse resource quantity: " + err.Error())
+	}
+	// 获取该资源的数量单位
+	unit := quantity.Format
+	// 如果是十进制，即cpu的单位,
+	if unit != resource.BinarySI {
+		return "", errors.New("please use BinarySI")
 	}
 	return quantity.String(), nil
 }
