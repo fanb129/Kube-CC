@@ -140,3 +140,11 @@ func SplitRSC(rsc string, n int) (string, error) {
 		return result, nil
 	}
 }
+
+func VerifyResource(rsc string) (string, error) {
+	quantity, err := resource.ParseQuantity(rsc)
+	if err != nil {
+		return "", errors.New("failed to parse resource quantity: " + err.Error())
+	}
+	return quantity.String(), nil
+}
