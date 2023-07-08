@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"net/http"
 	"strconv"
 )
@@ -298,7 +299,8 @@ func Add(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.CreateNs(form.Name, form.ExpiredTime, label, form.Resources)
+	newUUID := string(uuid.NewUUID())
+	response, err := service.CreateNs(form.Name+"-"+newUUID, "", form.ExpiredTime, label, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
@@ -320,7 +322,7 @@ func Update(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.UpdateNs(form.Name, form.ExpiredTime, form.Resources)
+	response, err := service.UpdateNs(form.Name, "", form.ExpiredTime, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})

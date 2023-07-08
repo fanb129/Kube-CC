@@ -97,3 +97,20 @@ func ListPVC(ns, label string) (*responses.PvcListResponse, error) {
 	}
 	return &responses.PvcListResponse{Response: responses.OK, Length: num, PvcList: pvcList}, nil
 }
+
+func UpdateOrCreatePvc(namespace, name, storageClassName string, storageSize, accessModes string) (*responses.Response, error) {
+	pvc, _ := GetPVC(namespace, name)
+
+	if pvc == nil {
+		_, err := CreatePVC(namespace, name, storageClassName, storageSize, accessModes)
+		if err != nil {
+			return nil, err
+		}
+		return &responses.OK, nil
+	}
+	err := UpdatePVC(namespace, name, storageSize)
+	if err != nil {
+		return nil, err
+	}
+	return &responses.OK, nil
+}

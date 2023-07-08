@@ -4,6 +4,7 @@ import "time"
 
 type HadoopAddForm struct {
 	Uid                string     `form:"u_id" json:"u_id" binding:"required"`
+	Name               string     `form:"name" json:"name" binding:"required,min=3,max=16"`
 	HdfsMasterReplicas int32      `form:"hdfs_master_replicas" json:"hdfs_master_replicas" binding:"required,gte=1"`
 	DatanodeReplicas   int32      `form:"datanode_replicas" json:"datanode_replicas" binding:"required,gte=1"`
 	YarnMasterReplicas int32      `form:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1"`
@@ -15,6 +16,7 @@ type HadoopAddForm struct {
 // BatchHadoopAddForm 批量添加
 type BatchHadoopAddForm struct {
 	Uid                []string   `form:"u_id" json:"u_id" binding:"required"`
+	Name               string     `form:"name" json:"name" binding:"required,min=3,max=16"`
 	HdfsMasterReplicas int32      `form:"hdfs_master_replicas" json:"hdfs_master_replicas" binding:"required,gte=1"`
 	DatanodeReplicas   int32      `form:"datanode_replicas" json:"datanode_replicas" binding:"required,gte=1"`
 	YarnMasterReplicas int32      `form:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1"`
@@ -25,7 +27,6 @@ type BatchHadoopAddForm struct {
 
 type HadoopUpdateForm struct {
 	Name               string     `json:"name" form:"name" binding:"required"`
-	Uid                string     `form:"u_id" json:"u_id" binding:"required"`
 	HdfsMasterReplicas int32      `form:"hdfs_master_replicas" json:"hdfs_master_replicas" binding:"required,gte=1"`
 	DatanodeReplicas   int32      `form:"datanode_replicas" json:"datanode_replicas" binding:"required,gte=1"`
 	YarnMasterReplicas int32      `form:"yarn_master_replicas" json:"yarn_master_replicas" binding:"required,gte=1"`

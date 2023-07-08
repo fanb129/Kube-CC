@@ -60,14 +60,17 @@ func CreateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 	}
 
 	// 创建PVC，持久存储
-	pvcTemplate := make([]corev1.PersistentVolumeClaim, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+	var pvcTemplate []corev1.PersistentVolumeClaim
+	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
+		pvcTemplate = make([]corev1.PersistentVolumeClaim, 1)
+		//volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+		volumeMounts = make([]corev1.VolumeMount, 1)
 		pvcName := form.Name + "-pvc"
 		if form.StorageClassName == "" {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
 		}
-		pvcTemplate = append(pvcTemplate, corev1.PersistentVolumeClaim{
+		pvcTemplate[0] = corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{Name: pvcName, Namespace: form.Namespace},
 			Spec: corev1.PersistentVolumeClaimSpec{
 				StorageClassName: &form.StorageClassName,
@@ -78,12 +81,11 @@ func CreateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 					},
 				},
 			},
-		})
-		for i, path := range form.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
+		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
 		}
 	}
 
@@ -111,7 +113,7 @@ func CreateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 		j++
 	}
 
-	// 1. 创建deployment
+	// 1. 创建sts
 	// 端口
 	num := len(form.Ports)
 	ports := make([]corev1.ContainerPort, num)
@@ -358,14 +360,17 @@ func UpdateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 	}
 	label := sts.Labels
 	// 创建PVC，持久存储
-	pvcTemplate := make([]corev1.PersistentVolumeClaim, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+	var pvcTemplate []corev1.PersistentVolumeClaim
+	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
+		pvcTemplate = make([]corev1.PersistentVolumeClaim, 1)
+		//volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+		volumeMounts = make([]corev1.VolumeMount, 1)
 		pvcName := form.Name + "-pvc"
 		if form.StorageClassName == "" {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
 		}
-		pvcTemplate = append(pvcTemplate, corev1.PersistentVolumeClaim{
+		pvcTemplate[0] = corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{Name: pvcName, Namespace: form.Namespace},
 			Spec: corev1.PersistentVolumeClaimSpec{
 				StorageClassName: &form.StorageClassName,
@@ -376,12 +381,11 @@ func UpdateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 					},
 				},
 			},
-		})
-		for i, path := range form.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
+		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
 		}
 	}
 	spec := appsv1.StatefulSetSpec{

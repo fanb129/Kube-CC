@@ -68,9 +68,12 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	}
 
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
+		volumes = make([]corev1.Volume, 1)
+		//volumeMounts = make([]corev1.VolumeMount, len(form.PvcPath))
+		volumeMounts = make([]corev1.VolumeMount, 1)
 		if form.StorageClassName == "" {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
 		}
@@ -79,28 +82,35 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 		if err != nil {
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
+		volumes[0] = corev1.Volume{
 			Name: pvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
 				},
 			},
-		})
-		for i, path := range form.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
 		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
+		}
+		//for i, path := range form.PvcPath {
+		//	volumeMounts[i] = corev1.VolumeMount{
+		//		Name:      pvcName,
+		//		MountPath: path,
+		//	}
+		//}
 	}
 
 	// 0.创建configMap，存储环境变量
 	configName := form.Name + "-configMap"
-	_, err = service.CreateConfigMap(configName, form.Namespace, label, form.Env)
-	if err != nil {
-		DeleteAppDeploy(form.Name, form.Namespace)
-		return nil, err
+	if len(form.Env) > 0 {
+		_, err = service.CreateConfigMap(configName, form.Namespace, label, form.Env)
+		if err != nil {
+			DeleteAppDeploy(form.Name, form.Namespace)
+			return nil, err
+		}
 	}
 	env := make([]corev1.EnvVar, len(form.Env))
 	j := 0
@@ -138,6 +148,7 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 				RestartPolicy: corev1.RestartPolicyAlways,
 				Containers: []corev1.Container{
 					{
+						Name:            form.Name,
 						Image:           form.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         form.Command,
@@ -170,27 +181,28 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	}
 
 	// 2 创建service
-	servicePorts := make([]corev1.ServicePort, num)
-	for i, port := range form.Ports {
-		servicePorts[i] = corev1.ServicePort{
-			Name:       strconv.Itoa(int(port)),
-			Port:       port,
-			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: port},
+	if num > 0 {
+		servicePorts := make([]corev1.ServicePort, num)
+		for i, port := range form.Ports {
+			servicePorts[i] = corev1.ServicePort{
+				Name:       strconv.Itoa(int(port)),
+				Port:       port,
+				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: port},
+			}
+		}
+		serviceName := form.Name + "-service"
+		serviceSpec := corev1.ServiceSpec{
+			Type:     corev1.ServiceTypeNodePort,
+			Selector: label,
+			Ports:    servicePorts,
+		}
+		_, err = service.CreateService(serviceName, form.Namespace, label, serviceSpec)
+		if err != nil {
+			// 删除上面的资源
+			DeleteAppDeploy(form.Name, form.Namespace)
+			return nil, err
 		}
 	}
-	serviceName := form.Name + "-service"
-	serviceSpec := corev1.ServiceSpec{
-		Type:     corev1.ServiceTypeNodePort,
-		Selector: label,
-		Ports:    servicePorts,
-	}
-	_, err = service.CreateService(serviceName, form.Namespace, label, serviceSpec)
-	if err != nil {
-		// 删除上面的资源
-		DeleteAppDeploy(form.Name, form.Namespace)
-		return nil, err
-	}
-
 	// TODO Nginx
 
 	return &responses.OK, nil
@@ -228,6 +240,10 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 	for i, deploy := range list.Items {
 		// 获取对应service
 		serviceName := deploy.Name + "-service"
+		// 针对spark定制化
+		if deploy.Name == sparkMasterDeployName {
+			serviceName = sparkMasterServiceName
+		}
 		svc, err := service.GetService(serviceName, ns)
 		if err != nil {
 			zap.S().Errorln("service/application/appDeploy:", err)
@@ -252,10 +268,10 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 		limitMemory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceMemory]
 		limitStorage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]
 		// 获取对应pod
-		label := map[string]string{
+		label1 := map[string]string{
 			"uuid": deploy.Labels["uuid"],
 		}
-		selector := labels.SelectorFromSet(label).String()
+		selector := labels.SelectorFromSet(label1).String()
 		podList, err := service.ListDeployPod(ns, selector)
 		if err != nil {
 			return nil, err
@@ -373,27 +389,34 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	}
 	label := deploy.Labels
 	// 创建PVC，持久存储
-	volumes := make([]corev1.Volume, 0)
-	volumeMounts := make([]corev1.VolumeMount, len(form.PvcPath))
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
-		err = service.UpdatePVC(form.Namespace, pvcName, form.PvcStorage)
+		volumes = make([]corev1.Volume, 1)
+		volumeMounts = make([]corev1.VolumeMount, 1)
+		_, err = service.UpdateOrCreatePvc(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, accessModes)
 		if err != nil {
 			return nil, err
 		}
-		volumes = append(volumes, corev1.Volume{
+		volumes[0] = corev1.Volume{
 			Name: pvcName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
 				},
 			},
-		})
-		for i, path := range form.PvcPath {
-			volumeMounts[i] = corev1.VolumeMount{
-				Name:      pvcName,
-				MountPath: path,
-			}
 		}
+		// 写死为/data目录
+		volumeMounts[0] = corev1.VolumeMount{
+			Name:      pvcName,
+			MountPath: "/data",
+		}
+		//for i, path := range form.PvcPath {
+		//	volumeMounts[i] = corev1.VolumeMount{
+		//		Name:      pvcName,
+		//		MountPath: path,
+		//	}
+		//}
 	}
 	spec := appsv1.DeploymentSpec{
 		Replicas: &form.Replicas,

@@ -72,7 +72,7 @@ func Add(c *gin.Context) {
 		return
 	}
 
-	res, err := application.CreateHadoop(form.Uid, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.ApplyResources)
+	res, err := application.CreateHadoop(form.Uid, form.Name, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.ApplyResources)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -128,7 +128,7 @@ func BatchAdd(c *gin.Context) {
 	group.Add(len(ids))
 	for _, id := range ids {
 		go func(id string) {
-			if _, err := application.CreateHadoop(id, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.ApplyResources); err != nil {
+			if _, err := application.CreateHadoop(id, form.Name, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ExpiredTime, form.ApplyResources); err != nil {
 				zap.S().Errorln(err)
 			}
 			group.Done()
@@ -136,4 +136,14 @@ func BatchAdd(c *gin.Context) {
 	}
 	group.Wait()
 	c.JSON(http.StatusOK, responses.OK)
+}
+
+func Info(c *gin.Context) {
+	name := c.Query("name")
+	response, err := application.GetHadoop(name)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
+	}
 }

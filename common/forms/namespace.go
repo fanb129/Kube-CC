@@ -19,7 +19,7 @@ type NsAddForm struct {
 }
 
 type NsUpdateForm struct {
-	Name        string     `form:"name" json:"name" binding:"required,min=3,max=16"`
+	Name        string     `form:"name" json:"name" binding:"required"`
 	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
 	Resources
 }

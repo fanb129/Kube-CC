@@ -95,10 +95,15 @@ func ListNs(label string) (*responses.NsListResponse, error) {
 }
 
 // CreateNs 新建属于指定用户的namespace
-func CreateNs(name string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
+func CreateNs(name, form string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
+	annotation := map[string]string{}
+	// 利用注释存储表单信息
+	if form != "" {
+		annotation["form"] = form
+	}
 	ns := corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label, Annotations: annotation},
 	}
 	_, err := dao.ClientSet.CoreV1().Namespaces().Create(context.Background(), &ns, metav1.CreateOptions{})
 	if err != nil {
@@ -138,13 +143,23 @@ func DeleteNs(name string) (*responses.Response, error) {
 }
 
 // UpdateNs 更新资源配额、过期时间
-func UpdateNs(name string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+func UpdateNs(name, form string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+	annotation := map[string]string{}
+	// 利用注释存储表单信息
+	if form != "" {
+		annotation["form"] = form
+	}
 	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	ns := get.Name
+	get.Annotations = annotation
+	_, err = dao.ClientSet.CoreV1().Namespaces().Update(context.Background(), get, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
 
+	ns := get.Name
 	//更新resourceQuota
 	err = UpdateResourceQuota(ns, resources)
 	if err != nil {
