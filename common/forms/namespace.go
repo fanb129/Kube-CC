@@ -12,8 +12,14 @@ type Resources struct {
 }
 
 type NsAddForm struct {
-	Uid         uint       `form:"u_id" json:"u_id" binding:"gte=0"`
+	Uid         uint       `form:"u_id" json:"u_id" binding:"gte=1"` // 必须绑定用户
 	Name        string     `form:"name" json:"name" binding:"required,min=3,max=16"`
+	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
+	Resources
+}
+
+type NsUpdateForm struct {
+	Name        string     `form:"name" json:"name" binding:"required"`
 	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
 	Resources
 }

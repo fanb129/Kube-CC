@@ -24,16 +24,14 @@ func CreateLimitRange(ns string) error {
 				{
 					Type: corev1.LimitTypeContainer,
 					Default: corev1.ResourceList{
-						corev1.ResourceLimitsCPU:              resource.MustParse("200m"),
-						corev1.ResourceLimitsMemory:           resource.MustParse("256Mi"),
-						corev1.ResourceLimitsEphemeralStorage: resource.MustParse("2Gi"),
+						corev1.ResourceCPU:              resource.MustParse("200m"),
+						corev1.ResourceMemory:           resource.MustParse("256Mi"),
+						corev1.ResourceEphemeralStorage: resource.MustParse("2Gi"),
 					},
 					DefaultRequest: corev1.ResourceList{
-						corev1.ResourceRequestsCPU:              resource.MustParse("100m"),
-						corev1.ResourceRequestsMemory:           resource.MustParse("64Mi"),
-						corev1.ResourceRequestsEphemeralStorage: resource.MustParse("512Mi"),
-						// TODO GPU
-						ResourceGPU: resource.MustParse("0"),
+						corev1.ResourceCPU:              resource.MustParse("100m"),
+						corev1.ResourceMemory:           resource.MustParse("64Mi"),
+						corev1.ResourceEphemeralStorage: resource.MustParse("512Mi"),
 					},
 				},
 			},

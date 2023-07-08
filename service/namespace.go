@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// GetNs 获取所有namespace
-func GetNs(label string) (*responses.NsListResponse, error) {
+// ListNs 获取所有namespace
+func ListNs(label string) (*responses.NsListResponse, error) {
 	namespace, err := dao.ClientSet.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{LabelSelector: label})
 	if err != nil {
 		return nil, err
@@ -57,14 +57,15 @@ func GetNs(label string) (*responses.NsListResponse, error) {
 			limitsCpu := quota.Status.Hard[corev1.ResourceLimitsCPU]
 			limitsMemory := quota.Status.Hard[corev1.ResourceLimitsMemory]
 			limitsStorage := quota.Status.Hard[corev1.ResourceLimitsEphemeralStorage] // [add] 限制临时存储
-			requestPVC := quota.Status.Hard.Storage()                                 // [add] 限制PVC持久存储
-			requestGPU := quota.Status.Hard[ResourceGPU]
+			requestPVC := quota.Status.Hard[corev1.ResourceRequestsStorage]           // [add] 限制PVC持久存储
+			requestGPU := quota.Status.Hard[LimitsNvidiaGpu]
 
 			usedLimitsCpu := quota.Status.Used[corev1.ResourceLimitsCPU]
 			usedLimitsMemory := quota.Status.Used[corev1.ResourceLimitsMemory]
 			usedSLimitsStorage := quota.Status.Used[corev1.ResourceLimitsEphemeralStorage] // [add] 已使用临时存储
-			usedRequestPVC := quota.Status.Used.Storage()                                  // [add] 已使用PVC持久存储
-			usedRequestGPU := quota.Status.Used[ResourceGPU]
+			usedRequestPVC := quota.Status.Used[corev1.ResourceRequestsStorage]            // [add] 已使用PVC持久存储
+			// TODO: GPU
+			usedRequestGPU := quota.Status.Used[LimitsNvidiaGpu]
 
 			resources.Cpu = limitsCpu.String()
 			resources.Memory = limitsMemory.String()
@@ -93,11 +94,16 @@ func GetNs(label string) (*responses.NsListResponse, error) {
 	return &responses.NsListResponse{Response: responses.OK, Length: num, NsList: namespaceList}, nil
 }
 
-// CreateNs 新建属于指定用户的namespace，u_id == 0 则不添加标签
-func CreateNs(name string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
+// CreateNs 新建属于指定用户的namespace
+func CreateNs(name, form string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
+	annotation := map[string]string{}
+	// 利用注释存储表单信息
+	if form != "" {
+		annotation["form"] = form
+	}
 	ns := corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label, Annotations: annotation},
 	}
 	_, err := dao.ClientSet.CoreV1().Namespaces().Create(context.Background(), &ns, metav1.CreateOptions{})
 	if err != nil {
@@ -130,116 +136,50 @@ func DeleteNs(name string) (*responses.Response, error) {
 		return nil, err
 	}
 	//TODO 会自动删除PVC吗？
-
 	if err = DeleteTtl(name); err != nil {
-		return nil, err
+		//return nil, err
 	}
 	return &responses.OK, nil
 }
 
-// UpdateNs 分配namespace
-func UpdateNs(name, uid string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+// UpdateNs 更新资源配额、过期时间
+func UpdateNs(name, form string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+	annotation := map[string]string{}
+	// 利用注释存储表单信息
+	if form != "" {
+		annotation["form"] = form
+	}
 	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	ns := get.Name
-	// 未改变
-	//if get.Labels["u_id"] == uid {
-	//	return &responses.OK, nil
-	//}
-
-	if get.Labels["u_id"] != uid {
-		// 更新namespace的uid
-		if uid == "" {
-			delete(get.Labels, "u_id")
-		} else {
-			get.Labels["u_id"] = uid
-		}
-		if _, err := dao.ClientSet.CoreV1().Namespaces().Update(context.Background(), get, metav1.UpdateOptions{}); err != nil {
-			return nil, err
-		}
-
-		// 更新namespace下所有deploy的uid
-		//deployList, err := GetDeploy(ns, "")
-		//if err == nil {
-		//	for i := 0; i < deployList.Length; i++ {
-		//		name := deployList.DeployList[i].Name
-		//		deployment, err := dao.ClientSet.AppsV1().Deployments(ns).Get(context.Background(), name, metav1.GetOptions{})
-		//		if err != nil {
-		//			return nil, err
-		//		}
-		//		if uid == "" {
-		//			delete(deployment.Labels, "u_id")
-		//			delete(deployment.Spec.Template.Labels, "u_id")
-		//		} else {
-		//			deployment.Labels["u_id"] = uid
-		//			deployment.Spec.Template.Labels["u_id"] = uid
-		//		}
-		//		if _, err := UpdateDeploy(deployment); err != nil {
-		//			return nil, err
-		//		}
-		//	}
-		//}
-
-		// 更新namespace下所有service的uid
-		//serviceList, err := GetService(ns, "")
-		//if err == nil {
-		//	for i := 0; i < serviceList.Length; i++ {
-		//		name := serviceList.ServiceList[i].Name
-		//		service, err := dao.ClientSet.CoreV1().Services(ns).Get(context.Background(), name, metav1.GetOptions{})
-		//		if err != nil {
-		//			return nil, err
-		//		}
-		//		if uid == "" {
-		//			delete(service.Labels, "u_id")
-		//		} else {
-		//			service.Labels["u_id"] = uid
-		//		}
-		//		if _, err := UpdateService(service); err != nil {
-		//			return nil, err
-		//		}
-		//	}
-		//}
-
-		// 更新namespace下所有pod的uid
-		//podList, err := GetPod(ns, "")
-		//if err == nil {
-		//	for i := 0; i < podList.Length; i++ {
-		//		name := podList.PodList[i].Name
-		//		pod, err := dao.ClientSet.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
-		//		if err != nil {
-		//			return nil, err
-		//		}
-		//		if uid == "" {
-		//			delete(pod.Labels, "u_id")
-		//		} else {
-		//			pod.Labels["u_id"] = uid
-		//		}
-		//		if _, err := UpdatePod(pod); err != nil {
-		//			return nil, err
-		//		}
-		//	}
-		//}
+	get.Annotations = annotation
+	_, err = dao.ClientSet.CoreV1().Namespaces().Update(context.Background(), get, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
 	}
 
+	ns := get.Name
 	//更新resourceQuota
 	err = UpdateResourceQuota(ns, resources)
 	if err != nil {
 		return nil, err
 	}
 
-	// 更新limitRange
-	//if err = UpdateLimitRange(ns, cpu, memory, n); err != nil {
-	//	return nil, err
-	//}
-
 	// ttl
 	if expiredTime != nil {
-		if err = CreateOrUpdateTtl(name, *expiredTime); err != nil {
+		if err = CreateOrUpdateTtl(ns, *expiredTime); err != nil {
 			return nil, err
 		}
 	}
 
 	return &responses.OK, nil
+}
+
+func GetNs(name string) (*corev1.Namespace, error) {
+	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return get, nil
 }

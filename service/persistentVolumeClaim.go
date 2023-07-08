@@ -15,6 +15,7 @@ import (
 // accessModes: 选择的读写模式 ReadWriteOnce ReadOnlyMany ReadWriteMany ReadWriteOncePod
 func CreatePVC(namespace, name, storageClassName string, storageSize, accessModes string) (*responses.Response, error) {
 	pvc := &v1.PersistentVolumeClaim{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "PersistentVolumeClaim"},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
@@ -71,4 +72,45 @@ func UpdatePVC(namespace, name, newStorageSize string) error {
 	}
 
 	return nil
+}
+
+// ListPVC 显示指定ns下的所有PVC
+func ListPVC(ns, label string) (*responses.PvcListResponse, error) {
+	list, err := dao.ClientSet.CoreV1().PersistentVolumeClaims(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
+	if err != nil {
+		return nil, err
+	}
+	num := len(list.Items)
+	pvcList := make([]responses.Pvc, num)
+	for i, pvc := range list.Items {
+		tmp := responses.Pvc{
+			Name:             pvc.Name,
+			Namespace:        pvc.Namespace,
+			CreatedAt:        pvc.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			Status:           string(pvc.Status.Phase),
+			AccessModes:      string(pvc.Spec.AccessModes[0]),
+			StorageClassName: *pvc.Spec.StorageClassName,
+			Storage:          pvc.Spec.Resources.Requests.Storage().String(),
+			Volume:           pvc.Spec.VolumeName,
+		}
+		pvcList[i] = tmp
+	}
+	return &responses.PvcListResponse{Response: responses.OK, Length: num, PvcList: pvcList}, nil
+}
+
+func UpdateOrCreatePvc(namespace, name, storageClassName string, storageSize, accessModes string) (*responses.Response, error) {
+	pvc, _ := GetPVC(namespace, name)
+
+	if pvc == nil {
+		_, err := CreatePVC(namespace, name, storageClassName, storageSize, accessModes)
+		if err != nil {
+			return nil, err
+		}
+		return &responses.OK, nil
+	}
+	err := UpdatePVC(namespace, name, storageSize)
+	if err != nil {
+		return nil, err
+	}
+	return &responses.OK, nil
 }

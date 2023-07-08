@@ -34,3 +34,26 @@ func DeleteConfigMap(name, ns string) (*responses.Response, error) {
 	}
 	return &responses.OK, nil
 }
+
+// GetConfigMap 获取configMap
+func GetConfigMap(name, ns string) (*corev1.ConfigMap, error) {
+	get, err := dao.ClientSet.CoreV1().ConfigMaps(ns).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return get, err
+}
+
+// UpdateConfigMap 更新configMap
+func UpdateConfigMap(name, ns string, data map[string]string) (*corev1.ConfigMap, error) {
+	configMap, err := GetConfigMap(name, ns)
+	if err != nil {
+		return nil, err
+	}
+	configMap.Data = data
+	update, err := dao.ClientSet.CoreV1().ConfigMaps(ns).Update(context.Background(), configMap, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return update, nil
+}
