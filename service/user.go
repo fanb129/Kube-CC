@@ -111,6 +111,23 @@ func EditUser(id, role uint) (*responses.Response, error) {
 	return &responses.OK, nil
 }
 
+func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, error) {
+	user, err := dao.GetUserById(id)
+	if err != nil {
+		return nil, errors.New("获取用户失败")
+	}
+	user.Cpu = data.Cpu
+	user.Memory = data.Memory
+	user.Storage = data.Storage
+	user.Pvcstorage = data.Pvcstorage
+	user.Gpu = data.Gpu
+	row, err := dao.UpdateUser(user)
+	if err != nil || row == 0 {
+		return nil, errors.New("更新用户配额失败")
+	}
+	return &responses.OK, nil
+}
+
 // UpdateUser 更新用户信息
 func UpdateUser(id uint, data forms.UpdateForm) (*responses.Response, error) {
 	user, err := dao.GetUserById(id)
