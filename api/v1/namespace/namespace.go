@@ -5,92 +5,291 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"Kube-CC/service"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"net/http"
 	"strconv"
 )
 
-// Index 展示所有namespace，
+// Index 展示所有的工作空间 namespace，
 func Index(c *gin.Context) {
+	label := map[string]string{
+		"kind": "workspace",
+	}
 	g_id := c.DefaultQuery("g_id", "")
 	u_id := c.DefaultQuery("u_id", "")
 
-	var nsListResponse *responses.NsListResponse
-	var err error
 	// 1. u_id不为空，就是看指定用户的ns
 	if u_id != "" {
-		label := map[string]string{
-			"u_id": u_id,
+		intuid, err := strconv.Atoi(u_id)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+			return
 		}
-		// 将map标签转换为string
-		selector := labels.SelectorFromSet(label).String()
-		nsListResponse, err = service.GetNs(selector)
-		goto END
+		uintuid := uint(intuid)
+		// 判断权限
+		// 是否为自己的ns
+		uid, exists := c.Get("u_id")
+		if !exists {
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  errors.New("获取权限信息失败").Error(),
+			})
+			return
+		}
+		if uid.(uint) == uintuid {
+			label["u_id"] = u_id
+			// 将map标签转换为string
+			selector := labels.SelectorFromSet(label).String()
+			nsListResponse, err := service.ListNs(selector)
+			if err != nil {
+				c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+			} else {
+				c.JSON(http.StatusOK, nsListResponse)
+			}
+			return
+		}
+		// 是否为超管
+		role, exists := c.Get("role")
+		if !exists {
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  errors.New("获取权限信息失败").Error(),
+			})
+			return
+		}
+		if role.(uint) == 3 {
+			label["u_id"] = u_id
+			// 将map标签转换为string
+			selector := labels.SelectorFromSet(label).String()
+			nsListResponse, err := service.ListNs(selector)
+			if err != nil {
+				c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+			} else {
+				c.JSON(http.StatusOK, nsListResponse)
+			}
+			return
+		}
+		// 是否为自己组员
+		user, err := dao.GetUserById(uintuid)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+			return
+		}
+		group, err := dao.GetGroupById(user.Groupid)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+			return
+		}
+		if group.Adminid != uintuid {
+			// 将map标签转换为string
+			selector := labels.SelectorFromSet(label).String()
+			nsListResponse, err := service.ListNs(selector)
+			if err != nil {
+				c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+			} else {
+				c.JSON(http.StatusOK, nsListResponse)
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("没有权限").Error(),
+		})
+
 	}
 	// 2. g_id不为空，u_id为空的话，就是查看该组下面所有人的ns
 	if g_id != "" {
-		var gid int
-		gid, err = strconv.Atoi(g_id)
+		// 判断权限
+		uid, exists := c.Get("u_id")
+		if !exists {
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  errors.New("获取用户信息失败").Error(),
+			})
+			return
+		}
+		gid, err := strconv.Atoi(g_id)
 		if err != nil {
-			zap.S().Errorln("ns:index:", err)
-			goto END
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  err.Error(),
+			})
+			return
+		}
+		group, err := dao.GetGroupById(uint(gid))
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  err.Error(),
+			})
+			return
+		}
+		role, exists := c.Get("role")
+		if !exists {
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  errors.New("获取权限信息失败").Error(),
+			})
+			return
+		}
+		if group.Adminid != uid.(uint) && role.(uint) != 3 {
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  errors.New("没有权限").Error(),
+			})
+			return
 		}
 		users, err := dao.GetGroupUserById(uint(gid))
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{
+				StatusCode: -1,
+				StatusMsg:  err.Error(),
+			})
+			return
+		}
 
-		nsListResponse = &responses.NsListResponse{
+		nsListResponse := &responses.NsListResponse{
 			Response: responses.OK,
 		}
 		for _, user := range users {
-			label := map[string]string{
-				"u_id": strconv.Itoa(int(user.ID)),
-			}
+			label["u_id"] = strconv.Itoa(int(user.ID))
 			// 将map标签转换为string
 			selector := labels.SelectorFromSet(label).String()
 			var ns *responses.NsListResponse
-			ns, err = service.GetNs(selector)
+			ns, err = service.ListNs(selector)
 			if err != nil {
 				zap.S().Errorln("ns:index:", err)
-				goto END
+				c.JSON(http.StatusOK, responses.Response{
+					StatusCode: -1,
+					StatusMsg:  err.Error(),
+				})
+				return
 			}
 			// 拼接该组所有用户的ns
 			nsListResponse.Length += ns.Length
 			nsListResponse.NsList = append(nsListResponse.NsList, ns.NsList...)
 		}
-		goto END
+		c.JSON(http.StatusOK, nsListResponse)
+		return
 	}
 	//3. g_id和u_id都为空的话就是查看所有组下面所有人的ns
-	nsListResponse, err = service.GetNs("")
-	goto END
-
-END:
+	// 判断权限
+	role, exists := c.Get("role")
+	if !exists {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("获取权限信息失败").Error(),
+		})
+		return
+	}
+	if role.(uint) != 3 {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("没有权限").Error(),
+		})
+		return
+	}
+	// 将map标签转换为string
+	selector := labels.SelectorFromSet(label).String()
+	nsListResponse, err := service.ListNs(selector)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 	} else {
 		c.JSON(http.StatusOK, nsListResponse)
 	}
-	return
 }
 
 // Delete 删除指定namespace
 func Delete(c *gin.Context) {
 	ns := c.Param("ns")
-	response, err := service.DeleteNs(ns)
+	get, err := service.GetNs(ns)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
-	} else {
-		c.JSON(http.StatusOK, response)
+		return
 	}
+	nsUid := get.Labels["u_id"]
+	intuid, err := strconv.Atoi(nsUid)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	uintuid := uint(intuid)
+	// 判断权限
+	// 是否为自己的ns
+	uid, exists := c.Get("u_id")
+	if !exists {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("获取权限信息失败").Error(),
+		})
+		return
+	}
+	if uid.(uint) == uintuid {
+		response, err := service.DeleteNs(ns)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		} else {
+			c.JSON(http.StatusOK, response)
+		}
+	}
+	// 是否为超管
+	role, exists := c.Get("role")
+	if !exists {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("获取权限信息失败").Error(),
+		})
+		return
+	}
+	if role.(uint) == 3 {
+		response, err := service.DeleteNs(ns)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		} else {
+			c.JSON(http.StatusOK, response)
+		}
+	}
+	// 是否为自己组员的ns
+	user, err := dao.GetUserById(uintuid)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	group, err := dao.GetGroupById(user.Groupid)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	if group.Adminid == uid.(uint) {
+		response, err := service.DeleteNs(ns)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		} else {
+			c.JSON(http.StatusOK, response)
+		}
+		return
+	}
+	c.JSON(http.StatusOK, responses.Response{
+		StatusCode: -1,
+		StatusMsg:  errors.New("没有权限").Error(),
+	})
 }
 
+// Add 创建workspace
 func Add(c *gin.Context) {
 	form := forms.NsAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	label := map[string]string{}
+	label := map[string]string{
+		"kind": "workspace",
+	}
 	if form.Uid != 0 {
 		label["u_id"] = strconv.Itoa(int(form.Uid))
 	}
@@ -100,7 +299,8 @@ func Add(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.CreateNs(form.Name, form.ExpiredTime, label, form.Resources)
+	newUUID := string(uuid.NewUUID())
+	response, err := service.CreateNs(form.Name+"-"+newUUID, "", form.ExpiredTime, label, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
@@ -109,16 +309,12 @@ func Add(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// Update 更新namespace及其所含所有资源的uid
+// Update 更新namespace
 func Update(c *gin.Context) {
-	form := forms.NsAddForm{}
+	form := forms.NsUpdateForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
-	}
-	uid := ""
-	if form.Uid != 0 {
-		uid = strconv.Itoa(int(form.Uid))
 	}
 	//expiredTime, err := time.Parse("2006-01-02 15:04:05", forms.ExpiredTime)
 	//if err != nil {
@@ -126,7 +322,7 @@ func Update(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.UpdateNs(form.Name, uid, form.ExpiredTime, form.Resources)
+	response, err := service.UpdateNs(form.Name, "", form.ExpiredTime, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})

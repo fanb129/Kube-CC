@@ -102,7 +102,7 @@ func DeleteGroupById(id uint) (int, error) {
 }
 
 // CreateGroup 新增group
-func CreateGroup(name, description string, adminid uint) (int, error) {
+func CreateGroup(adminid uint, name, description string) (int, error) {
 	group := models.Group{
 		Adminid:     adminid,
 		Name:        name,

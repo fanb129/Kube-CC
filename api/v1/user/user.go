@@ -4,9 +4,10 @@ import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/service"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Info(c *gin.Context) {
@@ -37,6 +38,19 @@ func Index(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, userListResponse)
 }
+
+// // GetAd 获取管理员用户
+// func GetAd(c *gin.Context) {
+// 	response, err := service.GetAdminUser()
+// 	if err != nil {
+// 		c.JSON(http.StatusOK, responses.Response{
+// 			StatusCode: -1,
+// 			StatusMsg:  err.Error(),
+// 		})
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, response)
+// }
 
 // Delete 删除用户
 func Delete(c *gin.Context) {
