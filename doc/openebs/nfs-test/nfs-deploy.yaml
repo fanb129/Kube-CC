@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-deploy
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nfs-deploy
+  template:
+    metadata:
+      labels:
+        app: nfs-deploy
+    spec:
+      volumes:
+        - name: nfs
+          persistentVolumeClaim:
+            claimName: nfs-pvc
+      containers:
+        - name: hello-container
+          image: busybox
+          command:
+            - sh
+            - -c
+            - 'while true; do echo "`date` [`hostname`] Hello from OpenEBS Local PV." >> /mnt/store/greet.txt; sleep $(($RANDOM % 5 + 300)); done'
+          volumeMounts:
+            - mountPath: /mnt/store
+              name: nfs
