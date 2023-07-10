@@ -60,6 +60,16 @@ func GetGroupById(id uint) (*models.Group, error) {
 	return &group, nil
 }
 
+// GetGroupByAdminid 通过adminid获取Group
+func GetGroupByAdminid(adid uint) ([]models.Group, error) {
+	groups := []models.Group{}
+	result := mysqlDb.Where("adminid = ?", adid).Find(&groups)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return groups, nil
+}
+
 // GetGroupUserById 通过id获取groupuser
 func GetGroupUserById(id uint) ([]models.User, error) {
 	users := []models.User{}

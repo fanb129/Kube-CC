@@ -14,11 +14,11 @@ type User struct {
 	Role    uint `gorm:"not null;default:1"` // 权限状态 1普通用户 2组管理员 3超级管理员
 	Groupid uint `gorm:"not null;default:0"` // 所属组
 
-	Cpu        string `gorm:"type:varchar(20);not null"` //Cpu配额
-	Memory     string `gorm:"type:varchar(20);not null"` //内存配额
-	Storage    string `gorm:"type:varchar(20);not null"` //存储配额
-	Pvcstorage string `gorm:"type:varchar(20);not null"` //持久化存储配额
-	Gpu        string `gorm:"type:varchar(20);not null"` //Gpu配额
+	Cpu        string `gorm:"type:varchar(20);not null;default:5"`    //Cpu配额
+	Memory     string `gorm:"type:varchar(20);not null;default:10Gi"` //内存配额
+	Storage    string `gorm:"type:varchar(20);not null;default:20Gi"` //存储配额
+	Pvcstorage string `gorm:"type:varchar(20);not null;default:20Gi"` //持久化存储配额
+	Gpu        string `gorm:"type:varchar(20);not null;default:5"`    //Gpu配额
 }
 
 //func (u *User) Create

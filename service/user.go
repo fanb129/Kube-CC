@@ -116,11 +116,31 @@ func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, er
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	user.Cpu = data.Cpu
-	user.Memory = data.Memory
-	user.Storage = data.Storage
-	user.Pvcstorage = data.Pvcstorage
-	user.Gpu = data.Gpu
+	fmcpu, errcpu := VerifyCpu(data.Cpu)
+	if errcpu != nil {
+		return nil, errors.New("Cpu配额格式错误")
+	}
+	fmmemory, errmemory := VerifyResource(data.Memory)
+	if errmemory != nil {
+		return nil, errors.New("内存配额格式错误")
+	}
+	fmstorage, errstorage := VerifyResource(data.Storage)
+	if errstorage != nil {
+		return nil, errors.New("存储配额格式错误")
+	}
+	fmpvcstorage, errpvcstorage := VerifyResource(data.Pvcstorage)
+	if errpvcstorage != nil {
+		return nil, errors.New("持久化存储配额格式错误")
+	}
+	fmgpu, errgpu := VerifyCpu(data.Gpu)
+	if errgpu != nil {
+		return nil, errors.New("Gpu配额格式错误")
+	}
+	user.Cpu = fmcpu
+	user.Memory = fmmemory
+	user.Storage = fmstorage
+	user.Pvcstorage = fmpvcstorage
+	user.Gpu = fmgpu
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("更新用户配额失败")
