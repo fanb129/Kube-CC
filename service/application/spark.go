@@ -116,12 +116,12 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 		}
 		masterPvcName := sparkMasterDeployName + "-pvc"
 		workerPvcName := sparkWorkerDeployName + "-pvc"
-		_, err = service.CreatePVC(ns, masterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, masterPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			DeleteSpark(ns)
 			return nil, err
 		}
-		_, err = service.CreatePVC(ns, workerPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, workerPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			DeleteSpark(ns)
 			return nil, err
@@ -453,11 +453,11 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 		}
 		masterPvcName := sparkMasterDeployName + "-pvc"
 		workerPvcName := sparkWorkerDeployName + "-pvc"
-		_, err = service.UpdateOrCreatePvc(name, masterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, masterPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
-		_, err = service.UpdateOrCreatePvc(name, workerPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, workerPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}

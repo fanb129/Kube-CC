@@ -64,7 +64,7 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
 		}
 		pvcName := name + "-pvc"
-		_, err = service.CreatePVC(ns, pvcName, resources.StorageClassName, resources.PvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, pvcName, resources.StorageClassName, resources.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
@@ -224,7 +224,7 @@ func UpdateLinux(name, ns string, resources forms.ApplyResources) (*responses.Re
 	if resources.PvcStorage != "" {
 		volumes = make([]corev1.Volume, 1)
 		volumeMounts = make([]corev1.VolumeMount, 1)
-		_, err = service.UpdateOrCreatePvc(ns, pvcName, resources.StorageClassName, resources.PvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(ns, pvcName, resources.StorageClassName, resources.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
