@@ -138,10 +138,10 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 		datenodePvcName := datanodeDeployName + "-pvc"
 		yarnMasterPvcName := hadoopYarnMasterDeployName + "-pvc"
 		yarnNodePvcName := hadoopYarnNodeDeployName + "-pvc"
-		_, err = service.CreatePVC(ns, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.CreatePVC(ns, datenodePvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.CreatePVC(ns, yarnMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.CreatePVC(ns, yarnNodePvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.CreatePVC(ns, datenodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.CreatePVC(ns, yarnMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.CreatePVC(ns, yarnNodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
 		if err != nil {
 			DeleteHadoop(ns)
 			return nil, err
@@ -692,10 +692,10 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		datenodePvcName := datanodeDeployName + "-pvc"
 		yarnMasterPvcName := hadoopYarnMasterDeployName + "-pvc"
 		yarnNodePvcName := hadoopYarnNodeDeployName + "-pvc"
-		_, err = service.UpdateOrCreatePvc(name, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.UpdateOrCreatePvc(name, datenodePvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.UpdateOrCreatePvc(name, yarnMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.UpdateOrCreatePvc(name, yarnNodePvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.UpdateOrCreatePvc(name, datenodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.UpdateOrCreatePvc(name, yarnMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.UpdateOrCreatePvc(name, yarnNodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
 		if err != nil {
 			return nil, err
 		}

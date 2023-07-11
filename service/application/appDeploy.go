@@ -20,8 +20,9 @@ import (
 )
 
 var (
-	n           = 10 // 使request为limit的1/10
-	accessModes = "ReadWriteOnce"
+	n             = 10 // 使request为limit的1/10
+	readWriteOnce = "ReadWriteOnce"
+	readWriteMany = "ReadWriteMany"
 )
 
 // CreateAppDeploy 创建deploy类型的整个应用app
@@ -78,7 +79,7 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
 		}
 		pvcName := form.Name + "-pvc"
-		_, err = service.CreatePVC(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, accessModes)
+		_, err = service.CreatePVC(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
@@ -394,7 +395,7 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	if form.PvcStorage != "" {
 		volumes = make([]corev1.Volume, 1)
 		volumeMounts = make([]corev1.VolumeMount, 1)
-		_, err = service.UpdateOrCreatePvc(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
