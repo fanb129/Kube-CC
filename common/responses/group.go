@@ -21,3 +21,7 @@ type GroupListResponse struct {
 	Total     int         `json:"total"`
 	GroupList []GroupInfo `json:"group_list"`
 }
+type GroupList struct {
+	Response
+	GroupList []GroupInfo `json:"group_list"`
+}

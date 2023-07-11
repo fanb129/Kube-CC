@@ -56,6 +56,19 @@ func Delete(c *gin.Context) {
 
 }
 
+func ViewGroupByAdid(c *gin.Context) {
+	adid, _ := strconv.Atoi(c.Param("id"))
+	response, err := service.GetGroupByAdid(uint(adid))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // Create 创建组
 func Create(c *gin.Context) {
 	adid, _ := strconv.Atoi(c.Param("id"))

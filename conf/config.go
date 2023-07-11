@@ -2,8 +2,9 @@ package conf
 
 import (
 	"Kube-CC/service/ssh"
-	"gopkg.in/ini.v1"
 	"strconv"
+
+	"gopkg.in/ini.v1"
 )
 
 // 解析配置文件
@@ -30,6 +31,11 @@ var (
 	RedisPort        int
 	MasterInfo       ssh.Config // master的ssh信息
 	DockerHost       string     // docker的host地址
+	Cpu              string     //Cpu配额
+	Memory           string     //内存配额
+	Storage          string     //存储配额
+	Pvcstorage       string     //持久化存储配额
+	Gpu              string     //Gpu配额
 )
 
 func init() {
@@ -44,9 +50,18 @@ func init() {
 	loadJWt(f)
 	loadPwd(f)
 	loadMaster(f)
+	loadResource(f)
 }
 
 // 加载服务器配置
+func loadResource(file *ini.File) {
+	s := file.Section("resource")
+	Cpu = s.Key("Cpu").MustString("5")
+	Memory = s.Key("Memory").MustString("10Gi")
+	Storage = s.Key("Storage").MustString("20Gi")
+	Pvcstorage = s.Key("Pvcstorage").MustString("20Gi")
+	Gpu = s.Key("Gpu").MustString("5")
+}
 func loadServer(file *ini.File) {
 	s := file.Section("server")
 	AppMode = s.Key("AppMode").MustString("debug")

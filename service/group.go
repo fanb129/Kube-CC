@@ -108,6 +108,32 @@ func ViewGroupUser(groupid uint) (*responses.GroupUser, error) {
 	}, nil
 }
 
+func GetGroupByAdid(adid uint) (*responses.GroupList, error) {
+	groups, err := dao.GetGroupByAdminid(adid)
+	if err != nil {
+		return nil, errors.New("获取组失败")
+	}
+	if groups == nil {
+		return nil, errors.New("当前用户未管理组")
+	}
+	groupList := make([]responses.GroupInfo, len(groups))
+	for i, v := range groups {
+		tmp := responses.GroupInfo{
+			Groupid:     v.ID,
+			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Name:        v.Name,
+			Adminid:     v.Adminid,
+			Description: v.Description,
+		}
+		groupList[i] = tmp
+	}
+	return &responses.GroupList{
+		Response:  responses.OK,
+		GroupList: groupList,
+	}, nil
+}
+
 // CreateNewGroup 创建新的组
 func CreateNewGroup(adminid uint, name, description string) (*responses.Response, error) {
 	group, _ := dao.GetGroupByName(name)
