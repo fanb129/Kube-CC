@@ -544,7 +544,7 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 }
 
 // ListHadoop 获取uid下的所有hadoop
-func ListHadoop(u_id string) (*responses.HadoopListResponse, error) {
+func ListHadoop(u_id string) (*responses.BigdataListResponse, error) {
 	label := map[string]string{
 		"image": "hadoop",
 	}
@@ -557,22 +557,22 @@ func ListHadoop(u_id string) (*responses.HadoopListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	hadoopList := make([]responses.Hadoop, hadoops.Length)
+	hadoopList := make([]responses.Bigdata, hadoops.Length)
 	for i, hadoop := range hadoops.NsList {
 		// 获取deploy
 		deploy, err := ListAppDeploy(hadoop.Name, "")
 		if err != nil {
 			return nil, err
 		}
-		hadoopList[i] = responses.Hadoop{
+		hadoopList[i] = responses.Bigdata{
 			Ns:         hadoop,
 			DeployList: deploy.DeployList,
 		}
 	}
-	return &responses.HadoopListResponse{
-		Response:   responses.OK,
-		Length:     hadoops.Length,
-		HadoopList: hadoopList,
+	return &responses.BigdataListResponse{
+		Response:    responses.OK,
+		Length:      hadoops.Length,
+		BigdataList: hadoopList,
 	}, nil
 }
 
