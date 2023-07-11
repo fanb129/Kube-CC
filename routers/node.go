@@ -9,7 +9,7 @@ import (
 func nodeRouter(router *gin.RouterGroup) {
 	nodeRouters := router.Group("/node")
 	{
-		nodeRouters.GET("", node.Index) // 浏览所有node
+		nodeRouters.GET("", middleware.Is3Role(), node.Index) // 浏览所有node
 		nodeRouters.GET("/delete/:node", middleware.Is3Role(), node.Delete)
 		nodeRouters.POST("/add", middleware.Is3Role(), node.Add)
 	}

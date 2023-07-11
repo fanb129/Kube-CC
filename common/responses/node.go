@@ -9,8 +9,7 @@ type Node struct {
 	CreatedAt      string                 `json:"created_at"`
 	OsImage        string                 `json:"os_image"`
 	KubeletVersion string                 `json:"kubelet_version"`
-	CPU            string                 `json:"cpu"`
-	Memory         string                 `json:"memory"`
+	Resources
 }
 
 type NodeListResponse struct {
