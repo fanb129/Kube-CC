@@ -315,7 +315,7 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 }
 
 // ListSpark  获取uid用户下的所有spark
-func ListSpark(u_id string) (*responses.SparkListResponse, error) {
+func ListSpark(u_id string) (*responses.BigdataListResponse, error) {
 	label := map[string]string{
 		"image": "spark",
 	}
@@ -328,23 +328,23 @@ func ListSpark(u_id string) (*responses.SparkListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	sparkList := make([]responses.Spark, sparks.Length)
+	sparkList := make([]responses.Bigdata, sparks.Length)
 	for i, spark := range sparks.NsList {
 		// 获取deploy
 		deploy, err := ListAppDeploy(spark.Name, "")
 		if err != nil {
 			return nil, err
 		}
-		sparkList[i] = responses.Spark{
+		sparkList[i] = responses.Bigdata{
 			Ns:         spark,
 			DeployList: deploy.DeployList,
 		}
 	}
 
-	return &responses.SparkListResponse{
-		Response:  responses.OK,
-		Length:    sparks.Length,
-		SparkList: sparkList,
+	return &responses.BigdataListResponse{
+		Response:    responses.OK,
+		Length:      sparks.Length,
+		BigdataList: sparkList,
 	}, nil
 }
 
