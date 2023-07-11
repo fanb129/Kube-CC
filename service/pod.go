@@ -72,3 +72,22 @@ func ListStatefulSetPod(ns string, label string) ([]responses.StsPod, error) {
 	}
 	return podList, nil
 }
+
+func ListJobPod(ns string, label string) ([]responses.JobPod, error) {
+	list, err := dao.ClientSet.CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
+	if err != nil {
+		return nil, err
+	}
+	num := len(list.Items)
+	podList := make([]responses.JobPod, num)
+	for i, pod := range list.Items {
+		podList[i] = responses.JobPod{
+			Name:     pod.Name,
+			Phase:    string(pod.Status.Phase),
+			Restarts: pod.Status.ContainerStatuses[0].RestartCount,
+			PodIP:    pod.Status.PodIP,
+			HostIP:   pod.Status.HostIP,
+		}
+	}
+	return podList, nil
+}

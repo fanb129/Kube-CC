@@ -26,16 +26,22 @@ func DeleteJob(name, ns string) (*responses.Response, error) {
 	return &responses.OK, nil
 }
 
-func CreateJob(name, ns string, label map[string]string, spec batchv1.JobSpec) (*batchv1.Job, error) {
+func CreateJob(name, ns, form string, label map[string]string, spec batchv1.JobSpec) (*batchv1.Job, error) {
+	annotation := map[string]string{}
+	// 利用注释存储表单信息
+	if form != "" {
+		annotation["form"] = form
+	}
 	job := batchv1.Job{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Job",
 			APIVersion: "batch/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns,
-			Labels:    label,
+			Name:        name,
+			Namespace:   ns,
+			Labels:      label,
+			Annotations: annotation,
 		},
 		Spec: spec,
 	}
