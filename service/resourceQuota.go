@@ -4,10 +4,11 @@ import (
 	"Kube-CC/common/forms"
 	"Kube-CC/dao"
 	"context"
+	"errors"
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strconv"
 )
 
 //var n = 1 // request == limit
@@ -103,31 +104,66 @@ func UpdateResourceQuota(ns string, resouces forms.Resources) error {
 
 // SplitRSC 将资源除以n，用作request
 func SplitRSC(rsc string, n int) (string, error) {
-	if n <= 1 {
-		return rsc, nil
-	}
-	// 分割出数字与单位
-	index := 0
-	for _, v := range rsc {
-		if (v < '0' || v > '9') && v != '.' {
-			break
-		}
-		index++
-	}
-	//转换为float
-	float, err := strconv.ParseFloat(rsc[:index], 64)
+	quantity, err := resource.ParseQuantity(rsc)
 	if err != nil {
-		return "", err
+		return "", errors.New("failed to parse resource quantity: " + err.Error())
 	}
-	// 如果没有单位，x1000，加上单位m
-	if index == len(rsc) {
-		m := int(float * 1000 / float64(n))
-		str := strconv.Itoa(m)
-		return str + "m", nil
+	// 获取该资源的数量单位
+	unit := quantity.Format
+	// 如果是十进制，即cpu的单位
+	if unit == resource.DecimalSI {
+		quantity.SetMilli(quantity.MilliValue() / int64(n))
+		return quantity.String(), nil
 	} else {
-		m := int(float / float64(n))
-		str := strconv.Itoa(m)
-		return str + rsc[index:], nil
+		// 将该资源的数量转化为字节数
+		bytes := quantity.Value()
+		// 将字节数除以n
+		bytesPerPart := bytes / int64(n)
+		// 将结果转换为适当的单位
+		var result string
+		switch {
+		case bytesPerPart >= 1<<60:
+			// 保留到整数位，故将单位转换到下一级单位，
+			result = fmt.Sprintf("%.0fPi", float64(bytesPerPart)/(1<<50))
+		case bytesPerPart >= 1<<50:
+			result = fmt.Sprintf("%.0fTi", float64(bytesPerPart)/(1<<40))
+		case bytesPerPart >= 1<<40:
+			result = fmt.Sprintf("%.0fGi", float64(bytesPerPart)/(1<<30))
+		case bytesPerPart >= 1<<30:
+			result = fmt.Sprintf("%.0fMi", float64(bytesPerPart)/(1<<20))
+		case bytesPerPart >= 1<<20:
+			result = fmt.Sprintf("%.0fKi", float64(bytesPerPart)/(1<<10))
+		default:
+			quantity.Set(bytesPerPart)
+			result = quantity.String()
+		}
+		return result, nil
 	}
+}
 
+func VerifyCpu(rsc string) (string, error) {
+	quantity, err := resource.ParseQuantity(rsc)
+	if err != nil {
+		return "", errors.New("failed to parse resource quantity: " + err.Error())
+	}
+	// 获取该资源的数量单位
+	unit := quantity.Format
+	// 如果不是十进制，即cpu的单位
+	if unit != resource.DecimalSI {
+		return "", errors.New("please use DecimalSI")
+	}
+	return quantity.String(), nil
+}
+func VerifyResource(rsc string) (string, error) {
+	quantity, err := resource.ParseQuantity(rsc)
+	if err != nil {
+		return "", errors.New("failed to parse resource quantity: " + err.Error())
+	}
+	// 获取该资源的数量单位
+	unit := quantity.Format
+	// 如果是十进制，即cpu的单位,
+	if unit != resource.BinarySI {
+		return "", errors.New("please use BinarySI")
+	}
+	return quantity.String(), nil
 }

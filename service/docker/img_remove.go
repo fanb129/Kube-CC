@@ -1,17 +1,24 @@
 package docker
 
 import (
+	"Kube-CC/common/responses"
+	"Kube-CC/dao"
 	"context"
 	"fmt"
 	"github.com/docker/docker/api/types"
 )
 
-func DeleteImage(imageId string) (imageDeleteResponseItems []types.ImageDeleteResponseItem, err error) {
+func DeleteImage(imageId string) ([]types.ImageDeleteResponseItem, error, *responses.Response) {
 	ctx := context.Background()
-	imageDeleteResponseItems, err = cli.ImageRemove(ctx, imageId, types.ImageRemoveOptions{Force: true})
+	imgdeletersp, err := cli.ImageRemove(ctx, imageId, types.ImageRemoveOptions{Force: true})
 	if err != nil {
+
 		fmt.Println(err)
-		return imageDeleteResponseItems, err
+		return nil, err, nil
 	}
-	return imageDeleteResponseItems, nil
+	_, err = dao.DeletedImgByImageId(imageId)
+	if err != nil {
+		return nil, err, nil
+	}
+	return imgdeletersp, nil, &responses.OK
 }

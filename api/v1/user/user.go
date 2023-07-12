@@ -90,6 +90,24 @@ func Edit(c *gin.Context) {
 
 }
 
+func Allocation(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	form := forms.AllocationForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.AllocationUser(uint(id), form)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // Update 更新用户信息
 func Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))

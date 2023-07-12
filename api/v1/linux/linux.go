@@ -11,7 +11,7 @@ import (
 
 // Index 获取当前用户下的指定类型的linux
 func Index(c *gin.Context) {
-	os := c.DefaultQuery("os", "")
+	os := c.Query("os")
 	os1, err := strconv.Atoi(os)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
@@ -20,10 +20,7 @@ func Index(c *gin.Context) {
 		})
 		return
 	}
-	ns := c.DefaultQuery("ns", "")
-	if ns == "" {
-		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: "请选择namespace"})
-	}
+	ns := c.Query("ns")
 	response, err := application.ListLinux(ns, uint(os1))
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
@@ -49,8 +46,8 @@ func Add(c *gin.Context) {
 
 // Delete 删除linux
 func Delete(c *gin.Context) {
-	name := c.DefaultQuery("name", "")
-	ns := c.DefaultQuery("ns", "")
+	name := c.Query("name")
+	ns := c.Query("ns")
 	response, err := application.DeleteLinux(name, ns)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})

@@ -15,9 +15,10 @@ func groupRouter(router *gin.RouterGroup) {
 		groupRouters.GET("/delete/:id", middleware.Is3Role(), group.Delete)          // 删除组
 		groupRouters.GET("/view/:id", middleware.Is2Role(), group.ViewGroupUser)     // 查看组成员
 		groupRouters.POST("/creat/:id", middleware.Is2Role(), group.Create)          // 创建新的组
-		groupRouters.POST("/remove/:id", middleware.Is2Role(), group.Remove)         // 移出用户
-		groupRouters.POST("/transadmin/:id", middleware.Is2Role(), group.TransAdmin) // 更改管理员
+		groupRouters.POST("/add/:id", middleware.Is2Role(), group.Add)               // 添加用户
+		groupRouters.GET("/remove/:id", middleware.Is2Role(), group.Remove)          // 移出用户
 		groupRouters.POST("/update/:id", middleware.Is2Role(), group.Update)         // 更新组信息
+		groupRouters.GET("/vgbyad/:id", middleware.Is2Role(), group.ViewGroupByAdid) //通过管理员id查看组
 	}
 
 }

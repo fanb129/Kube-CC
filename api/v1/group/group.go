@@ -56,6 +56,19 @@ func Delete(c *gin.Context) {
 
 }
 
+func ViewGroupByAdid(c *gin.Context) {
+	adid, _ := strconv.Atoi(c.Param("id"))
+	response, err := service.GetGroupByAdid(uint(adid))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // Create 创建组
 func Create(c *gin.Context) {
 	adid, _ := strconv.Atoi(c.Param("id"))
@@ -90,6 +103,25 @@ func ViewGroupUser(c *gin.Context) {
 	c.JSON(http.StatusOK, groupuserListResponse)
 }
 
+// Add 添加用户
+func Add(c *gin.Context) {
+	u_id, _ := strconv.Atoi(c.Param("id"))
+	form := forms.AddUser{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.AddUser(form.GroupID, uint(u_id))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // Remove 移出用户
 func Remove(c *gin.Context) {
 	//fmt.Println("useredit")
@@ -108,13 +140,13 @@ func Remove(c *gin.Context) {
 
 // Update 更新用户信息
 func Update(c *gin.Context) {
-	uid, _ := strconv.Atoi(c.Param("u_id"))
+	gid, _ := strconv.Atoi(c.Param("id"))
 	form := forms.GroupUpdateForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	response, err := service.UpdateGroup(uint(uid), form)
+	response, err := service.UpdateGroup(uint(gid), form)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,

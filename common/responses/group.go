@@ -7,6 +7,7 @@ type GroupInfo struct {
 	UpdatedAt   string `json:"group_updated_at"`
 	Name        string `json:"name"`
 	Adminid     uint   `json:"adminid"`
+	Adminname   string `json:"adminname"`
 	Description string `json:"description"`
 }
 
@@ -18,5 +19,9 @@ type GroupListResponse struct {
 	Response
 	Page      int         `json:"page"`
 	Total     int         `json:"total"`
+	GroupList []GroupInfo `json:"group_list"`
+}
+type GroupList struct {
+	Response
 	GroupList []GroupInfo `json:"group_list"`
 }

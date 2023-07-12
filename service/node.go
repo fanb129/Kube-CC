@@ -7,6 +7,7 @@ import (
 	"Kube-CC/service/ssh"
 	"context"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
 )
@@ -46,7 +47,21 @@ func GetNode(label string) (*responses.NodeListResponse, error) {
 	nodeList := make([]responses.Node, num)
 	//遍历所有node实列
 	for i, node := range nodes.Items {
-
+		cpu := node.Status.Capacity.Cpu()
+		usedCpu := cpu.DeepCopy()
+		usedCpu.Sub(*node.Status.Allocatable.Cpu())
+		memory := node.Status.Capacity.Memory()
+		usedMemory := memory.DeepCopy()
+		usedMemory.Sub(*node.Status.Allocatable.Memory())
+		storage := node.Status.Capacity.StorageEphemeral()
+		usedStorage := storage.DeepCopy()
+		usedStorage.Sub(*node.Status.Allocatable.StorageEphemeral())
+		pvc := node.Status.Capacity.Storage()
+		usedPvc := pvc.DeepCopy()
+		usedPvc.Sub(*node.Status.Allocatable.Storage())
+		gpu := node.Status.Capacity.Name(NvidiaGPU, resource.DecimalSI)
+		usedGpu := gpu.DeepCopy()
+		usedGpu.Sub(*node.Status.Allocatable.Name(NvidiaGPU, resource.DecimalSI))
 		tmp := responses.Node{
 			Name:           node.Name,
 			Ip:             node.Status.Addresses[0].Address,
@@ -54,8 +69,18 @@ func GetNode(label string) (*responses.NodeListResponse, error) {
 			CreatedAt:      node.CreationTimestamp.Format("2006-01-02 15:04:05"),
 			OsImage:        node.Status.NodeInfo.OSImage,
 			KubeletVersion: node.Status.NodeInfo.KubeletVersion,
-			CPU:            node.Status.Allocatable.Cpu().String() + " / " + node.Status.Capacity.Cpu().String(),
-			Memory:         node.Status.Allocatable.Memory().String() + " / " + node.Status.Capacity.Memory().String(),
+			Resources: responses.Resources{
+				Cpu:         cpu.String(),
+				UsedCpu:     usedCpu.String(),
+				Memory:      memory.String(),
+				UsedMemory:  usedMemory.String(),
+				Storage:     storage.String(),
+				UsedStorage: usedStorage.String(),
+				PVC:         pvc.String(),
+				UsedPVC:     usedPvc.String(),
+				GPU:         gpu.String(),
+				UsedGPU:     usedGpu.String(),
+			},
 		}
 		nodeList[i] = tmp
 	}

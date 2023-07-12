@@ -5,9 +5,12 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
+	"errors"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"strconv"
 	"time"
 )
@@ -95,12 +98,22 @@ func ListNs(label string) (*responses.NsListResponse, error) {
 }
 
 // CreateNs 新建属于指定用户的namespace
-func CreateNs(name string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
+func CreateNs(name, form string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
+	uid := label["u_id"]
+	err := VerifyNsResource(uid, "", resources)
+	if err != nil {
+		return nil, err
+	}
+	// 利用注释存储表单信息
+	annotation := map[string]string{}
+	if form != "" {
+		annotation["form"] = form
+	}
 	ns := corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: label, Annotations: annotation},
 	}
-	_, err := dao.ClientSet.CoreV1().Namespaces().Create(context.Background(), &ns, metav1.CreateOptions{})
+	_, err = dao.ClientSet.CoreV1().Namespaces().Create(context.Background(), &ns, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -138,13 +151,28 @@ func DeleteNs(name string) (*responses.Response, error) {
 }
 
 // UpdateNs 更新资源配额、过期时间
-func UpdateNs(name string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
-	get, err := dao.ClientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
+func UpdateNs(name, form string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+	annotation := map[string]string{}
+	// 利用注释存储表单信息
+	if form != "" {
+		annotation["form"] = form
+	}
+	get, err := GetNs(name)
 	if err != nil {
 		return nil, err
 	}
-	ns := get.Name
+	uid := get.Labels["u_id"]
+	err = VerifyNsResource(uid, name, resources)
+	if err != nil {
+		return nil, err
+	}
+	get.Annotations = annotation
+	_, err = dao.ClientSet.CoreV1().Namespaces().Update(context.Background(), get, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
 
+	ns := get.Name
 	//更新resourceQuota
 	err = UpdateResourceQuota(ns, resources)
 	if err != nil {
@@ -167,4 +195,67 @@ func GetNs(name string) (*corev1.Namespace, error) {
 		return nil, err
 	}
 	return get, nil
+}
+
+// VerifyNsResource
+//如果是更新前的资源验证的话，计算剩余量时排除掉更新所选的ns
+//如果是创建ns前的资源验证，ns参数为空，则应该计算所有的资源剩余量
+func VerifyNsResource(uid, name string, resources forms.Resources) error {
+	// 请求的资源量
+	requestCpu := resource.MustParse(resources.Cpu)
+	requestMemory := resource.MustParse(resources.Memory)
+	requestGpu := resource.MustParse(resources.Gpu)
+	requestStorage := resource.MustParse(resources.Storage)
+	requestPvc := resource.MustParse(resources.PvcStorage)
+
+	// 该用户的资源限额
+	intuid, err := strconv.Atoi(uid)
+	if err != nil {
+		return err
+	}
+	user, err := dao.GetUserById(uint(intuid))
+	if err != nil {
+		return err
+	}
+	cpu := resource.MustParse(user.Cpu)
+	memory := resource.MustParse(user.Memory)
+	gpu := resource.MustParse(user.Gpu)
+	storage := resource.MustParse(user.Storage)
+	pvc := resource.MustParse(user.Pvcstorage)
+
+	// 创建ns前先计算资源是否超额
+	label := map[string]string{
+		"u_id": uid,
+	}
+	// 将map标签转换为string
+	selector := labels.SelectorFromSet(label).String()
+	nsList, err := ListNs(selector)
+	if err != nil {
+		return err
+	}
+	for _, ns := range nsList.NsList {
+		if ns.Name != name {
+			cpu.Sub(resource.MustParse(ns.Cpu))
+			memory.Sub(resource.MustParse(ns.Memory))
+			gpu.Sub(resource.MustParse(ns.GPU))
+			storage.Sub(resource.MustParse(ns.Storage))
+			pvc.Sub(resource.MustParse(ns.PVC))
+		}
+	}
+	if cpu.MilliValue() < requestCpu.MilliValue() {
+		return errors.New("left cpu:" + cpu.String() + " less than request cpu:" + requestCpu.String())
+	}
+	if gpu.MilliValue() < requestGpu.MilliValue() {
+		return errors.New("left gpu:" + gpu.String() + " is less than request gpu:" + requestGpu.String())
+	}
+	if memory.Value() < requestMemory.Value() {
+		return errors.New("left memory:" + memory.String() + " is less than request memory:" + requestMemory.String())
+	}
+	if storage.Value() < requestStorage.Value() {
+		return errors.New("left storage:" + storage.String() + " is less than request storage:" + requestStorage.String())
+	}
+	if pvc.Value() < requestPvc.Value() {
+		return errors.New("left pvc:" + pvc.String() + " is less than request pvc:" + requestPvc.String())
+	}
+	return nil
 }
