@@ -11,3 +11,8 @@ type RegisterForm struct {
 	Nickname string `form:"nickname" json:"nickname" binding:"required,min=1,max=16"`
 	Email    string `form:"email" json:"email" binding:"required,min=3,max=16"`
 }
+
+type VerifyCaptcha struct {
+	CaptchaId  string `json:"captcha_id"`
+	CaptchaVal string `json:"captcha_val"`
+}

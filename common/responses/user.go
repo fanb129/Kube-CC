@@ -22,6 +22,12 @@ type LoginResponse struct {
 	Token  string `json:"token"`
 }
 
+type CaptchaResponse struct {
+	Response
+	CaptchaId string `json:"captcha_id"`
+	PicPath   string `json:"pic_path"`
+}
+
 type UserInfoResponse struct {
 	Response
 	UserInfo UserInfo `json:"user_info"`

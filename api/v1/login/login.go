@@ -85,18 +85,51 @@ var store = base64Captcha.DefaultMemStore
 
 // GetCaptcha 生成验证码
 func GetCaptcha(ctx *gin.Context) {
-	driver := base64Captcha.NewDriverDigit(80, 240, 6, 0.7, 80)
+	driver := base64Captcha.NewDriverDigit(60, 200, 6, 0.7, 80)
 	cp := base64Captcha.NewCaptcha(driver, store)
 	id, b64s, err := cp.Generate()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "生成验证码错误",
+		ctx.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  "生成验证码失败",
 		})
 		zap.S().Errorln("生成验证码错误: ", err.Error())
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{
-		"captchaId": id,
-		"picPath":   b64s,
+	ctx.JSON(http.StatusOK, responses.CaptchaResponse{
+		Response:  responses.OK,
+		CaptchaId: id,
+		PicPath:   b64s,
+	})
+}
+
+// CheckCaptcha 验证验证码
+func CheckCaptcha(ctx *gin.Context) {
+	verifycaptchaForm := forms.VerifyCaptcha{}
+	if err := ctx.ShouldBind(&verifycaptchaForm); err != nil {
+		ctx.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	if verifycaptchaForm.CaptchaVal == "" {
+		ctx.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  "未输入图片验证码",
+		})
+		return
+	}
+	res := store.Verify(verifycaptchaForm.CaptchaId, verifycaptchaForm.CaptchaVal, true)
+	if !res {
+		ctx.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  "图片验证码错误",
+		})
+		return
+	}
+	// id := ctx.DefaultQuery("captchaId", "")
+	// captchaVal := ctx.DefaultQuery("captchaVal", "")
+	// res := store.Verify(id, captchaVal, true)
+	ctx.JSON(http.StatusOK, responses.Response{
+		StatusCode: 1,
+		StatusMsg:  "图片验证码正确",
 	})
 }
