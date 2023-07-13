@@ -93,12 +93,12 @@ spec:
       tolerations:
       - effect: NoSchedule
         operator: Exists
-        key: node-role.kubernetes.io/master
+        key: node-role.kubernetes.io/control-plane
       - effect: NoSchedule
         operator: Exists
         key: node.cloudprovider.kubernetes.io/uninitialized
       nodeSelector:
-         node-role.kubernetes.io/master: ""
+         node-role.kubernetes.io/control-plane: ""
       serviceAccount: gpushare-schd-extender
       containers:
         - name: gpushare-schd-extender
