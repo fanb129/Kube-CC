@@ -112,7 +112,7 @@ func CheckCaptcha(ctx *gin.Context) {
 	}
 	if verifycaptchaForm.CaptchaVal == "" {
 		ctx.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
+			StatusCode: 0,
 			StatusMsg:  "未输入图片验证码",
 		})
 		return
