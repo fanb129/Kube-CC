@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nfd
+  name: nfd-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfd-master
+  template:
+    metadata:
+      labels:
+        app: nfd-master
+    spec:
+      serviceAccount: nfd-master
+      enableServiceLinks: false
+      tolerations: []
+      containers:
+        - name: nfd-master
+          image: gcr.lank8s.cn/k8s-staging-nfd/node-feature-discovery:master
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command: ["/usr/bin/grpc_health_probe", "-addr=:8080"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["/usr/bin/grpc_health_probe", "-addr=:8080"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 10
+          command:
+            - "nfd-master"
+          ports:
+            - name: grpc
+              containerPort: 8080

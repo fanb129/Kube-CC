@@ -3,7 +3,7 @@ package forms
 type LinuxAddForm struct {
 	Kind      uint   `form:"kind" json:"kind" binding:"required,gt=0"`
 	Name      string `json:"name" form:"name" binding:"required,min=3,max=16"`
-	Namespace string `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
+	Namespace string `json:"namespace" form:"namespace" binding:"required"`
 	ApplyResources
 }
 
@@ -17,6 +17,6 @@ type LinuxAddForm struct {
 
 type LinuxUpdateForm struct {
 	Name      string `json:"name" form:"name" binding:"required,min=3,max=16"`
-	Namespace string `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
+	Namespace string `json:"namespace" form:"namespace" binding:"required"`
 	ApplyResources
 }

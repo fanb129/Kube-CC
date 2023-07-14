@@ -301,7 +301,7 @@ func Add(c *gin.Context) {
 	//	return
 	//}
 	newUUID := string(uuid.NewUUID())
-	response, err := service.CreateNs(form.Name+"-"+newUUID, "", form.ExpiredTime, label, form.Resources)
+	response, err := service.CreateNs(form.Name+"-"+newUUID, "", label, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
@@ -323,7 +323,7 @@ func Update(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.UpdateNs(form.Name, "", form.ExpiredTime, form.Resources)
+	response, err := service.UpdateNs(form.Name, "", form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
@@ -505,4 +505,18 @@ func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataLi
 	} else {
 		c.JSON(http.StatusOK, nsListResponse)
 	}
+}
+
+func NsTotal(c *gin.Context) {
+	u_id := c.DefaultQuery("u_id", "")
+	if u_id == "" {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: "获取uid失败"})
+		return
+	}
+	rsp, err := service.GetUserNsTotal(u_id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, rsp)
 }

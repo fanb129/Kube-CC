@@ -3,6 +3,7 @@ package conf
 import (
 	"Kube-CC/service/ssh"
 	"strconv"
+	"time"
 
 	"gopkg.in/ini.v1"
 )
@@ -29,13 +30,14 @@ var (
 	HadoopImage      string    // hadoop镜像
 	RedisHost        string    // redis服务器
 	RedisPort        int
-	MasterInfo       ssh.Config // master的ssh信息
-	DockerHost       string     // docker的host地址
-	Cpu              string     //Cpu配额
-	Memory           string     //内存配额
-	Storage          string     //存储配额
-	Pvcstorage       string     //持久化存储配额
-	Gpu              string     //Gpu配额
+	MasterInfo       ssh.Config    // master的ssh信息
+	DockerHost       string        // docker的host地址
+	Cpu              string        //Cpu配额
+	Memory           string        //内存配额
+	Storage          string        //存储配额
+	Pvcstorage       string        //持久化存储配额
+	Gpu              string        //Gpu配额
+	UserExpiredTime  time.Duration // 用户默认使用时间
 )
 
 func init() {
@@ -61,6 +63,7 @@ func loadResource(file *ini.File) {
 	Storage = s.Key("Storage").MustString("20Gi")
 	Pvcstorage = s.Key("Pvcstorage").MustString("20Gi")
 	Gpu = s.Key("Gpu").MustString("5")
+	UserExpiredTime = time.Duration(s.Key("UserExpiredTime").MustInt(30) * 24 * int(time.Hour.Nanoseconds()))
 }
 func loadServer(file *ini.File) {
 	s := file.Section("server")

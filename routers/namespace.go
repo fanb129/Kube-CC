@@ -12,5 +12,6 @@ func nsRouter(router *gin.RouterGroup) {
 		nsRouters.GET("/delete/:ns", namespace.Delete) // 删除指定namespace
 		nsRouters.POST("/add", namespace.Add)          // 添加namespace
 		nsRouters.POST("/update", namespace.Update)    // 更新资源大小
+		nsRouters.GET("/total", namespace.NsTotal)     /// 总的资源
 	}
 }
