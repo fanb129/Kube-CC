@@ -38,6 +38,17 @@ func Index(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, userListResponse)
 }
+func GetAll(c *gin.Context) {
+	allUserList, err := service.GetAll()
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, allUserList)
+}
 
 // // GetAd 获取管理员用户
 // func GetAd(c *gin.Context) {
