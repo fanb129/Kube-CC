@@ -59,9 +59,9 @@ func GetNode(label string) (*responses.NodeListResponse, error) {
 		pvc := node.Status.Capacity.Storage()
 		usedPvc := pvc.DeepCopy()
 		usedPvc.Sub(*node.Status.Allocatable.Storage())
-		gpu := node.Status.Capacity.Name(NvidiaGPU, resource.DecimalSI)
+		gpu := node.Status.Capacity.Name(GpuShare, resource.BinarySI)
 		usedGpu := gpu.DeepCopy()
-		usedGpu.Sub(*node.Status.Allocatable.Name(NvidiaGPU, resource.DecimalSI))
+		usedGpu.Sub(*node.Status.Allocatable.Name(GpuShare, resource.BinarySI))
 		tmp := responses.Node{
 			Name:           node.Name,
 			Ip:             node.Status.Addresses[0].Address,
