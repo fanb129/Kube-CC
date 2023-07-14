@@ -21,3 +21,10 @@ type JobPod struct {
 	HostIP   string `json:"host_ip"`
 	PodIP    string `json:"pod_ip"`
 }
+
+type PodLogResponse struct {
+	Response
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	Log       string `json:"log"`
+}
