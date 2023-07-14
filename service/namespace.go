@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"strconv"
-	"time"
 )
 
 // ListNs 获取所有namespace
@@ -43,13 +42,13 @@ func ListNs(label string) (*responses.NsListResponse, error) {
 		}
 
 		// 增加ttl
-		expiredTime := "null"
-		ttl, err := dao.GetTtlByNs(ns.Name)
-		if err != nil {
-			//zap.S().Error(err)
-		} else {
-			expiredTime = ttl.ExpiredTime.Format("2006-01-02 15:04:05")
-		}
+		//expiredTime := "null"
+		//ttl, err := dao.GetTtlByNs(ns.Name)
+		//if err != nil {
+		//	//zap.S().Error(err)
+		//} else {
+		//	expiredTime = ttl.ExpiredTime.Format("2006-01-02 15:04:05")
+		//}
 
 		// 资源
 		resources := responses.Resources{}
@@ -83,14 +82,14 @@ func ListNs(label string) (*responses.NsListResponse, error) {
 		}
 
 		tmp := responses.Ns{
-			Name:        ns.Name,
-			Status:      ns.Status.Phase,
-			CreatedAt:   ns.CreationTimestamp.Format("2006-01-02 15:04:05"),
-			Username:    username,
-			Nickname:    nickname,
-			Uid:         uint(uid),
-			ExpiredTime: expiredTime,
-			Resources:   resources,
+			Name:      ns.Name,
+			Status:    ns.Status.Phase,
+			CreatedAt: ns.CreationTimestamp.Format("2006-01-02 15:04:05"),
+			Username:  username,
+			Nickname:  nickname,
+			Uid:       uint(uid),
+			//ExpiredTime: expiredTime,
+			Resources: resources,
 		}
 		namespaceList[i] = tmp
 	}
@@ -98,7 +97,7 @@ func ListNs(label string) (*responses.NsListResponse, error) {
 }
 
 // CreateNs 新建属于指定用户的namespace
-func CreateNs(name, form string, expiredTime *time.Time, label map[string]string, resources forms.Resources) (*responses.Response, error) {
+func CreateNs(name, form string, label map[string]string, resources forms.Resources) (*responses.Response, error) {
 	uid := label["u_id"]
 	err := VerifyNsResource(uid, "", resources)
 	if err != nil {
@@ -127,12 +126,12 @@ func CreateNs(name, form string, expiredTime *time.Time, label map[string]string
 		return nil, err
 	}
 
-	// 创建ttl
-	if expiredTime != nil {
-		if err = CreateOrUpdateTtl(name, *expiredTime); err != nil {
-			return nil, err
-		}
-	}
+	//// 创建ttl
+	//if expiredTime != nil {
+	//	if err = CreateOrUpdateTtl(name, *expiredTime); err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	return &responses.OK, nil
 }
@@ -144,14 +143,14 @@ func DeleteNs(name string) (*responses.Response, error) {
 		return nil, err
 	}
 	//TODO 会自动删除PVC吗？
-	if err = DeleteTtl(name); err != nil {
-		//return nil, err
-	}
+	//if err = DeleteTtl(name); err != nil {
+	//	//return nil, err
+	//}
 	return &responses.OK, nil
 }
 
 // UpdateNs 更新资源配额、过期时间
-func UpdateNs(name, form string, expiredTime *time.Time, resources forms.Resources) (*responses.Response, error) {
+func UpdateNs(name, form string, resources forms.Resources) (*responses.Response, error) {
 	annotation := map[string]string{}
 	// 利用注释存储表单信息
 	if form != "" {
@@ -180,11 +179,11 @@ func UpdateNs(name, form string, expiredTime *time.Time, resources forms.Resourc
 	}
 
 	// ttl
-	if expiredTime != nil {
-		if err = CreateOrUpdateTtl(ns, *expiredTime); err != nil {
-			return nil, err
-		}
-	}
+	//if expiredTime != nil {
+	//	if err = CreateOrUpdateTtl(ns, *expiredTime); err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	return &responses.OK, nil
 }

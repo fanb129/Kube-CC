@@ -16,13 +16,13 @@ type Resources struct {
 }
 
 type Ns struct {
-	Name        string                `json:"name"`
-	Status      corev1.NamespacePhase `json:"status"`
-	CreatedAt   string                `json:"created_at"`
-	Username    string                `json:"username"`
-	Nickname    string                `json:"nickname"`
-	Uid         uint                  `json:"u_id"`
-	ExpiredTime string                `json:"expired_time"`
+	Name      string                `json:"name"`
+	Status    corev1.NamespacePhase `json:"status"`
+	CreatedAt string                `json:"created_at"`
+	Username  string                `json:"username"`
+	Nickname  string                `json:"nickname"`
+	Uid       uint                  `json:"u_id"`
+	//ExpiredTime string                `json:"expired_time"`
 	Resources
 }
 

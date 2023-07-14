@@ -301,7 +301,7 @@ func Add(c *gin.Context) {
 	//	return
 	//}
 	newUUID := string(uuid.NewUUID())
-	response, err := service.CreateNs(form.Name+"-"+newUUID, "", form.ExpiredTime, label, form.Resources)
+	response, err := service.CreateNs(form.Name+"-"+newUUID, "", label, form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
@@ -323,7 +323,7 @@ func Update(c *gin.Context) {
 	//	c.JSON(http.StatusOK, common.Response{StatusCode: -1, StatusMsg: err.Error()})
 	//	return
 	//}
-	response, err := service.UpdateNs(form.Name, "", form.ExpiredTime, form.Resources)
+	response, err := service.UpdateNs(form.Name, "", form.Resources)
 	if err != nil {
 		zap.S().Errorln(err)
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})

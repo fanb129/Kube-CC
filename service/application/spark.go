@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"time"
 )
 
 const (
@@ -26,7 +25,7 @@ const (
 )
 
 // CreateSpark 为uid创建spark，masterReplicas默认1， masterReplicas默认2
-func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
 	// uuid
 	newUuid := string(uuid.NewUUID())
 	ns := name + "-" + newUuid
@@ -54,7 +53,7 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 		Name:           ns,
 		MasterReplicas: masterReplicas,
 		WorkerReplicas: workerReplicas,
-		ExpiredTime:    expiredTime,
+		//ExpiredTime:    expiredTime,
 		ApplyResources: resources,
 	}
 	jsonBytes, err := json.Marshal(form)
@@ -90,7 +89,7 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 		return nil, err
 	}
 	// 创建namespace
-	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
+	_, err = service.CreateNs(ns, strForm, label, rsc)
 	if err != nil {
 		DeleteSpark(ns)
 		return nil, err
@@ -382,7 +381,7 @@ func DeleteSpark(ns string) (*responses.Response, error) {
 }
 
 // UpdateSpark 更新spark以及replicas
-func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
 	rsc := forms.Resources{
 		Cpu:        resources.Cpu,
 		Memory:     resources.Memory,
@@ -395,7 +394,7 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 		Name:           name,
 		MasterReplicas: masterReplicas,
 		WorkerReplicas: workerReplicas,
-		ExpiredTime:    expiredTime,
+		//ExpiredTime:    expiredTime,
 		ApplyResources: resources,
 	}
 	jsonBytes, err := json.Marshal(form)
@@ -403,7 +402,7 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 		return nil, err
 	}
 	strForm := string(jsonBytes)
-	if _, err := service.UpdateNs(name, strForm, expiredTime, rsc); err != nil {
+	if _, err := service.UpdateNs(name, strForm, rsc); err != nil {
 		return nil, err
 	}
 	// 准备工作
