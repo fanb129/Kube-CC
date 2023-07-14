@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"time"
 )
 
 const (
@@ -26,7 +25,7 @@ const (
 )
 
 // CreateSpark 为uid创建spark，masterReplicas默认1， masterReplicas默认2
-func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
 	// uuid
 	newUuid := string(uuid.NewUUID())
 	ns := name + "-" + newUuid
@@ -54,7 +53,7 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 		Name:           ns,
 		MasterReplicas: masterReplicas,
 		WorkerReplicas: workerReplicas,
-		ExpiredTime:    expiredTime,
+		//ExpiredTime:    expiredTime,
 		ApplyResources: resources,
 	}
 	jsonBytes, err := json.Marshal(form)
@@ -90,7 +89,7 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 		return nil, err
 	}
 	// 创建namespace
-	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
+	_, err = service.CreateNs(ns, strForm, label, rsc)
 	if err != nil {
 		DeleteSpark(ns)
 		return nil, err
@@ -116,12 +115,12 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 		}
 		masterPvcName := sparkMasterDeployName + "-pvc"
 		workerPvcName := sparkWorkerDeployName + "-pvc"
-		_, err = service.CreatePVC(ns, masterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, masterPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			DeleteSpark(ns)
 			return nil, err
 		}
-		_, err = service.CreatePVC(ns, workerPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, workerPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			DeleteSpark(ns)
 			return nil, err
@@ -315,7 +314,7 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 }
 
 // ListSpark  获取uid用户下的所有spark
-func ListSpark(u_id string) (*responses.SparkListResponse, error) {
+func ListSpark(u_id string) (*responses.BigdataListResponse, error) {
 	label := map[string]string{
 		"image": "spark",
 	}
@@ -328,23 +327,23 @@ func ListSpark(u_id string) (*responses.SparkListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	sparkList := make([]responses.Spark, sparks.Length)
+	sparkList := make([]responses.Bigdata, sparks.Length)
 	for i, spark := range sparks.NsList {
 		// 获取deploy
 		deploy, err := ListAppDeploy(spark.Name, "")
 		if err != nil {
 			return nil, err
 		}
-		sparkList[i] = responses.Spark{
+		sparkList[i] = responses.Bigdata{
 			Ns:         spark,
 			DeployList: deploy.DeployList,
 		}
 	}
 
-	return &responses.SparkListResponse{
-		Response:  responses.OK,
-		Length:    sparks.Length,
-		SparkList: sparkList,
+	return &responses.BigdataListResponse{
+		Response:    responses.OK,
+		Length:      sparks.Length,
+		BigdataList: sparkList,
 	}, nil
 }
 
@@ -382,7 +381,7 @@ func DeleteSpark(ns string) (*responses.Response, error) {
 }
 
 // UpdateSpark 更新spark以及replicas
-func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
 	rsc := forms.Resources{
 		Cpu:        resources.Cpu,
 		Memory:     resources.Memory,
@@ -395,7 +394,7 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 		Name:           name,
 		MasterReplicas: masterReplicas,
 		WorkerReplicas: workerReplicas,
-		ExpiredTime:    expiredTime,
+		//ExpiredTime:    expiredTime,
 		ApplyResources: resources,
 	}
 	jsonBytes, err := json.Marshal(form)
@@ -403,7 +402,7 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 		return nil, err
 	}
 	strForm := string(jsonBytes)
-	if _, err := service.UpdateNs(name, strForm, expiredTime, rsc); err != nil {
+	if _, err := service.UpdateNs(name, strForm, rsc); err != nil {
 		return nil, err
 	}
 	// 准备工作
@@ -453,11 +452,11 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, expire
 		}
 		masterPvcName := sparkMasterDeployName + "-pvc"
 		workerPvcName := sparkWorkerDeployName + "-pvc"
-		_, err = service.UpdateOrCreatePvc(name, masterPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, masterPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
-		_, err = service.UpdateOrCreatePvc(name, workerPvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, workerPvcName, resources.StorageClassName, pvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}

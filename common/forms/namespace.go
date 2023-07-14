@@ -1,7 +1,5 @@
 package forms
 
-import "time"
-
 type Resources struct {
 	Cpu        string `json:"cpu" form:"cpu" binding:"required"`         //500m = .5 cores
 	Memory     string `json:"memory" form:"memory" binding:"required"`   //500Gi 256Mi
@@ -12,14 +10,14 @@ type Resources struct {
 }
 
 type NsAddForm struct {
-	Uid         uint       `form:"u_id" json:"u_id" binding:"gte=1"` // 必须绑定用户
-	Name        string     `form:"name" json:"name" binding:"required,min=3,max=16"`
-	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
+	Uid  uint   `form:"u_id" json:"u_id" binding:"gte=1"` // 必须绑定用户
+	Name string `form:"name" json:"name" binding:"required,min=3,max=16"`
+	//ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
 	Resources
 }
 
 type NsUpdateForm struct {
-	Name        string     `form:"name" json:"name" binding:"required"`
-	ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
+	Name string `form:"name" json:"name" binding:"required"`
+	//ExpiredTime *time.Time `form:"expired_time" json:"expired_time"`
 	Resources
 }

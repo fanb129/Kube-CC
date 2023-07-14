@@ -6,10 +6,10 @@ import (
 
 // AppDeploy appDeploy的信息,用于查看详细信息
 type AppDeploy struct {
-	Name      string               `json:"name" form:"name" binding:"required,min=3,max=16"`
-	Namespace string               `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
-	Replicas  int32                `json:"replicas" form:"replicas" binding:"required,gte=1"`
-	Image     string               `json:"image" form:"image" binding:"required"`
+	Name      string               `json:"name"`
+	Namespace string               `json:"namespace"`
+	Replicas  int32                `json:"replicas"`
+	Image     string               `json:"image"`
 	Ports     []corev1.ServicePort `json:"ports"`
 	Resources
 	PvcPath           []string    `json:"pvc_path"`

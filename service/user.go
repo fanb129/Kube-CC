@@ -6,7 +6,9 @@ import (
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -41,6 +43,7 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 			Storage:    v.Storage,
 			PvcStorage: v.Pvcstorage,
 			Gpu:        v.Gpu,
+			ExpiredTime: v.ExpiredTime.Format("2006-01-02 15:04:05"),
 		}
 		userList[i] = tmp
 	}
@@ -73,6 +76,7 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 			Storage:    user.Storage,
 			PvcStorage: user.Pvcstorage,
 			Gpu:        user.Gpu,
+			ExpiredTime: user.ExpiredTime.Format("2006-01-02 15:04:05"),
 		},
 	}, nil
 }
@@ -102,6 +106,19 @@ func DeleteUSer(id uint) (*responses.Response, error) {
 	row, err := dao.DeleteUserById(id)
 	if err != nil || row == 0 {
 		return nil, errors.New("删除失败")
+	}
+	// 删除其所有ns
+	label := map[string]string{
+		"u_id": strconv.Itoa(int(id)),
+	}
+	// 将map标签转换为string
+	selector := labels.SelectorFromSet(label).String()
+	nsList, err := ListNs(selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, ns := range nsList.NsList {
+		DeleteNs(ns.Name)
 	}
 	return &responses.OK, nil
 }
@@ -151,6 +168,7 @@ func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, er
 	user.Storage = fmstorage
 	user.Pvcstorage = fmpvcstorage
 	user.Gpu = fmgpu
+	user.ExpiredTime = data.ExpiredTime
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("更新用户配额失败")

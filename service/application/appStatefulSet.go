@@ -74,7 +74,7 @@ func CreateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 			ObjectMeta: metav1.ObjectMeta{Name: pvcName, Namespace: form.Namespace},
 			Spec: corev1.PersistentVolumeClaimSpec{
 				StorageClassName: &form.StorageClassName,
-				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.PersistentVolumeAccessMode(accessModes)},
+				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.PersistentVolumeAccessMode(readWriteOnce)},
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
 						corev1.ResourceStorage: resource.MustParse(form.PvcStorage),
@@ -374,7 +374,7 @@ func UpdateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 			ObjectMeta: metav1.ObjectMeta{Name: pvcName, Namespace: form.Namespace},
 			Spec: corev1.PersistentVolumeClaimSpec{
 				StorageClassName: &form.StorageClassName,
-				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.PersistentVolumeAccessMode(accessModes)},
+				AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.PersistentVolumeAccessMode(readWriteOnce)},
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
 						corev1.ResourceStorage: resource.MustParse(form.PvcStorage),

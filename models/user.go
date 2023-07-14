@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type User struct {
 	gorm.Model
@@ -18,7 +21,9 @@ type User struct {
 	Memory     string `gorm:"type:varchar(20);not null;default:10Gi"` //内存配额
 	Storage    string `gorm:"type:varchar(20);not null;default:20Gi"` //存储配额
 	Pvcstorage string `gorm:"type:varchar(20);not null;default:20Gi"` //持久化存储配额
-	Gpu        string `gorm:"type:varchar(20);not null;default:5"`    //Gpu配额
+	Gpu        string `gorm:"type:varchar(20);not null;default:5Gi"`  //Gpu配额
+
+	ExpiredTime time.Time
 }
 
 //func (u *User) Create
