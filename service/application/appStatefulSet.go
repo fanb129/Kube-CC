@@ -52,7 +52,13 @@ func CreateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 		return nil, err
 	}
 	limitsStorage, err := service.SplitRSC(form.Storage, m)
-
+	if err != nil {
+		return nil, err
+	}
+	limitsGpu, err := service.SplitRSC(form.Gpu, m)
+	if err != nil {
+		return nil, err
+	}
 	// 创建uuid，以便筛选出属于同一组的deploy、pod、service等
 	newUuid := string(uuid.NewUUID())
 	label := map[string]string{
@@ -142,12 +148,12 @@ func CreateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
 								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+								service.GpuShare:                resource.MustParse(limitsGpu),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -244,9 +250,10 @@ func ListAppStatesulSet(ns string) (*responses.AppStatefulSetList, error) {
 			pvcPath[i2] = path.MountPath
 		}
 		// 获取资源信息
-		limitCpu := sts.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsCPU]
-		limitMemory := sts.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsMemory]
-		limitStorage := sts.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceLimitsEphemeralStorage]
+		limitCpu := sts.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceCPU]
+		limitMemory := sts.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceMemory]
+		limitStorage := sts.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]
+		limitGpu := sts.Spec.Template.Spec.Containers[0].Resources.Limits[service.GpuShare]
 		// 获取对应pod
 		podList, err := service.ListStatefulSetPod(ns, selector)
 		if err != nil {
@@ -266,7 +273,7 @@ func ListAppStatesulSet(ns string) (*responses.AppStatefulSetList, error) {
 				Cpu:     limitCpu.String(),
 				Memory:  limitMemory.String(),
 				Storage: limitStorage.String(),
-				// TODO GPU
+				GPU:     limitGpu.String(),
 			},
 			PvcPath: pvcPath,
 			PodList: podList,
@@ -323,6 +330,13 @@ func UpdateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 		return nil, err
 	}
 	limitsStorage, err := service.SplitRSC(form.Storage, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsGpu, err := service.SplitRSC(form.Gpu, m)
+	if err != nil {
+		return nil, err
+	}
 	configName := form.Name + "-configMap"
 	serviceName := form.Name + "-service"
 	// 更新configmap
@@ -408,12 +422,12 @@ func UpdateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, e
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
 								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+								service.GpuShare:                resource.MustParse(limitsGpu),
 							},
 						},
 						VolumeMounts: volumeMounts,

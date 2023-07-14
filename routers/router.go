@@ -51,5 +51,7 @@ func InitRouter() *gin.Engine {
 	// application路由
 	appRouter(auth)
 
+	podRouter(auth)
+
 	return r
 }

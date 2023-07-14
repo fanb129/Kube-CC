@@ -177,7 +177,6 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -237,7 +236,6 @@ func CreateSpark(name, u_id string, masterReplicas int32, workerReplicas int32, 
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -497,7 +495,6 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, resour
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -522,7 +519,6 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, resour
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
