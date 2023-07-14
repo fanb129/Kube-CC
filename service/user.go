@@ -30,14 +30,19 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 	userList := make([]responses.UserInfo, len(u))
 	for i, v := range u {
 		tmp := responses.UserInfo{
-			ID:          v.ID,
-			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:    v.Username,
-			Nickname:    v.Nickname,
-			Role:        v.Role,
-			Avatar:      v.Avatar,
-			Gid:         v.Groupid,
+			ID:         v.ID,
+			CreatedAt:  v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:  v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:   v.Username,
+			Nickname:   v.Nickname,
+			Role:       v.Role,
+			Avatar:     v.Avatar,
+			Gid:        v.Groupid,
+			Cpu:        v.Cpu,
+			Memory:     v.Memory,
+			Storage:    v.Storage,
+			PvcStorage: v.Pvcstorage,
+			Gpu:        v.Gpu,
 			ExpiredTime: v.ExpiredTime.Format("2006-01-02 15:04:05"),
 		}
 		userList[i] = tmp
@@ -58,14 +63,19 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 	return &responses.UserInfoResponse{
 		Response: responses.OK,
 		UserInfo: responses.UserInfo{
-			ID:          user.ID,
-			CreatedAt:   user.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:   user.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:    user.Username,
-			Nickname:    user.Nickname,
-			Role:        user.Role,
-			Avatar:      user.Avatar,
-			Gid:         user.Groupid,
+			ID:         user.ID,
+			CreatedAt:  user.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:  user.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:   user.Username,
+			Nickname:   user.Nickname,
+			Role:       user.Role,
+			Avatar:     user.Avatar,
+			Gid:        user.Groupid,
+			Cpu:        user.Cpu,
+			Memory:     user.Memory,
+			Storage:    user.Storage,
+			PvcStorage: user.Pvcstorage,
+			Gpu:        user.Gpu,
 			ExpiredTime: user.ExpiredTime.Format("2006-01-02 15:04:05"),
 		},
 	}, nil
@@ -149,7 +159,7 @@ func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, er
 	if errpvcstorage != nil {
 		return nil, errors.New("持久化存储配额格式错误")
 	}
-	fmgpu, errgpu := VerifyCpu(data.Gpu)
+	fmgpu, errgpu := VerifyResource(data.Gpu)
 	if errgpu != nil {
 		return nil, errors.New("Gpu配额格式错误")
 	}
