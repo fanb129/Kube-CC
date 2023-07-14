@@ -230,7 +230,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -310,7 +309,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -386,7 +384,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -480,7 +477,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -759,7 +755,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -784,7 +779,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -809,7 +803,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -834,7 +827,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),

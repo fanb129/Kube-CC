@@ -17,6 +17,8 @@ var (
 	LimitsNvidiaGpu corev1.ResourceName = "limits.nvidia.com/gpu"
 	AmdGpu          corev1.ResourceName = "amd.com/gpu"
 	LimitsAmdGpu    corev1.ResourceName = "limits.amd.com/gpu"
+	GpuShare        corev1.ResourceName = "aliyun.com/gpu-mem"
+	LimitsGpuShare  corev1.ResourceName = "limits.aliyun.com/gpu-mem"
 )
 
 //GPU 只能在 limits 部分指定，这意味着：
@@ -56,8 +58,8 @@ func CreateResourceQuota(ns string, resouces forms.Resources) error {
 				corev1.ResourceRequestsMemory: resource.MustParse(resouces.Memory),
 				corev1.ResourceLimitsMemory:   resource.MustParse(resouces.Memory),
 
-				//TODO:GPU
-				LimitsNvidiaGpu: resource.MustParse(resouces.Gpu),
+				//LimitsNvidiaGpu: resource.MustParse(resouces.Gpu),
+				LimitsGpuShare: resource.MustParse(resouces.Gpu),
 			},
 		},
 	}
@@ -96,8 +98,8 @@ func UpdateResourceQuota(ns string, resouces forms.Resources) error {
 
 	quota.Spec.Hard[corev1.ResourceRequestsMemory] = resource.MustParse(resouces.Memory)
 	quota.Spec.Hard[corev1.ResourceLimitsMemory] = resource.MustParse(resouces.Memory)
-	// TODO:GPU
-	quota.Spec.Hard[LimitsNvidiaGpu] = resource.MustParse(resouces.Gpu)
+	//quota.Spec.Hard[LimitsNvidiaGpu] = resource.MustParse(resouces.Gpu)
+	quota.Spec.Hard[LimitsGpuShare] = resource.MustParse(resouces.Gpu)
 	_, err = dao.ClientSet.CoreV1().ResourceQuotas(ns).Update(context.Background(), quota, metav1.UpdateOptions{})
 	return err
 }
