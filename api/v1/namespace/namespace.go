@@ -506,3 +506,17 @@ func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataLi
 		c.JSON(http.StatusOK, nsListResponse)
 	}
 }
+
+func NsTotal(c *gin.Context) {
+	u_id := c.DefaultQuery("u_id", "")
+	if u_id == "" {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: "获取uid失败"})
+		return
+	}
+	rsp, err := service.GetUserNsTotal(u_id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, rsp)
+}

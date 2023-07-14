@@ -79,6 +79,12 @@ func ListNs(label string) (*responses.NsListResponse, error) {
 			resources.UsedPVC = usedRequestPVC.String()
 			resources.GPU = requestGPU.String()
 			resources.UsedGPU = usedRequestGPU.String()
+
+			resources.UsedCpuValue = usedLimitsCpu.MilliValue()
+			resources.UsedMemoryValue = usedLimitsMemory.Value()
+			resources.UsedStorageValue = usedSLimitsStorage.Value()
+			resources.UsedPVCValue = usedRequestPVC.Value()
+			resources.UsedGPUValue = usedRequestGPU.Value()
 		}
 
 		tmp := responses.Ns{
@@ -244,7 +250,7 @@ func VerifyNsResource(uid, name string, resources forms.Resources) error {
 	if cpu.MilliValue() < requestCpu.MilliValue() {
 		return errors.New("left cpu:" + cpu.String() + " less than request cpu:" + requestCpu.String())
 	}
-	if gpu.MilliValue() < requestGpu.MilliValue() {
+	if gpu.Value() < requestGpu.Value() {
 		return errors.New("left gpu:" + gpu.String() + " is less than request gpu:" + requestGpu.String())
 	}
 	if memory.Value() < requestMemory.Value() {
@@ -257,4 +263,67 @@ func VerifyNsResource(uid, name string, resources forms.Resources) error {
 		return errors.New("left pvc:" + pvc.String() + " is less than request pvc:" + requestPvc.String())
 	}
 	return nil
+}
+
+// GetUserNsTotal 返回当前用户总的ns的使用情况
+func GetUserNsTotal(uid string) (*responses.UserTotalNs, error) {
+	label := map[string]string{
+		"u_id": uid,
+	}
+	// 将map标签转换为string
+	selector := labels.SelectorFromSet(label).String()
+	nsList, err := ListNs(selector)
+	if err != nil {
+		return nil, err
+	}
+	cpu := resource.MustParse("0")
+	usedCpu := resource.MustParse("0")
+	memory := resource.MustParse("0")
+	usedMemory := resource.MustParse("0")
+	gpu := resource.MustParse("0")
+	usedGpu := resource.MustParse("0")
+	storage := resource.MustParse("0")
+	usedStorage := resource.MustParse("0")
+	pvc := resource.MustParse("0")
+	usedPvc := resource.MustParse("0")
+	for _, ns := range nsList.NsList {
+		cpu.Add(resource.MustParse(ns.Cpu))
+		usedCpu.Add(resource.MustParse(ns.UsedCpu))
+
+		memory.Add(resource.MustParse(ns.Memory))
+		usedMemory.Add(resource.MustParse(ns.UsedMemory))
+
+		gpu.Add(resource.MustParse(ns.GPU))
+		usedGpu.Add(resource.MustParse(ns.UsedGPU))
+
+		storage.Add(resource.MustParse(ns.Storage))
+		usedStorage.Add(resource.MustParse(ns.UsedStorage))
+
+		pvc.Add(resource.MustParse(ns.PVC))
+		usedPvc.Add(resource.MustParse(ns.UsedPVC))
+	}
+	rsp := responses.UserTotalNs{
+		Response: responses.OK,
+		Cpu:      cpu.String(),
+		UsedCpu:  usedCpu.String(),
+		CpuRatio: float64(usedCpu.MilliValue()) / float64(cpu.MilliValue()),
+
+		Memory:      memory.String(),
+		UsedMemory:  usedMemory.String(),
+		MemoryRatio: float64(usedMemory.Value()) / float64(memory.Value()),
+
+		Storage:      storage.String(),
+		UsedStorage:  usedStorage.String(),
+		StorageRatio: float64(usedStorage.Value()) / float64(storage.Value()),
+
+		PVC:      pvc.String(),
+		UsedPVC:  usedPvc.String(),
+		PvcRatio: float64(usedPvc.Value()) / float64(pvc.Value()),
+
+		GPU:      gpu.String(),
+		UsedGPU:  usedGpu.String(),
+		GpuRatio: float64(usedGpu.Value()) / float64(gpu.Value()),
+	}
+
+	return &rsp, nil
 }

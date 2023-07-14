@@ -35,18 +35,6 @@ func main() {
 	// 	zap.S().Panicln(err)
 	// }
 
-	// TODO login提交完毕后对功能进行本地测试
-	//docker.CreateImage()
-	//docker.GetImageList()
-	//docker.AddNewTag()
-
-	//docker.DeleteImage()
-
-	//TODO 待测
-
-	//docker.PullImage()
-	//docker.SaveImage()
-
 	r := routers.InitRouter() //路由初始化
 	// 初始化翻译
 	if err := common.InitTrans("zh"); err != nil {
