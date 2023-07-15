@@ -55,16 +55,13 @@ func main() {
 				}
 				for _, user := range users {
 					// 如果为nil就是永久时长
-					if user.ExpiredTime != nil {
-						// 如果过期时间在现在之前，则删除
-						if user.ExpiredTime.Before(time.Now()) {
-							// 删除user
-							_, err := service.DeleteUSer(user.ID)
-							if err != nil {
-								zap.S().Errorln("删除user失败:", err)
-							} else {
-								zap.S().Infoln("delete user:", user.Username)
-							}
+					if user.ExpiredTime.Before(time.Now()) && user.Role < 3 {
+						// 删除user
+						_, err := service.DeleteUSer(user.ID)
+						if err != nil {
+							zap.S().Errorln("删除user失败:", err)
+						} else {
+							zap.S().Infoln("delete user:", user.Username)
 						}
 					}
 				}
