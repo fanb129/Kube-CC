@@ -30,6 +30,39 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 	userList := make([]responses.UserInfo, len(u))
 	for i, v := range u {
 		tmp := responses.UserInfo{
+			ID:         v.ID,
+			CreatedAt:  v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:  v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:   v.Username,
+			Nickname:   v.Nickname,
+			Role:       v.Role,
+			Avatar:     v.Avatar,
+			Gid:        v.Groupid,
+			Cpu:        v.Cpu,
+			Memory:     v.Memory,
+			Storage:    v.Storage,
+			PvcStorage: v.Pvcstorage,
+			Gpu:        v.Gpu,
+			ExpiredTime: v.ExpiredTime.Format("2006-01-02 15:04:05"),
+		}
+		userList[i] = tmp
+	}
+	return &responses.UserListResponse{
+		Response: responses.OK,
+		Page:     page,
+		Total:    total,
+		UserList: userList,
+	}, nil
+}
+
+func GetAll() (*responses.AllUserList, error) {
+	u, err := dao.GetAllUser()
+	if err != nil {
+		return nil, errors.New("获取用户列表失败")
+	}
+	userList := make([]responses.UserInfo, len(u))
+	for i, v := range u {
+		tmp := responses.UserInfo{
 			ID:          v.ID,
 			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
@@ -47,10 +80,8 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 		}
 		userList[i] = tmp
 	}
-	return &responses.UserListResponse{
+	return &responses.AllUserList{
 		Response: responses.OK,
-		Page:     page,
-		Total:    total,
 		UserList: userList,
 	}, nil
 }
