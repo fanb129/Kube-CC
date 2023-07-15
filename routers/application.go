@@ -5,6 +5,7 @@ import (
 	"Kube-CC/api/v1/linux"
 	"Kube-CC/api/v1/spark"
 	"Kube-CC/api/v2/application/deploy"
+	"Kube-CC/api/v2/application/job"
 	"Kube-CC/api/v2/application/statefulSet"
 	"Kube-CC/middleware"
 	"github.com/gin-gonic/gin"
@@ -68,4 +69,11 @@ func appRouter(router *gin.RouterGroup) {
 		statefulSetRouters.GET("/info", statefulSet.Info)
 	}
 	// Job app 一次性任务 路由
+	jobRouters := appRouters.Group("/job")
+	{
+		jobRouters.GET("", job.Index)
+		jobRouters.GET("/delete", job.Delete)
+		jobRouters.POST("/add", job.Add)
+		jobRouters.GET("/info", job.Info)
+	}
 }

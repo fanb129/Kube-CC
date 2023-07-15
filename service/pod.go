@@ -3,7 +3,9 @@ package service
 import (
 	"Kube-CC/common/responses"
 	"Kube-CC/dao"
+	"bytes"
 	"context"
+	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -71,4 +73,45 @@ func ListStatefulSetPod(ns string, label string) ([]responses.StsPod, error) {
 		}
 	}
 	return podList, nil
+}
+
+func ListJobPod(ns string, label string) ([]responses.JobPod, error) {
+	list, err := dao.ClientSet.CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
+	if err != nil {
+		return nil, err
+	}
+	num := len(list.Items)
+	podList := make([]responses.JobPod, num)
+	for i, pod := range list.Items {
+		podList[i] = responses.JobPod{
+			Name:     pod.Name,
+			Phase:    string(pod.Status.Phase),
+			Restarts: pod.Status.ContainerStatuses[0].RestartCount,
+			PodIP:    pod.Status.PodIP,
+			HostIP:   pod.Status.HostIP,
+		}
+	}
+	return podList, nil
+}
+
+func GetPodLog(ns, name string) (*responses.PodLogResponse, error) {
+	req := dao.ClientSet.CoreV1().Pods(ns).GetLogs(name, &corev1.PodLogOptions{})
+	podLogs, err := req.Stream(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	defer podLogs.Close()
+
+	// Copy the logs
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, podLogs)
+	if err != nil {
+		return nil, err
+	}
+	return &responses.PodLogResponse{
+		Response:  responses.OK,
+		Namespace: ns,
+		Name:      name,
+		Log:       buf.String(),
+	}, nil
 }

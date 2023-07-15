@@ -3,6 +3,7 @@ package dao
 import (
 	"Kube-CC/conf"
 	"Kube-CC/models"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -113,15 +114,16 @@ func DeleteUserByEmail(email string) (int, error) {
 // CreateUser 新增user  <<修改>>
 func CreateUser(username, nickname, password, email string) (int, error) {
 	user := models.User{
-		Username:   username,
-		Email:      email,
-		Nickname:   nickname,
-		Password:   password,
-		Cpu:        conf.Cpu,
-		Memory:     conf.Memory,
-		Storage:    conf.Storage,
-		Pvcstorage: conf.Pvcstorage,
-		Gpu:        conf.Gpu,
+		Username:    username,
+		Email:       email,
+		Nickname:    nickname,
+		Password:    password,
+		Cpu:         conf.Cpu,
+		Memory:      conf.Memory,
+		Storage:     conf.Storage,
+		Pvcstorage:  conf.Pvcstorage,
+		Gpu:         conf.Gpu,
+		ExpiredTime: time.Now().Add(conf.UserExpiredTime),
 	}
 	result := mysqlDb.Create(&user)
 	return int(result.RowsAffected), result.Error
@@ -149,18 +151,19 @@ func UpdateUserWithNil(u *models.User) (int, error) {
 // UpdateUser 更新user,零值不会更新 <<修改>>
 func UpdateUser(u *models.User) (int, error) {
 	result := mysqlDb.Model(u).Updates(models.User{
-		Username:   u.Username,
-		Email:      u.Email,
-		Nickname:   u.Nickname,
-		Password:   u.Password,
-		Role:       u.Role,
-		Avatar:     u.Avatar,
-		Groupid:    u.Groupid,
-		Cpu:        u.Cpu,
-		Memory:     u.Memory,
-		Storage:    u.Storage,
-		Pvcstorage: u.Pvcstorage,
-		Gpu:        u.Gpu,
+		Username:    u.Username,
+		Email:       u.Email,
+		Nickname:    u.Nickname,
+		Password:    u.Password,
+		Role:        u.Role,
+		Avatar:      u.Avatar,
+		Groupid:     u.Groupid,
+		Cpu:         u.Cpu,
+		Memory:      u.Memory,
+		Storage:     u.Storage,
+		Pvcstorage:  u.Pvcstorage,
+		Gpu:         u.Gpu,
+		ExpiredTime: u.ExpiredTime, // 增加用户过期时间
 	})
 	return int(result.RowsAffected), result.Error
 }
@@ -170,4 +173,14 @@ func VerifyEmailFormat(email string) bool {
 	pattern := `\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*`
 	reg := regexp.MustCompile(pattern)
 	return reg.MatchString(email)
+}
+
+// ListAllUser 列出所有user
+func ListAllUser() ([]models.User, error) {
+	var users []models.User
+	result := mysqlDb.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
 }

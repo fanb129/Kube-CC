@@ -110,12 +110,12 @@ func CreateLinux(name, ns string, kind uint, resources forms.ApplyResources) (*r
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(resources.Cpu),
 								corev1.ResourceMemory:           resource.MustParse(resources.Memory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(resources.Storage),
+								service.GpuShare:                resource.MustParse(resources.Gpu),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -249,12 +249,12 @@ func UpdateLinux(name, ns string, resources forms.ApplyResources) (*responses.Re
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(resources.Cpu),
 			corev1.ResourceMemory:           resource.MustParse(resources.Memory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(resources.Storage),
+			service.GpuShare:                resource.MustParse(resources.Gpu),
 		},
 	}
 	deploySpec.Template.Spec.Containers[0].VolumeMounts = volumeMounts
