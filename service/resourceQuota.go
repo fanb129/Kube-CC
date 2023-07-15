@@ -143,29 +143,53 @@ func SplitRSC(rsc string, n int) (string, error) {
 	}
 }
 
-func VerifyCpu(rsc string) (string, error) {
+func VerifyCpu(rsc string) error {
 	quantity, err := resource.ParseQuantity(rsc)
 	if err != nil {
-		return "", errors.New("failed to parse resource quantity: " + err.Error())
+		return errors.New("failed to parse resource quantity: " + err.Error())
 	}
 	// 获取该资源的数量单位
 	unit := quantity.Format
 	// 如果不是十进制，即cpu的单位
 	if unit != resource.DecimalSI {
-		return "", errors.New("please use DecimalSI")
+		return errors.New("please use DecimalSI")
 	}
-	return quantity.String(), nil
+	return nil
 }
-func VerifyResource(rsc string) (string, error) {
+func VerifyResource(rsc string) error {
 	quantity, err := resource.ParseQuantity(rsc)
 	if err != nil {
-		return "", errors.New("failed to parse resource quantity: " + err.Error())
+		return errors.New("failed to parse resource quantity: " + err.Error())
 	}
 	// 获取该资源的数量单位
 	unit := quantity.Format
 	// 如果是十进制，即cpu的单位,
 	if unit != resource.BinarySI {
-		return "", errors.New("please use BinarySI")
+		return errors.New("please use BinarySI")
 	}
-	return quantity.String(), nil
+	return nil
+}
+
+func VerifyResourceForm(resources forms.ApplyResources) error {
+	err := VerifyCpu(resources.Cpu)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.Memory)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.Gpu)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.Storage)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.PvcStorage)
+	if err != nil {
+		return err
+	}
+	return nil
 }

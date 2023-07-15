@@ -6,12 +6,11 @@ import (
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
-
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 // IndexUser  分页浏览用户信息
@@ -175,38 +174,36 @@ func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, er
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	fmcpu, errcpu := VerifyCpu(data.Cpu)
+	errcpu := VerifyCpu(data.Cpu)
 	if errcpu != nil {
 		return nil, errors.New("Cpu配额格式错误")
 	}
-	fmmemory, errmemory := VerifyResource(data.Memory)
+	errmemory := VerifyResource(data.Memory)
 	if errmemory != nil {
 		return nil, errors.New("内存配额格式错误")
 	}
-	fmstorage, errstorage := VerifyResource(data.Storage)
+	errstorage := VerifyResource(data.Storage)
 	if errstorage != nil {
 		return nil, errors.New("存储配额格式错误")
 	}
-	fmpvcstorage, errpvcstorage := VerifyResource(data.Pvcstorage)
+	errpvcstorage := VerifyResource(data.Pvcstorage)
 	if errpvcstorage != nil {
 		return nil, errors.New("持久化存储配额格式错误")
 	}
-	fmgpu, errgpu := VerifyResource(data.Gpu)
+	errgpu := VerifyResource(data.Gpu)
 	if errgpu != nil {
 		return nil, errors.New("Gpu配额格式错误")
 	}
-
 	var timeLayoutStr = "2006-01-02 15:04:05"
 	fmexptime, errtime := time.ParseInLocation(timeLayoutStr, data.ExpiredTime, time.Local)
 	if errtime != nil {
 		return nil, errors.New("日期转换错误")
 	}
-
-	user.Cpu = fmcpu
-	user.Memory = fmmemory
-	user.Storage = fmstorage
-	user.Pvcstorage = fmpvcstorage
-	user.Gpu = fmgpu
+	user.Cpu = data.Cpu
+	user.Memory = data.Memory
+	user.Storage = data.Storage
+	user.Pvcstorage = data.Pvcstorage
+	user.Gpu = data.Gpu
 	user.ExpiredTime = fmexptime
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
