@@ -30,19 +30,19 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 	userList := make([]responses.UserInfo, len(u))
 	for i, v := range u {
 		tmp := responses.UserInfo{
-			ID:         v.ID,
-			CreatedAt:  v.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:  v.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:   v.Username,
-			Nickname:   v.Nickname,
-			Role:       v.Role,
-			Avatar:     v.Avatar,
-			Gid:        v.Groupid,
-			Cpu:        v.Cpu,
-			Memory:     v.Memory,
-			Storage:    v.Storage,
-			PvcStorage: v.Pvcstorage,
-			Gpu:        v.Gpu,
+			ID:          v.ID,
+			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:    v.Username,
+			Nickname:    v.Nickname,
+			Role:        v.Role,
+			Avatar:      v.Avatar,
+			Gid:         v.Groupid,
+			Cpu:         v.Cpu,
+			Memory:      v.Memory,
+			Storage:     v.Storage,
+			PvcStorage:  v.Pvcstorage,
+			Gpu:         v.Gpu,
 			ExpiredTime: v.ExpiredTime.Format("2006-01-02 15:04:05"),
 		}
 		userList[i] = tmp
@@ -63,19 +63,19 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 	return &responses.UserInfoResponse{
 		Response: responses.OK,
 		UserInfo: responses.UserInfo{
-			ID:         user.ID,
-			CreatedAt:  user.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:  user.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:   user.Username,
-			Nickname:   user.Nickname,
-			Role:       user.Role,
-			Avatar:     user.Avatar,
-			Gid:        user.Groupid,
-			Cpu:        user.Cpu,
-			Memory:     user.Memory,
-			Storage:    user.Storage,
-			PvcStorage: user.Pvcstorage,
-			Gpu:        user.Gpu,
+			ID:          user.ID,
+			CreatedAt:   user.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   user.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:    user.Username,
+			Nickname:    user.Nickname,
+			Role:        user.Role,
+			Avatar:      user.Avatar,
+			Gid:         user.Groupid,
+			Cpu:         user.Cpu,
+			Memory:      user.Memory,
+			Storage:     user.Storage,
+			PvcStorage:  user.Pvcstorage,
+			Gpu:         user.Gpu,
 			ExpiredTime: user.ExpiredTime.Format("2006-01-02 15:04:05"),
 		},
 	}, nil
@@ -143,31 +143,31 @@ func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, er
 	if err != nil {
 		return nil, errors.New("获取用户失败")
 	}
-	fmcpu, errcpu := VerifyCpu(data.Cpu)
+	errcpu := VerifyCpu(data.Cpu)
 	if errcpu != nil {
 		return nil, errors.New("Cpu配额格式错误")
 	}
-	fmmemory, errmemory := VerifyResource(data.Memory)
+	errmemory := VerifyResource(data.Memory)
 	if errmemory != nil {
 		return nil, errors.New("内存配额格式错误")
 	}
-	fmstorage, errstorage := VerifyResource(data.Storage)
+	errstorage := VerifyResource(data.Storage)
 	if errstorage != nil {
 		return nil, errors.New("存储配额格式错误")
 	}
-	fmpvcstorage, errpvcstorage := VerifyResource(data.Pvcstorage)
+	errpvcstorage := VerifyResource(data.Pvcstorage)
 	if errpvcstorage != nil {
 		return nil, errors.New("持久化存储配额格式错误")
 	}
-	fmgpu, errgpu := VerifyResource(data.Gpu)
+	errgpu := VerifyResource(data.Gpu)
 	if errgpu != nil {
 		return nil, errors.New("Gpu配额格式错误")
 	}
-	user.Cpu = fmcpu
-	user.Memory = fmmemory
-	user.Storage = fmstorage
-	user.Pvcstorage = fmpvcstorage
-	user.Gpu = fmgpu
+	user.Cpu = data.Cpu
+	user.Memory = data.Memory
+	user.Storage = data.Storage
+	user.Pvcstorage = data.Pvcstorage
+	user.Gpu = data.Gpu
 	user.ExpiredTime = data.ExpiredTime
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {

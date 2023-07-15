@@ -4,6 +4,7 @@ import (
 	"Kube-CC/api/v1/namespace"
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
+	"Kube-CC/service"
 	"Kube-CC/service/application"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -74,7 +75,14 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-
+	err := service.VerifyResourceForm(form.ApplyResources)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
 	res, err := application.CreateSpark(form.Name, form.Uid, form.MasterReplicas, form.WorkerReplicas, form.ApplyResources)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
@@ -103,6 +111,14 @@ func Update(c *gin.Context) {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
+	err := service.VerifyResourceForm(form.ApplyResources)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
 	res, err := application.UpdateSpark(form.Name, form.MasterReplicas, form.WorkerReplicas, form.ApplyResources)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
@@ -120,6 +136,14 @@ func BatchAdd(c *gin.Context) {
 	form := forms.BatchSparkAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	err := service.VerifyResourceForm(form.ApplyResources)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
 		return
 	}
 	ids := form.Uid
