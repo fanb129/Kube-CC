@@ -31,6 +31,15 @@ func GetUserList(page int, pageSize int) ([]models.User, int, error) {
 	return users, int(total), nil
 }
 
+func GetAllUser() ([]models.User, error) {
+	var users []models.User
+	result := mysqlDb.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
+
 // GetUserById 通过id获取user
 func GetUserById(id uint) (*models.User, error) {
 	user := models.User{}
