@@ -285,7 +285,7 @@ func ListAppStatesulSet(ns string) (*responses.AppStatefulSetList, error) {
 }
 
 // GetAppStatefulSet 更新之前先获取deployApp的信息
-func GetAppStatefulSet(name, ns string) (*forms.StatefulSetAddForm, error) {
+func GetAppStatefulSet(name, ns string) (*responses.InfoStatefulSet, error) {
 	form := forms.StatefulSetAddForm{}
 	sts, err := service.GetStatefulSet(name, ns)
 	if err != nil {
@@ -296,7 +296,7 @@ func GetAppStatefulSet(name, ns string) (*forms.StatefulSetAddForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoStatefulSet{Response: responses.OK, Form: form}, nil
 }
 
 func UpdateAppStatefulSet(form forms.StatefulSetAddForm) (*responses.Response, error) {

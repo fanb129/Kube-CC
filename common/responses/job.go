@@ -1,5 +1,7 @@
 package responses
 
+import "Kube-CC/common/forms"
+
 // AppJob job的信息,用于查看详细信息
 type AppJob struct {
 	Name        string `json:"name"`
@@ -16,4 +18,9 @@ type AppJobList struct {
 	Response
 	Length     int      `json:"length"`
 	AppJobList []AppJob `json:"app_job_list"`
+}
+
+type InfoJob struct {
+	Response
+	Form forms.JobAddForm
 }

@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"Kube-CC/common/forms"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -25,4 +26,9 @@ type AppStatefulSetList struct {
 	Response
 	Length          int              `json:"length"`
 	StatefulSetList []AppStatefulSet `json:"stateful_set_list"`
+}
+
+type InfoStatefulSet struct {
+	Response
+	Form forms.StatefulSetAddForm
 }

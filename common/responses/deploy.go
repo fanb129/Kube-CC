@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"Kube-CC/common/forms"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -25,4 +26,14 @@ type AppDeployList struct {
 	Response
 	Length     int         `json:"length"`
 	DeployList []AppDeploy `json:"deploy_list"`
+}
+
+type InfoDeploy struct {
+	Response
+	Form forms.DeployAddForm
+}
+
+type InfoLinux struct {
+	Response
+	Form forms.LinuxUpdateForm
 }

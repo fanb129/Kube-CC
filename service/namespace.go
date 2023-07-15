@@ -227,6 +227,12 @@ func VerifyNsResource(uid, name string, resources forms.Resources) error {
 	if err != nil {
 		return err
 	}
+	if resources.Gpu == "" {
+		resources.Gpu = "0"
+	}
+	if resources.PvcStorage == "" {
+		resources.PvcStorage = "0"
+	}
 	requestCpu := resource.MustParse(resources.Cpu)
 	requestMemory := resource.MustParse(resources.Memory)
 	requestGpu := resource.MustParse(resources.Gpu)

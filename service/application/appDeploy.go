@@ -309,7 +309,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 }
 
 // GetAppDeploy 更新之前先获取deployApp的信息
-func GetAppDeploy(name, ns string) (*forms.DeployAddForm, error) {
+func GetAppDeploy(name, ns string) (*responses.InfoDeploy, error) {
 	form := forms.DeployAddForm{}
 	deploy, err := service.GetDeploy(name, ns)
 	if err != nil {
@@ -320,7 +320,10 @@ func GetAppDeploy(name, ns string) (*forms.DeployAddForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoDeploy{
+		Response: responses.OK,
+		Form:     form,
+	}, nil
 }
 
 func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
