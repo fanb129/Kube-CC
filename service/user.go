@@ -30,19 +30,19 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 	userList := make([]responses.UserInfo, len(u))
 	for i, v := range u {
 		tmp := responses.UserInfo{
-			ID:         v.ID,
-			CreatedAt:  v.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:  v.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:   v.Username,
-			Nickname:   v.Nickname,
-			Role:       v.Role,
-			Avatar:     v.Avatar,
-			Gid:        v.Groupid,
-			Cpu:        v.Cpu,
-			Memory:     v.Memory,
-			Storage:    v.Storage,
-			PvcStorage: v.Pvcstorage,
-			Gpu:        v.Gpu,
+			ID:          v.ID,
+			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:    v.Username,
+			Nickname:    v.Nickname,
+			Role:        v.Role,
+			Avatar:      v.Avatar,
+			Gid:         v.Groupid,
+			Cpu:         v.Cpu,
+			Memory:      v.Memory,
+			Storage:     v.Storage,
+			PvcStorage:  v.Pvcstorage,
+			Gpu:         v.Gpu,
 			ExpiredTime: v.ExpiredTime.Format("2006-01-02 15:04:05"),
 		}
 		userList[i] = tmp
@@ -194,12 +194,17 @@ func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, er
 	if errgpu != nil {
 		return nil, errors.New("Gpu配额格式错误")
 	}
+	var timeLayoutStr = "2006-01-02 15:04:05"
+	fmexptime, errtime := time.ParseInLocation(timeLayoutStr, data.ExpiredTime, time.Local)
+	if errtime != nil {
+		return nil, errors.New("日期转换错误")
+	}
 	user.Cpu = data.Cpu
 	user.Memory = data.Memory
 	user.Storage = data.Storage
 	user.Pvcstorage = data.Pvcstorage
 	user.Gpu = data.Gpu
-	user.ExpiredTime = data.ExpiredTime
+	user.ExpiredTime = fmexptime
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("更新用户配额失败")
