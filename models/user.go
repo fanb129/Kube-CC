@@ -23,7 +23,7 @@ type User struct {
 	Pvcstorage string `gorm:"type:varchar(20);not null;default:20Gi"` //持久化存储配额
 	Gpu        string `gorm:"type:varchar(20);not null;default:5Gi"`  //Gpu配额
 
-	ExpiredTime time.Time
+	ExpiredTime *time.Time
 }
 
 //func (u *User) Create
