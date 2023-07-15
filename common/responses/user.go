@@ -39,6 +39,10 @@ type UserListResponse struct {
 	Total    int        `json:"total"`
 	UserList []UserInfo `json:"user_list"`
 }
+type AllUserList struct {
+	Response
+	UserList []UserInfo `json:"all_user_list"`
+}
 type GroupUser struct {
 	Response
 	UserList []UserInfo `json:"groupuser_list"`

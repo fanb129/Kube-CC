@@ -6,11 +6,12 @@ import (
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"errors"
-	"k8s.io/apimachinery/pkg/labels"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 // IndexUser  分页浏览用户信息
@@ -30,19 +31,19 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 	userList := make([]responses.UserInfo, len(u))
 	for i, v := range u {
 		tmp := responses.UserInfo{
-			ID:         v.ID,
-			CreatedAt:  v.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:  v.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:   v.Username,
-			Nickname:   v.Nickname,
-			Role:       v.Role,
-			Avatar:     v.Avatar,
-			Gid:        v.Groupid,
-			Cpu:        v.Cpu,
-			Memory:     v.Memory,
-			Storage:    v.Storage,
-			PvcStorage: v.Pvcstorage,
-			Gpu:        v.Gpu,
+			ID:          v.ID,
+			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:    v.Username,
+			Nickname:    v.Nickname,
+			Role:        v.Role,
+			Avatar:      v.Avatar,
+			Gid:         v.Groupid,
+			Cpu:         v.Cpu,
+			Memory:      v.Memory,
+			Storage:     v.Storage,
+			PvcStorage:  v.Pvcstorage,
+			Gpu:         v.Gpu,
 			ExpiredTime: v.ExpiredTime.Format("2006-01-02 15:04:05"),
 		}
 		userList[i] = tmp
@@ -55,6 +56,37 @@ func IndexUser(page int) (*responses.UserListResponse, error) {
 	}, nil
 }
 
+func GetAll() (*responses.AllUserList, error) {
+	u, err := dao.GetAllUser()
+	if err != nil {
+		return nil, errors.New("获取用户列表失败")
+	}
+	userList := make([]responses.UserInfo, len(u))
+	for i, v := range u {
+		tmp := responses.UserInfo{
+			ID:          v.ID,
+			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:    v.Username,
+			Nickname:    v.Nickname,
+			Role:        v.Role,
+			Avatar:      v.Avatar,
+			Gid:         v.Groupid,
+			Cpu:         v.Cpu,
+			Memory:      v.Memory,
+			Storage:     v.Storage,
+			PvcStorage:  v.Pvcstorage,
+			Gpu:         v.Gpu,
+			ExpiredTime: v.ExpiredTime.Format("2006-01-02 15:04:05"),
+		}
+		userList[i] = tmp
+	}
+	return &responses.AllUserList{
+		Response: responses.OK,
+		UserList: userList,
+	}, nil
+}
+
 func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 	user, err := dao.GetUserById(u_id)
 	if err != nil {
@@ -63,19 +95,19 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 	return &responses.UserInfoResponse{
 		Response: responses.OK,
 		UserInfo: responses.UserInfo{
-			ID:         user.ID,
-			CreatedAt:  user.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:  user.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:   user.Username,
-			Nickname:   user.Nickname,
-			Role:       user.Role,
-			Avatar:     user.Avatar,
-			Gid:        user.Groupid,
-			Cpu:        user.Cpu,
-			Memory:     user.Memory,
-			Storage:    user.Storage,
-			PvcStorage: user.Pvcstorage,
-			Gpu:        user.Gpu,
+			ID:          user.ID,
+			CreatedAt:   user.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   user.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Username:    user.Username,
+			Nickname:    user.Nickname,
+			Role:        user.Role,
+			Avatar:      user.Avatar,
+			Gid:         user.Groupid,
+			Cpu:         user.Cpu,
+			Memory:      user.Memory,
+			Storage:     user.Storage,
+			PvcStorage:  user.Pvcstorage,
+			Gpu:         user.Gpu,
 			ExpiredTime: user.ExpiredTime.Format("2006-01-02 15:04:05"),
 		},
 	}, nil
@@ -163,12 +195,19 @@ func AllocationUser(id uint, data forms.AllocationForm) (*responses.Response, er
 	if errgpu != nil {
 		return nil, errors.New("Gpu配额格式错误")
 	}
+
+	var timeLayoutStr = "2006-01-02 15:04:05"
+	fmexptime, errtime := time.ParseInLocation(timeLayoutStr, data.ExpiredTime, time.Local)
+	if errtime != nil {
+		return nil, errors.New("日期转换错误")
+	}
+
 	user.Cpu = fmcpu
 	user.Memory = fmmemory
 	user.Storage = fmstorage
 	user.Pvcstorage = fmpvcstorage
 	user.Gpu = fmgpu
-	user.ExpiredTime = data.ExpiredTime
+	user.ExpiredTime = fmexptime
 	row, err := dao.UpdateUser(user)
 	if err != nil || row == 0 {
 		return nil, errors.New("更新用户配额失败")
