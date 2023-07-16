@@ -15,7 +15,7 @@ import (
 )
 
 // Index 展示所有的工作空间 namespace，
-func Index(c *gin.Context) {
+func Index1(c *gin.Context) {
 	label := map[string]string{
 		"kind": "workspace",
 	}
@@ -205,6 +205,34 @@ func Index(c *gin.Context) {
 	}
 }
 
+// Index 简化版，无权限鉴别
+func Index(c *gin.Context) {
+	label := map[string]string{
+		"kind": "workspace",
+	}
+	u_id := c.DefaultQuery("u_id", "")
+	if u_id != "" {
+		label["u_id"] = u_id
+		// 将map标签转换为string
+		selector := labels.SelectorFromSet(label).String()
+		nsListResponse, err := service.ListNs(selector)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		} else {
+			c.JSON(http.StatusOK, nsListResponse)
+		}
+		return
+	}
+	// 将map标签转换为string
+	selector := labels.SelectorFromSet(label).String()
+	nsListResponse, err := service.ListNs(selector)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, nsListResponse)
+	}
+}
+
 // Delete 删除指定namespace
 func Delete(c *gin.Context) {
 	ns := c.Param("ns")
@@ -333,7 +361,7 @@ func Update(c *gin.Context) {
 }
 
 // BigDataIndex  将spark，hadoop的index操作封装在一起
-func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataListResponse, error)) {
+func BigDataIndex1(c *gin.Context, listFun func(uid string) (*responses.BigdataListResponse, error)) {
 	g_id := c.DefaultQuery("g_id", "")
 	u_id := c.DefaultQuery("u_id", "")
 
@@ -505,6 +533,18 @@ func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataLi
 	} else {
 		c.JSON(http.StatusOK, nsListResponse)
 	}
+}
+
+// BigDataIndex 简化版，无权限鉴别
+func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataListResponse, error)) {
+	u_id := c.DefaultQuery("u_id", "")
+	nsListResponse, err := listFun(u_id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, nsListResponse)
+	}
+	return
 }
 
 // NsTotal 用户总的ns的资源和

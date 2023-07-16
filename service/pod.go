@@ -47,10 +47,12 @@ func ListDeployPod(ns string, label string) ([]responses.DeployPod, error) {
 	podList := make([]responses.DeployPod, num)
 	for i, pod := range list.Items {
 		podList[i] = responses.DeployPod{
-			Name:   pod.Name,
-			Phase:  string(pod.Status.Phase),
-			PodIP:  pod.Status.PodIP,
-			HostIP: pod.Status.HostIP,
+			Name:      pod.Name,
+			Namespace: pod.Namespace,
+			Phase:     string(pod.Status.Phase),
+			PodIP:     pod.Status.PodIP,
+			HostIP:    pod.Status.HostIP,
+			Container: pod.Status.ContainerStatuses[0].Name,
 		}
 	}
 	return podList, nil
@@ -66,10 +68,12 @@ func ListStatefulSetPod(ns string, label string) ([]responses.StsPod, error) {
 	podList := make([]responses.StsPod, num)
 	for i, pod := range list.Items {
 		podList[i] = responses.StsPod{
-			Name:   pod.Name,
-			Phase:  string(pod.Status.Phase),
-			PodIP:  pod.Status.PodIP,
-			HostIP: pod.Status.HostIP,
+			Name:      pod.Name,
+			Namespace: pod.Namespace,
+			Phase:     string(pod.Status.Phase),
+			PodIP:     pod.Status.PodIP,
+			HostIP:    pod.Status.HostIP,
+			Container: pod.Status.ContainerStatuses[0].Name,
 		}
 	}
 	return podList, nil
@@ -84,11 +88,12 @@ func ListJobPod(ns string, label string) ([]responses.JobPod, error) {
 	podList := make([]responses.JobPod, num)
 	for i, pod := range list.Items {
 		podList[i] = responses.JobPod{
-			Name:     pod.Name,
-			Phase:    string(pod.Status.Phase),
-			Restarts: pod.Status.ContainerStatuses[0].RestartCount,
-			PodIP:    pod.Status.PodIP,
-			HostIP:   pod.Status.HostIP,
+			Name:      pod.Name,
+			Namespace: pod.Namespace,
+			Phase:     string(pod.Status.Phase),
+			Restarts:  pod.Status.ContainerStatuses[0].RestartCount,
+			PodIP:     pod.Status.PodIP,
+			HostIP:    pod.Status.HostIP,
 		}
 	}
 	return podList, nil

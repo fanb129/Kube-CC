@@ -51,14 +51,19 @@ func DeleteService(name, ns string) (*responses.Response, error) {
 
 // UpdateService 更新service
 func UpdateService(name, ns string, spec corev1.ServiceSpec) (*corev1.Service, error) {
-	service, err := GetService(name, ns)
-	if err != nil {
-		return nil, err
+	service, _ := GetService(name, ns)
+	if service == nil {
+		createService, err := CreateService(name, ns, map[string]string{}, spec)
+		if err != nil {
+			return nil, err
+		}
+		return createService, nil
+	} else {
+		service.Spec = spec
+		update, err := dao.ClientSet.CoreV1().Services(service.Namespace).Update(context.Background(), service, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return update, nil
 	}
-	service.Spec = spec
-	update, err := dao.ClientSet.CoreV1().Services(service.Namespace).Update(context.Background(), service, metav1.UpdateOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return update, nil
 }

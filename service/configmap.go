@@ -57,3 +57,20 @@ func UpdateConfigMap(name, ns string, data map[string]string) (*corev1.ConfigMap
 	}
 	return update, nil
 }
+
+func CreateOrUpdateConfigMap(name, ns string, data map[string]string) (*corev1.ConfigMap, error) {
+	configMap, _ := GetConfigMap(name, ns)
+	if configMap == nil {
+		create, err := CreateConfigMap(name, ns, map[string]string{}, data)
+		if err != nil {
+			return nil, err
+		}
+		return create, nil
+	} else {
+		update, err := UpdateConfigMap(name, ns, data)
+		if err != nil {
+			return nil, err
+		}
+		return update, nil
+	}
+}

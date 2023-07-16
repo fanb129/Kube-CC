@@ -369,8 +369,11 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	serviceName := form.Name + "-service"
 	// 更新configmap
 	ns := form.Namespace
-	if _, err := service.UpdateConfigMap(configName, ns, form.Env); err != nil {
-		return nil, err
+	if len(form.Env) > 0 {
+		_, err = service.CreateOrUpdateConfigMap(configName, ns, form.Env)
+		if err != nil {
+			return nil, err
+		}
 	}
 	env := make([]corev1.EnvVar, len(form.Env))
 	j := 0
@@ -441,6 +444,7 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 				RestartPolicy: corev1.RestartPolicyAlways,
 				Containers: []corev1.Container{
 					{
+						Name:            form.Name,
 						Image:           form.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         form.Command,
@@ -471,21 +475,23 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	}
 
 	// 更新service
-	servicePorts := make([]corev1.ServicePort, num)
-	for i, port := range form.Ports {
-		servicePorts[i] = corev1.ServicePort{
-			Name:       strconv.Itoa(int(port)),
-			Port:       port,
-			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: port},
+	if num > 0 {
+		servicePorts := make([]corev1.ServicePort, num)
+		for i, port := range form.Ports {
+			servicePorts[i] = corev1.ServicePort{
+				Name:       strconv.Itoa(int(port)),
+				Port:       port,
+				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: port},
+			}
 		}
-	}
-	serviceSpec := corev1.ServiceSpec{
-		Type:     corev1.ServiceTypeNodePort,
-		Selector: label,
-		Ports:    servicePorts,
-	}
-	if _, err := service.UpdateService(serviceName, ns, serviceSpec); err != nil {
-		return nil, err
+		serviceSpec := corev1.ServiceSpec{
+			Type:     corev1.ServiceTypeNodePort,
+			Selector: label,
+			Ports:    servicePorts,
+		}
+		if _, err := service.UpdateService(serviceName, ns, serviceSpec); err != nil {
+			return nil, err
+		}
 	}
 
 	// TODO niginx
