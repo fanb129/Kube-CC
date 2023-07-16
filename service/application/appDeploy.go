@@ -61,6 +61,10 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	limitsGpu, err := service.SplitRSC(form.Gpu, m)
+	if err != nil {
+		return nil, err
+	}
 
 	// 创建uuid，以便筛选出属于同一组的deploy、pod、service等
 	newUuid := string(uuid.NewUUID())
@@ -161,12 +165,12 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
 								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+								service.GpuShare:                resource.MustParse(limitsGpu),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -268,6 +272,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 		limitCpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceCPU]
 		limitMemory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceMemory]
 		limitStorage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]
+		limitGpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[service.GpuShare]
 		// 获取对应pod
 		label1 := map[string]string{
 			"uuid": deploy.Labels["uuid"],
@@ -292,7 +297,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 				Memory:  limitMemory.String(),
 				Storage: limitStorage.String(),
 				PVC:     pvc.Spec.Resources.Requests.Storage().String(),
-				// TODO GPU
+				GPU:     limitGpu.String(),
 			},
 			Volume:  pvc.Spec.VolumeName,
 			PvcPath: pvcPath,
@@ -349,6 +354,10 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 		return nil, err
 	}
 	limitsStorage, err := service.SplitRSC(form.Storage, m)
+	if err != nil {
+		return nil, err
+	}
+	limitsGpu, err := service.SplitRSC(form.Gpu, m)
 	if err != nil {
 		return nil, err
 	}
@@ -440,12 +449,12 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
 								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+								service.GpuShare:                resource.MustParse(limitsGpu),
 							},
 						},
 						VolumeMounts: volumeMounts,

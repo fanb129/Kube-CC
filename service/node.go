@@ -6,6 +6,7 @@ import (
 	"Kube-CC/dao"
 	"Kube-CC/service/ssh"
 	"context"
+	"errors"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,9 +60,9 @@ func GetNode(label string) (*responses.NodeListResponse, error) {
 		pvc := node.Status.Capacity.Storage()
 		usedPvc := pvc.DeepCopy()
 		usedPvc.Sub(*node.Status.Allocatable.Storage())
-		gpu := node.Status.Capacity.Name(NvidiaGPU, resource.DecimalSI)
+		gpu := node.Status.Capacity.Name(GpuShare, resource.BinarySI)
 		usedGpu := gpu.DeepCopy()
-		usedGpu.Sub(*node.Status.Allocatable.Name(NvidiaGPU, resource.DecimalSI))
+		usedGpu.Sub(*node.Status.Allocatable.Name(GpuShare, resource.BinarySI))
 		tmp := responses.Node{
 			Name:           node.Name,
 			Ip:             node.Status.Addresses[0].Address,
@@ -131,7 +132,14 @@ func CreateNode(configs []ssh.Config) (*responses.Response, error) {
 
 // DeleteNode 删除node节点
 func DeleteNode(name string) (*responses.Response, error) {
-	err := dao.ClientSet.CoreV1().Nodes().Delete(context.Background(), name, metav1.DeleteOptions{})
+	get, err := dao.ClientSet.CoreV1().Nodes().Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	if get.Status.Addresses[0].Address == conf.MasterInfo.Host {
+		return nil, errors.New("不允许删除master")
+	}
+	err = dao.ClientSet.CoreV1().Nodes().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, err
 	}

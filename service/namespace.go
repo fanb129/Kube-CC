@@ -207,12 +207,31 @@ func GetNs(name string) (*corev1.Namespace, error) {
 //如果是创建ns前的资源验证，ns参数为空，则应该计算所有的资源剩余量
 func VerifyNsResource(uid, name string, resources forms.Resources) error {
 	// 请求的资源量
+	err := VerifyCpu(resources.Cpu)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.Memory)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.Gpu)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.Storage)
+	if err != nil {
+		return err
+	}
+	err = VerifyResource(resources.PvcStorage)
+	if err != nil {
+		return err
+	}
 	requestCpu := resource.MustParse(resources.Cpu)
 	requestMemory := resource.MustParse(resources.Memory)
 	requestGpu := resource.MustParse(resources.Gpu)
 	requestStorage := resource.MustParse(resources.Storage)
 	requestPvc := resource.MustParse(resources.PvcStorage)
-
 	// 该用户的资源限额
 	intuid, err := strconv.Atoi(uid)
 	if err != nil {

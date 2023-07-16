@@ -51,7 +51,7 @@ func Add(c *gin.Context) {
 }
 
 func Delete(c *gin.Context) {
-	node := c.Param("name")
+	node := c.Param("node")
 	rsp, err := service.DeleteNode(node)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
