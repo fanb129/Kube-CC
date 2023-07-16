@@ -108,6 +108,7 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 			PvcStorage:  user.Pvcstorage,
 			Gpu:         user.Gpu,
 			ExpiredTime: user.ExpiredTime.Format("2006-01-02 15:04:05"),
+			Email:       user.Email,
 		},
 	}, nil
 }
