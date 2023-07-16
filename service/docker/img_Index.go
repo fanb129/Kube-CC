@@ -23,9 +23,10 @@ func IndexDocker(page int, uid uint) (*responses.ImageListResponse, error) {
 	}
 	imageListPublic := make([]responses.ImageInfo, len(u))
 	imageListPrivate := make([]responses.ImageInfo, len(u))
+	imageListAll := make([]responses.ImageInfo, len(u))
 	var public = 0
 	var private = 0
-
+	var alls = 0
 	for _, v := range u {
 		tmp := responses.ImageInfo{
 			ID:        v.ID,
@@ -38,6 +39,8 @@ func IndexDocker(page int, uid uint) (*responses.ImageListResponse, error) {
 			Tag:       v.Tag,
 			Size:      v.Size,
 		}
+		imageListAll[alls] = tmp
+		alls++
 		if v.Kind == 2 {
 			imageListPrivate[private] = tmp
 			private++
@@ -52,5 +55,6 @@ func IndexDocker(page int, uid uint) (*responses.ImageListResponse, error) {
 		Total:            total,
 		ImageListPBULIC:  imageListPublic,
 		ImageListPRIVATE: imageListPrivate,
+		ImageListAll:     imageListAll,
 	}, nil
 }

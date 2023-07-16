@@ -45,10 +45,10 @@ type ImageListResponse struct {
 	Response
 	Page             int         `json:"page"`
 	Total            int         `json:"total"`
-	ImageListPBULIC  []ImageInfo `json:"user_list_public"`
-	ImageListPRIVATE []ImageInfo `json:"user_list_private"`
-}
-type EmptyList struct {
+	Length           int         `json:"length"`
+	ImageListAll     []ImageInfo `json:"image_list_all"`
+	ImageListPBULIC  []ImageInfo `json:"image_list_public"`
+	ImageListPRIVATE []ImageInfo `json:"image_list_private"`
 }
 
 var NoSuchImage = Response{StatusCode: -1, StatusMsg: "该镜像不存在"}

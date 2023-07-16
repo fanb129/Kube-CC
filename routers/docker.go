@@ -8,8 +8,8 @@ import (
 func dockerRouter(router *gin.RouterGroup) {
 	dockerRouters := router.Group("/docker")
 	{
-		dockerRouters.GET("/index/:page", docker.Index)
-		dockerRouters.GET("/remove", docker.Remove)
+		dockerRouters.GET("/:page", docker.Index)
+		dockerRouters.GET("/remove/:image_id", docker.Remove)
 		dockerRouters.POST("/pullpublic", docker.PullPublic)
 		dockerRouters.POST("/tagadd", docker.TagAdd)
 		dockerRouters.POST("/pullprivate", docker.PullPrivate)

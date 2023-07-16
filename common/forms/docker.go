@@ -13,19 +13,19 @@ type SaveForm struct {
 }
 
 type PullFromRepositoryPrivateForm struct {
-	RepositoryName string `form:"image_name" json:"image_name" binding:"required,min=1,max=255"`
-	Tag            string `form:"tag" json:"tag" binding:"required,min=1,max=64"`
+	RepositoryName string `form:"image_name" json:"image_name"`
+	Tag            string `form:"tag" json:"tag"`
 	Uid            uint   `form:"uid" json:"uid"`
 	Kind           int    `form:"kind" json:"kind"`
-	Username       string `form:"username"json:"username"binding:"required min=1,max=64"`
-	Passwd         string `form:"passwd"json:"passwd"binding:"required min=1,max=64"`
+	Username       string `form:"username"json:"username"`
+	Passwd         string `form:"passwd"json:"passwd"`
 }
 
 type PullFromRepositoryPublicForm struct {
-	RepositoryName string `form:"image_names" json:"image_name" binding:"required,min=1,max=255"`
-	Tag            string `form:"tag" json:"tag" binding:"required,min=1,max=64"`
-	Uid            uint   `form:"user_id" json:"user_id"`
-	Kind           int    `form:"kind" json:"kind"`
+	Image_name string `form:"image_name" json:"image_name" binding:"required,min=1,max=255"`
+	Tag        string `form:"tag" json:"tag" binding:"required,min=1,max=255"`
+	Uid        uint   `form:"uid" json:"uid" binding:"required,min=1,max=255"`
+	Kind       int    `form:"Kind" json:"Kind" binding:"required,min=1,max=255"`
 }
 
 type ImageCreateForm struct {
