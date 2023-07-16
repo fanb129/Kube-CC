@@ -19,11 +19,13 @@ func GetImageList(page int, pageSize int, uid uint) ([]models.Docker, int, error
 			return images, int(total), result.Error
 		}
 	} else {
-		//mysqlDb.Find(&images).Count(&total)
+		mysqlDb.Find(&images).Count(&total)
 		offset := (page - 1) * pageSize
 		// 当查询失败时返回0
 		if result := mysqlDb.Offset(offset).Limit(pageSize).Where("user_id = ?", uid).Find(&images); result.Error != nil {
 			return nil, 0, result.Error
+		} else {
+			return images, int(total), result.Error
 		}
 	}
 
