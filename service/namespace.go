@@ -6,12 +6,13 @@ import (
 	"Kube-CC/dao"
 	"context"
 	"errors"
+	"strconv"
+
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"strconv"
 )
 
 // ListNs 获取所有namespace
@@ -203,8 +204,8 @@ func GetNs(name string) (*corev1.Namespace, error) {
 }
 
 // VerifyNsResource
-//如果是更新前的资源验证的话，计算剩余量时排除掉更新所选的ns
-//如果是创建ns前的资源验证，ns参数为空，则应该计算所有的资源剩余量
+// 如果是更新前的资源验证的话，计算剩余量时排除掉更新所选的ns
+// 如果是创建ns前的资源验证，ns参数为空，则应该计算所有的资源剩余量
 func VerifyNsResource(uid, name string, resources forms.Resources) error {
 	// 请求的资源量
 	err := VerifyCpu(resources.Cpu)
@@ -321,27 +322,55 @@ func GetUserNsTotal(uid string) (*responses.UserTotalNs, error) {
 		pvc.Add(resource.MustParse(ns.PVC))
 		usedPvc.Add(resource.MustParse(ns.UsedPVC))
 	}
+	// 零值检测
+	var cpuRatio, gpuRatio, memoryRatio, pvcRatio, storageRatio float64
+	if cpu.MilliValue() == 0 {
+		cpuRatio = 0
+	} else {
+		cpuRatio = float64(usedCpu.MilliValue()) / float64(cpu.MilliValue())
+	}
+	if gpu.Value() == 0 {
+		gpuRatio = 0
+	} else {
+		gpuRatio = float64(usedGpu.Value()) / float64(gpu.Value())
+	}
+	if memory.Value() == 0 {
+		memoryRatio = 0
+	} else {
+		memoryRatio = float64(usedMemory.Value()) / float64(memory.Value())
+	}
+	if pvc.Value() == 0 {
+		pvcRatio = 0
+	} else {
+		pvcRatio = float64(usedPvc.Value()) / float64(pvc.Value())
+	}
+	if storage.Value() == 0 {
+		storageRatio = 0
+	} else {
+		storageRatio = float64(usedStorage.Value()) / float64(storage.Value())
+	}
+
 	rsp := responses.UserTotalNs{
 		Response: responses.OK,
 		Cpu:      cpu.String(),
 		UsedCpu:  usedCpu.String(),
-		CpuRatio: float64(usedCpu.MilliValue()) / float64(cpu.MilliValue()),
+		CpuRatio: cpuRatio,
 
 		Memory:      memory.String(),
 		UsedMemory:  usedMemory.String(),
-		MemoryRatio: float64(usedMemory.Value()) / float64(memory.Value()),
+		MemoryRatio: memoryRatio,
 
 		Storage:      storage.String(),
 		UsedStorage:  usedStorage.String(),
-		StorageRatio: float64(usedStorage.Value()) / float64(storage.Value()),
+		StorageRatio: storageRatio,
 
 		PVC:      pvc.String(),
 		UsedPVC:  usedPvc.String(),
-		PvcRatio: float64(usedPvc.Value()) / float64(pvc.Value()),
+		PvcRatio: pvcRatio,
 
 		GPU:      gpu.String(),
 		UsedGPU:  usedGpu.String(),
-		GpuRatio: float64(usedGpu.Value()) / float64(gpu.Value()),
+		GpuRatio: gpuRatio,
 	}
 
 	return &rsp, nil
