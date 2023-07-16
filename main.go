@@ -7,6 +7,7 @@ import (
 	"Kube-CC/log"
 	"Kube-CC/routers"
 	"Kube-CC/service"
+	"Kube-CC/service/docker"
 	"time"
 
 	"go.uber.org/zap"
@@ -30,10 +31,10 @@ func main() {
 		zap.S().Panicln(err)
 	}
 
-	// 初始化连接docker
-	// if err := docker.ConnectDocker(); err != nil {
-	// 	zap.S().Panicln(err)
-	// }
+	//初始化连接docker
+	if err := docker.ConnectDocker(); err != nil {
+		zap.S().Panicln(err)
+	}
 
 	r := routers.InitRouter() //路由初始化
 	// 初始化翻译
