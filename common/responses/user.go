@@ -15,6 +15,7 @@ type UserInfo struct {
 	PvcStorage  string `json:"pvcstorage"`
 	Gpu         string `json:"gpu"`
 	ExpiredTime string `json:"expired_time"`
+	Email       string `json:"email"`
 }
 
 type LoginResponse struct {
