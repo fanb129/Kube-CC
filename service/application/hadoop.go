@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"strconv"
 )
 
 const (
@@ -31,12 +32,12 @@ const (
 )
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
-func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
+func CreateHadoop(u_id uint, name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
 	newUuid := string(uuid.NewUUID())
 	ns := name + "-" + newUuid
 	label := map[string]string{
 		"image": "hadoop",
-		"u_id":  u_id,
+		"u_id":  strconv.Itoa(int(u_id)),
 	}
 	hdfsMasterLabel := map[string]string{
 		"name": "hdfs-master",

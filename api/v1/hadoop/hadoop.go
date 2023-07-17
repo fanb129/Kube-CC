@@ -131,7 +131,7 @@ func BatchAdd(c *gin.Context) {
 	group := sync.WaitGroup{}
 	group.Add(len(ids))
 	for _, id := range ids {
-		go func(id string) {
+		go func(id uint) {
 			if _, err := application.CreateHadoop(id, form.Name, form.HdfsMasterReplicas, form.DatanodeReplicas, form.YarnMasterReplicas, form.YarnNodeReplicas, form.ApplyResources); err != nil {
 				zap.S().Errorln(err)
 			}
