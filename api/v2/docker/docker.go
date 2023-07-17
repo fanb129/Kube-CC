@@ -12,15 +12,8 @@ import (
 
 func Index(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Param("page"))
-	uid, exists := c.Get("u_id")
-	if exists == false {
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  "获取用户失败",
-		})
-		return
-	}
-	uId := uid.(uint)
+	uid, _ := strconv.Atoi(c.Query("u_id"))
+	uId := uint(uid)
 	rsp, err := docker.IndexDocker(page, uId)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
