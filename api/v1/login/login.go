@@ -55,6 +55,13 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, loginRes)
 }
 
+func Forget(c *gin.Context) {
+	c.JSON(http.StatusOK, responses.Response{
+		StatusCode: 1,
+		StatusMsg:  responses.OK.StatusMsg,
+	})
+}
+
 // Logout 用户登出
 func Logout(c *gin.Context) {
 	c.JSON(200, responses.OK)

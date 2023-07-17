@@ -16,4 +16,5 @@ func loginRouter(router *gin.RouterGroup) {
 	router.POST("/checkcp", login.CheckCaptcha)                      // 验证验证码
 	router.GET("/emailcaptcha/:email", emailcaptcha.GetValidateCode) //邮箱验证码
 	router.POST("/verifyemail", emailcaptcha.ValidateEmailCode)      //验证邮箱验证码
+	router.POST("/forgetpassword", login.Forget)
 }
