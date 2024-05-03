@@ -1,12 +1,18 @@
 package conf
 
 import (
-	"Kube-CC/service/ssh"
 	"strconv"
 	"time"
 
 	"gopkg.in/ini.v1"
 )
+
+type NodeConfig struct {
+	Host     string `json:"host" forms:"host"`
+	Port     int    `json:"port" forms:"port"`
+	User     string `json:"user" forms:"user"`
+	Password string `json:"password" forms:"password"`
+}
 
 // 解析配置文件
 var (
@@ -30,7 +36,7 @@ var (
 	HadoopImage      string    // hadoop镜像
 	RedisHost        string    // redis服务器
 	RedisPort        int
-	MasterInfo       ssh.Config    // master的ssh信息
+	MasterInfo       NodeConfig    // master的ssh信息
 	DockerHost       string        // docker的host地址
 	Cpu              string        //Cpu配额
 	Memory           string        //内存配额

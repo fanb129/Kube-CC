@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // Index 展示所有的工作空间 namespace，
@@ -316,6 +317,18 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
+	// 判断用户的过期时间
+	user, err := dao.GetUserById(form.Uid)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{-1, err.Error()})
+		return
+	}
+	expiredTime := user.ExpiredTime
+	if expiredTime.Before(time.Now()) {
+		c.JSON(http.StatusOK, responses.Response{-1, "用户已到过期时间"})
+		return
+	}
+
 	label := map[string]string{
 		"kind": "workspace",
 	}

@@ -27,3 +27,14 @@ func Log(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, log)
 }
+
+func Delete(c *gin.Context) {
+	ns := c.Query("ns")
+	name := c.Query("name")
+	response, err := service.DeletePod(name, ns)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
+	}
+}

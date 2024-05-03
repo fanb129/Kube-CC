@@ -57,12 +57,19 @@ func main() {
 				for _, user := range users {
 					// 如果为nil就是永久时长
 					if user.ExpiredTime.Before(time.Now()) && user.Role < 3 {
-						// 删除user
-						_, err := service.DeleteUSer(user.ID)
+						//// 删除user
+						//_, err := service.DeleteUSer(user.ID)
+						//if err != nil {
+						//	zap.S().Errorln("删除user失败:", err)
+						//} else {
+						//	zap.S().Infoln("delete user:", user.Username)
+						//}
+
+						// 删除其所有ns
+						zap.S().Infoln("冻结用户:" + user.Username + ",删除其所有工作空间")
+						err = service.DeleteNsByUser(user.ID)
 						if err != nil {
-							zap.S().Errorln("删除user失败:", err)
-						} else {
-							zap.S().Infoln("delete user:", user.Username)
+							zap.S().Errorln(err)
 						}
 					}
 				}

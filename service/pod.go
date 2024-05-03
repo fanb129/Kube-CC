@@ -5,9 +5,11 @@ import (
 	"Kube-CC/dao"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 // GetPod 获得指定deploy
@@ -46,13 +48,18 @@ func ListDeployPod(ns string, label string) ([]responses.DeployPod, error) {
 	num := len(list.Items)
 	podList := make([]responses.DeployPod, num)
 	for i, pod := range list.Items {
+		//pod.Status.ContainerStatuses[0].State
+		containerName := ""
+		if len(pod.Status.ContainerStatuses) == 1 {
+			containerName = pod.Status.ContainerStatuses[0].Name
+		}
 		podList[i] = responses.DeployPod{
 			Name:      pod.Name,
 			Namespace: pod.Namespace,
 			Phase:     string(pod.Status.Phase),
 			PodIP:     pod.Status.PodIP,
 			HostIP:    pod.Status.HostIP,
-			Container: pod.Status.ContainerStatuses[0].Name,
+			Container: containerName,
 		}
 	}
 	return podList, nil
@@ -100,6 +107,11 @@ func ListJobPod(ns string, label string) ([]responses.JobPod, error) {
 }
 
 func GetPodLog(ns, name string) (*responses.PodLogResponse, error) {
+	event, err := GetPodEvent(ns, name)
+	if err != nil {
+		return nil, err
+	}
+
 	req := dao.ClientSet.CoreV1().Pods(ns).GetLogs(name, &corev1.PodLogOptions{})
 	podLogs, err := req.Stream(context.Background())
 	if err != nil {
@@ -117,6 +129,21 @@ func GetPodLog(ns, name string) (*responses.PodLogResponse, error) {
 		Response:  responses.OK,
 		Namespace: ns,
 		Name:      name,
-		Log:       buf.String(),
+		Log:       event + buf.String() + "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n",
 	}, nil
+}
+
+func GetPodEvent(ns, name string) (string, error) {
+	events, err := dao.ClientSet.CoreV1().Events(ns).List(context.TODO(), metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("involvedObject.name=%s", name),
+	})
+	if err != nil {
+		return "", err
+	}
+	// 拼接事件信息到 res
+	var res strings.Builder
+	for _, event := range events.Items {
+		res.WriteString(fmt.Sprintf("%s\t%s\t[%s]\t%s\n", event.CreationTimestamp.Format("2006-01-02 15:04:05"), event.Type, event.Reason, event.Message))
+	}
+	return res.String(), nil
 }

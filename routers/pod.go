@@ -6,8 +6,9 @@ import (
 )
 
 func podRouter(router *gin.RouterGroup) {
-	pvcRouters := router.Group("/pod")
+	podRouters := router.Group("/pod")
 	{
-		pvcRouters.GET("/log", pod.Log) // pod 日志
+		podRouters.GET("/log", pod.Log) // pod 日志
+		podRouters.GET("/delete", pod.Delete)
 	}
 }

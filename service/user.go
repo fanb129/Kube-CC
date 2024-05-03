@@ -133,12 +133,7 @@ func UserInfo(u_id uint) (*responses.UserInfoResponse, error) {
 // 	}, nil
 // }
 
-// DeleteUSer  删除用户
-func DeleteUSer(id uint) (*responses.Response, error) {
-	row, err := dao.DeleteUserById(id)
-	if err != nil || row == 0 {
-		return nil, errors.New("删除失败")
-	}
+func DeleteNsByUser(id uint) error {
 	// 删除其所有ns
 	label := map[string]string{
 		"u_id": strconv.Itoa(int(id)),
@@ -147,13 +142,55 @@ func DeleteUSer(id uint) (*responses.Response, error) {
 	selector := labels.SelectorFromSet(label).String()
 	nsList, err := ListNs(selector)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, ns := range nsList.NsList {
 		DeleteNs(ns.Name)
 	}
+	return nil
+}
+
+// DeleteUSer  删除用户
+func DeleteUSer(id uint) (*responses.Response, error) {
+	row, err := dao.DeleteUserById(id)
+	if err != nil || row == 0 {
+		return nil, errors.New("删除失败")
+	}
+	// 删除其所有ns
+	err = DeleteNsByUser(id)
+	if err != nil {
+		return nil, err
+	}
 	return &responses.OK, nil
 }
+
+// FreezeUSer 冻结用户
+//func FreezeUSer(id uint) (*responses.Response, error) {
+//	user, err := dao.GetUserById(id)
+//	if err != nil {
+//		return nil, errors.New("获取用户失败")
+//	}
+//	user.Role =
+//		dao.up
+//	row, err := dao.DeleteUserById(id)
+//	if err != nil || row == 0 {
+//		return nil, errors.New("冻结失败")
+//	}
+//	// 删除其所有ns
+//	label := map[string]string{
+//		"u_id": strconv.Itoa(int(id)),
+//	}
+//	// 将map标签转换为string
+//	selector := labels.SelectorFromSet(label).String()
+//	nsList, err := ListNs(selector)
+//	if err != nil {
+//		return nil, err
+//	}
+//	for _, ns := range nsList.NsList {
+//		DeleteNs(ns.Name)
+//	}
+//	return &responses.OK, nil
+//}
 
 // EditUser 授权用户
 func EditUser(id, role uint) (*responses.Response, error) {
