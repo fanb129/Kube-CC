@@ -1,54 +1,32 @@
 package responses
 
-import "time"
-
 type ImageInfo struct {
-	ID        uint      `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	ImageId   string    `json:"image_id"`
-	ImageName string    `json:"image_name"`
-	UserId    uint      `json:"user_id"`
-	Kind      int       `json:"kind"`
-	Tag       string    `json:"tag"`
-	Size      string    `json:"size"`
+	Id        uint   `json:"id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+
+	ImageId string `json:"image_id"`
+	Name    string `json:"image_name"`
+	Tag     string `json:"tag"`
+	Size    string `json:"size"`
+
+	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+	Uid      uint   `json:"u_id"`
+
+	Kind   uint `json:"kind"`
+	Status uint `json:"status"`
+
+	Description string `json:"description"`
 }
 
-type CreateResponse struct {
+type ImageListResponse struct {
 	Response
-	UserID uint   `json:"user_id"`
-	Token  string `json:"token"`
-}
-
-type UpdateTagResponse struct {
-}
-
-type PullingResponse struct {
-	Response
-	ImageInfo ImageInfo `json:"image_pullinginfo"`
-}
-
-type RemoveResponse struct {
-	Response
-	ID     string `json:"id"`
-	Status uint   `json:"status"`
-}
-
-type SaveResponse struct {
+	Length    int         `json:"length"`
+	ImageList []ImageInfo `json:"image_list"`
 }
 
 type ImageInfoResponse struct {
 	Response
 	ImageInfo ImageInfo `json:"image_info"`
 }
-type ImageListResponse struct {
-	Response
-	Page             int         `json:"page"`
-	Total            int         `json:"total"`
-	Length           int         `json:"length"`
-	ImageListAll     []ImageInfo `json:"image_list_all"`
-	ImageListPBULIC  []ImageInfo `json:"image_list_public"`
-	ImageListPRIVATE []ImageInfo `json:"image_list_private"`
-}
-
-var NoSuchImage = Response{StatusCode: -1, StatusMsg: "该镜像不存在"}

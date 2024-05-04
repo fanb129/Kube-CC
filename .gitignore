@@ -2,8 +2,8 @@
 /.vscode
 conf/config.ini
 conf/admin.conf
-dao/main
 service/main
+service/image/main
 /tmp
 # Binaries for programs and plugins
 *.exe

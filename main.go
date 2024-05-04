@@ -7,7 +7,6 @@ import (
 	"Kube-CC/log"
 	"Kube-CC/routers"
 	"Kube-CC/service"
-	"Kube-CC/service/docker"
 	"time"
 
 	"go.uber.org/zap"
@@ -31,10 +30,11 @@ func main() {
 		zap.S().Panicln(err)
 	}
 
+	// TODO
 	//初始化连接docker
-	if err := docker.ConnectDocker(); err != nil {
-		zap.S().Panicln(err)
-	}
+	//if err := docker.ConnectDocker(); err != nil {
+	//	zap.S().Panicln(err)
+	//}
 
 	r := routers.InitRouter() //路由初始化
 	// 初始化翻译
@@ -56,7 +56,7 @@ func main() {
 				}
 				for _, user := range users {
 					// 如果为nil就是永久时长
-					if user.ExpiredTime.Before(time.Now()) && user.Role < 3 {
+					if user.ExpiredTime.Before(time.Now()) && user.Role < 2 {
 						//// 删除user
 						//_, err := service.DeleteUSer(user.ID)
 						//if err != nil {

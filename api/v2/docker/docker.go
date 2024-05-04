@@ -3,7 +3,7 @@ package docker
 import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
-	"Kube-CC/service/docker"
+	"Kube-CC/service/image"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
@@ -11,119 +11,90 @@ import (
 )
 
 func Index(c *gin.Context) {
-	page, _ := strconv.Atoi(c.Param("page"))
-	uid, _ := strconv.Atoi(c.Query("u_id"))
-	uId := uint(uid)
-	rsp, err := docker.IndexDocker(page, uId)
+	u_id := c.DefaultQuery("u_id", "0")
+	g_id := c.DefaultQuery("g_id", "0")
+	uid, err := strconv.Atoi(u_id)
 	if err != nil {
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -100,
-			StatusMsg:  err.Error(),
-		})
-	}
-	c.JSON(http.StatusOK, rsp)
-}
-
-func Remove(c *gin.Context) {
-	id := c.Param("image_id")
-	_, err, rsp := docker.DeleteImage(id)
-	if err != nil {
-		zap.S().Errorln(err)
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -2,
-			StatusMsg:  err.Error(),
-		})
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, rsp)
-	//if err != nil {
-	//	c.JSON(http.StatusOK, responses.Response{
-	//		StatusCode: -1,
-	//		StatusMsg:  err.Error(),
-	//	})
-	//} else {
-	//	c.JSON(http.StatusOK, rsp)
-	//}
+	gid, err := strconv.Atoi(g_id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	listResponse, err := image.ListImages(uint(uid), uint(gid))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, listResponse)
+	}
 }
-func TagAdd(c *gin.Context) {
-	form := forms.ImageCreateByTagForm{}
+
+func IndexOk(c *gin.Context) {
+	u_id := c.DefaultQuery("u_id", "0")
+	uid, err := strconv.Atoi(u_id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+
+	listResponse, err := image.ListOkImages(uint(uid))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, listResponse)
+	}
+}
+
+func Delete(c *gin.Context) {
+	id := c.Param("id")
+	uid, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		return
+	}
+	response, err := image.DeleteImage(uint(uid))
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
+	}
+}
+
+func Update(c *gin.Context) {
+	form := forms.UpdateImageForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	response, err := docker.AlertTag(form.OldRepositoryName, form.OldTag, form.NewRepositoryName, form.NewTag)
+
+	response, err := image.UpdateImage(form)
 	if err != nil {
 		zap.S().Errorln(err)
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-		return
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
 	}
-	c.JSON(http.StatusOK, response)
 }
 
-// Save备份镜像
-/*func Save(c *gin.Context) {
-	id := c.Param("imageid")
-	form := forms.SaveForm{}
+func Pull(c *gin.Context) {
+	form := forms.PullImageForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	response, err := docker.SaveImage(id)
-}*/
 
-func PullPublic(c *gin.Context) {
-	form := forms.PullFromRepositoryPublicForm{}
-	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
-		return
-	}
-	rsp, err := docker.PullImage(form.Image_name, form.Tag, form.Uid, form.Kind)
+	response, err := image.PullImage(form)
 	if err != nil {
 		zap.S().Errorln(err)
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-		return
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, response)
 	}
-	c.JSON(http.StatusOK, rsp)
 }
 
-func PullPrivate(c *gin.Context) {
-	form := forms.PullFromRepositoryPrivateForm{}
-	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
-		return
-	}
-	rsp, err := docker.PullPrivateImage(form.RepositoryName, form.Tag, form.Username, form.Passwd, form.Uid, form.Kind)
-	if err != nil {
-		zap.S().Errorln(err)
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-		return
-	}
-	c.JSON(http.StatusOK, rsp)
-}
+//TODO
+func Save(c *gin.Context) {
 
-func CreateImageByImageId(c *gin.Context) {
-	form := forms.ImageCreateForm{}
-	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
-		return
-	}
-	rsp, err := docker.CreateImage(form.Parent, form.Username, form.Passwd, form.Tag, form.Uid, form.Kind)
-	if err != nil {
-		zap.S().Errorln(err)
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-		return
-	}
-	c.JSON(http.StatusOK, rsp)
 }

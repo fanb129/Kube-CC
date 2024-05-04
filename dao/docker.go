@@ -2,84 +2,124 @@ package dao
 
 import (
 	"Kube-CC/models"
+	"errors"
+	"gorm.io/gorm"
 )
 
-// 根据用户获取用户对应的镜像列表
-func GetImageList(page int, pageSize int, uid uint) ([]models.Docker, int, error) {
-	var images []models.Docker
-	var total int64
-	// uid为0时显示全部镜像
-	if uid == 0 {
-		mysqlDb.Find(&images).Count(&total)
-		offset := (page - 1) * pageSize
-		// 当查询失败时返回0
-		if result := mysqlDb.Offset(offset).Limit(pageSize).Find(&images); result.Error != nil {
-			return nil, 0, result.Error
-		} else {
-			return images, int(total), result.Error
-		}
-	} else {
-		mysqlDb.Find(&images).Count(&total)
-		offset := (page - 1) * pageSize
-		// 当查询失败时返回0
-		if result := mysqlDb.Offset(offset).Limit(pageSize).Where("user_id = ?", uid).Find(&images); result.Error != nil {
-			return nil, 0, result.Error
-		} else {
-			return images, int(total), result.Error
-		}
-	}
-
-	return images, 0, nil
-}
-
-func GetImgById(imageid string) (*models.Docker, error) {
-	img := models.Docker{}
-	result := mysqlDb.First(&img, imageid)
+func GetImageById(id uint) (*models.Docker, error) {
+	docker := models.Docker{}
+	result := mysqlDb.First(&docker, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &img, nil
+	return &docker, nil
 }
 
-func GetImgByName(imagename string) (*models.Docker, error) {
-	img := models.Docker{}
-	result := mysqlDb.Where("image_name = ?", imagename).First(&img)
+// GetAllImages 获取所有用户的所有状态image
+func GetAllImages() ([]models.Docker, error) {
+	var dockers []models.Docker
+	result := mysqlDb.Find(&dockers)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &img, nil
+	return dockers, nil
 }
 
-// 根据镜像id删除镜像
-
-func DeletedImgByImageId(id string) (*models.Docker, error) {
-	imglist := models.Docker{}
-	result := mysqlDb.Where("image_id = ?", id).Delete(&models.Docker{})
+// GetPrivateImage 看自己的私有
+func GetPrivateImage(uid uint) ([]models.Docker, error) {
+	var dockers []models.Docker
+	result := mysqlDb.Where("user_id = ? and kind = 2", uid).Find(&dockers)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &imglist, nil
+	return dockers, nil
 }
 
-// 新增镜像
-
-func CreateImage(imagename, imageid string, uid uint, kinds int, tag, size string) (int, error) {
-	img := models.Docker{
-		ImageName: imagename,
-		ImageId:   imageid,
-		UserId:    uid,
-		Kind:      kinds,
-		Tag:       tag,
-		Size:      size,
+// GetPublicImage 获取共有
+func GetPublicImage() ([]models.Docker, error) {
+	var dockers []models.Docker
+	result := mysqlDb.Where("kind = 1").Find(&dockers)
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	result := mysqlDb.Create(&img)
-	return int(result.RowsAffected), result.Error
+	return dockers, nil
 }
 
-// 更新tag
-func CreateImageByTag(u *models.Docker) (int, error) {
-	result := mysqlDb.Model(u).Updates(models.Docker{
-		Tag: u.Tag,
+// GetImagesByUid 用户能够看到的镜像，包括自己的私有，和别人的共有
+func GetImagesByUid(uid uint) ([]models.Docker, error) {
+	dockers, err := GetPrivateImage(uid)
+	if err != nil {
+		return nil, err
+	}
+	dockers1, err := GetPublicImage()
+	if err != nil {
+		return nil, err
+	}
+
+	dockers = append(dockers, dockers1...)
+	return dockers, nil
+}
+
+// GetOkIMages 应用部署时的可用image，包括public和自己的，但必须是status==1
+func GetOkIMages(uid uint) ([]models.Docker, error) {
+	var dockers, dockers1 []models.Docker
+	// 自己的私有
+	result := mysqlDb.Where("user_id = ? and kind = 2 and status = 1", uid).Find(&dockers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	// 公有
+	result = mysqlDb.Where("kind = 1 and status = 1").Find(&dockers1)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	dockers = append(dockers, dockers1...)
+	return dockers, nil
+}
+
+func CreateImage(name, tag, description string, uid, kind uint) (uint, error) {
+	var docker models.Docker
+	result := mysqlDb.Where("image_name = ? and tag = ? and user_id = ?", name, tag, uid).First(&docker)
+	if result.RowsAffected > 0 {
+		return 0, errors.New("镜像已存在")
+	}
+	docker.ImageName = name
+	docker.Tag = tag
+	docker.UserId = uid
+	docker.Kind = kind
+	docker.Status = 2
+	docker.Description = description
+
+	result = mysqlDb.Create(&docker)
+	return docker.ID, result.Error
+}
+
+func SaveImage(d *models.Docker) error {
+	result := mysqlDb.Save(d)
+	return result.Error
+}
+
+func UpdateImage(id uint, kind uint, description string) error {
+	docker := models.Docker{
+		Model: gorm.Model{
+			ID: id,
+		},
+	}
+	result := mysqlDb.Model(&docker).Updates(models.Docker{
+		Kind:        kind,
+		Description: description,
 	})
-	return int(result.RowsAffected), result.Error
+	return result.Error
+}
+
+func DeleteImage(id uint) error {
+	docker := models.Docker{
+		Model: gorm.Model{
+			ID: id,
+		},
+	}
+	result := mysqlDb.Delete(&docker)
+	return result.Error
 }
