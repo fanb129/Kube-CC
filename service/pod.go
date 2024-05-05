@@ -50,16 +50,19 @@ func ListDeployPod(ns string, label string) ([]responses.DeployPod, error) {
 	for i, pod := range list.Items {
 		//pod.Status.ContainerStatuses[0].State
 		containerName := ""
+		containerId := ""
 		if len(pod.Status.ContainerStatuses) == 1 {
 			containerName = pod.Status.ContainerStatuses[0].Name
+			containerId = pod.Status.ContainerStatuses[0].ContainerID
 		}
 		podList[i] = responses.DeployPod{
-			Name:      pod.Name,
-			Namespace: pod.Namespace,
-			Phase:     string(pod.Status.Phase),
-			PodIP:     pod.Status.PodIP,
-			HostIP:    pod.Status.HostIP,
-			Container: containerName,
+			Name:        pod.Name,
+			Namespace:   pod.Namespace,
+			Phase:       string(pod.Status.Phase),
+			PodIP:       pod.Status.PodIP,
+			HostIP:      pod.Status.HostIP,
+			Container:   containerName,
+			ContainerID: getConatinerId(containerId),
 		}
 	}
 	return podList, nil
@@ -129,7 +132,7 @@ func GetPodLog(ns, name string) (*responses.PodLogResponse, error) {
 		Response:  responses.OK,
 		Namespace: ns,
 		Name:      name,
-		Log:       event + buf.String() + "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n",
+		Log:       event + buf.String(),
 	}, nil
 }
 
@@ -146,4 +149,8 @@ func GetPodEvent(ns, name string) (string, error) {
 		res.WriteString(fmt.Sprintf("%s\t%s\t[%s]\t%s\n", event.CreationTimestamp.Format("2006-01-02 15:04:05"), event.Type, event.Reason, event.Message))
 	}
 	return res.String(), nil
+}
+
+func getConatinerId(digest string) string {
+	return digest[9 : 9+12]
 }

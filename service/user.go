@@ -161,6 +161,11 @@ func DeleteUSer(id uint) (*responses.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 删除其所有私有镜像
+	err = dao.DeleteUserAllPrivateImages(id)
+	if err != nil {
+		return nil, err
+	}
 	return &responses.OK, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"Kube-CC/models"
 	"go.uber.org/zap"
 	"strings"
+	"time"
 )
 
 var (
@@ -90,7 +91,7 @@ func SaveImage(form forms.SaveImageForm) (*responses.Response, error) {
 	}
 
 	// 后台save and push
-	go backendSaveAndPush(id)
+	go backendSaveAndPush(id, form.ContainerID, form.NodeIp)
 
 	return &responses.Response{StatusCode: 1, StatusMsg: "操作成功,等待后台下载"}, nil
 }
@@ -161,6 +162,7 @@ func backendPullAndPush(id uint, pullImage forms.PullImage) {
 	}
 
 	//TODO ip暂时写死
+	//cli, err := NewDockerCli(conf.MasterInfo.Host, 2375)
 	cli, err := NewDockerCli("192.168.139.143", 2375)
 	if cli != nil {
 		defer cli.Close()
@@ -199,9 +201,42 @@ func backendPullAndPush(id uint, pullImage forms.PullImage) {
 	backendPush(docker, cli)
 }
 
-// TODO
-func backendSaveAndPush(id uint) {
+func backendSaveAndPush(id uint, containerId, nodeIp string) {
+	docker, err := dao.GetImageById(id)
+	if err != nil {
+		zap.S().Errorln(err)
+		docker.Status = 3
+		dao.SaveImage(docker)
+		return
+	}
 
+	cli, err := NewDockerCli(nodeIp, 2375)
+	if cli != nil {
+		defer cli.Close()
+	}
+	if err != nil {
+		zap.S().Errorln(err)
+		docker.Status = 3
+		dao.SaveImage(docker)
+		return
+	}
+
+	// 1. commit到本地
+	err = cli.Commit(containerId, docker.ImageName+":"+docker.Tag)
+	if err != nil {
+		zap.S().Errorln(err)
+		docker.Status = 3
+		dao.SaveImage(docker)
+		return
+	}
+	size, err := cli.GetSize(docker.ImageName + ":" + docker.Tag)
+	if err != nil {
+		zap.S().Errorln(err)
+	}
+	docker.Size = size
+
+	// 2. push到仓库
+	backendPush(docker, cli)
 }
 
 // 修改tag并push到仓库
@@ -220,10 +255,22 @@ func backendPush(docker *models.Docker, cli *DockerCli) {
 	name := docker.ImageName[index+1:]
 	manifest, err := dao.Hub.ManifestV2(name, docker.Tag)
 	if err != nil {
-		zap.S().Errorln(err)
-		docker.Status = 3
-		dao.SaveImage(docker)
-		return
+		zap.S().Errorln(err, "3s后第一次重试")
+		// 3秒后重试
+		time.Sleep(time.Second * 3)
+		manifest, err = dao.Hub.ManifestV2(name, docker.Tag)
+		if err != nil {
+			zap.S().Errorln(err, "10s后第二次重试")
+			// 10秒后重试
+			time.Sleep(time.Second * 10)
+			manifest, err = dao.Hub.ManifestV2(name, docker.Tag)
+			if err != nil {
+				zap.S().Errorln(err)
+				docker.Status = 3
+				dao.SaveImage(docker)
+				return
+			}
+		}
 	}
 	docker.Status = 1
 	//docker.Size = getSize(manifest.Config.Size)

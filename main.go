@@ -24,17 +24,15 @@ func main() {
 	if err := dao.InitDB(); err != nil {
 		zap.S().Panicln(err)
 	}
-	dao.InitRedis() //Redis 初始化(暂时不用)
+	dao.InitRedis() //Redis 初始化
 	// client-go k8s初始化
 	if err := dao.InitKube(); err != nil {
 		zap.S().Panicln(err)
 	}
-
-	// TODO
-	//初始化连接docker
-	//if err := docker.ConnectDocker(); err != nil {
-	//	zap.S().Panicln(err)
-	//}
+	// 初始化镜像仓库连接
+	if err := dao.InitRegistry(); err != nil {
+		zap.S().Panicln(err)
+	}
 
 	r := routers.InitRouter() //路由初始化
 	// 初始化翻译

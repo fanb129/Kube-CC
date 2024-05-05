@@ -15,18 +15,14 @@ type TargetImage struct {
 	Kind        uint   `form:"kind" json:"kind" binding:"required"`
 }
 
-type SourceImage struct {
-	Name string `form:"name" json:"name" binding:"required"`
-	Tag  string `form:"tag" json:"tag" binding:"required"`
-}
-
 type PullImageForm struct {
 	PullImage   PullImage   `json:"pull_image" form:"pull_image" binding:"required"`
 	TargetImage TargetImage `json:"target_image" form:"target_image" binding:"required"`
 }
 
 type SaveImageForm struct {
-	SourceImage SourceImage `json:"source_image" form:"source_image" binding:"required"`
+	ContainerID string      `json:"container_id" form:"container_id" binding:"required"`
+	NodeIp      string      `json:"node_ip" form:"node_ip" binding:"required"`
 	TargetImage TargetImage `json:"target_image" form:"target_image" binding:"required"`
 }
 

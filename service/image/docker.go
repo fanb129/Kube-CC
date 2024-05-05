@@ -10,8 +10,6 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"go.uber.org/zap"
-	"io"
-	"os"
 )
 
 type DockerCli struct {
@@ -82,8 +80,8 @@ func (d *DockerCli) Push(repositoryName, username, password string) error {
 	authStr := base64.StdEncoding.EncodeToString(encodeJson)
 	pushOptions.RegistryAuth = authStr
 
-	reader, err := d.cli.ImagePush(context.Background(), repositoryName, pushOptions)
-	io.Copy(os.Stdout, reader)
+	_, err := d.cli.ImagePush(context.Background(), repositoryName, pushOptions)
+	//io.Copy(os.Stdout, reader)
 	//defer reader.Close()
 	return err
 }
@@ -104,4 +102,21 @@ func (d *DockerCli) GetSize(repositoryName string) (string, error) {
 	}
 
 	return "", fmt.Errorf("image not found: %s", repositoryName)
+}
+
+// Commit 将容器保存为镜像到本地
+func (d *DockerCli) Commit(containerID, target string) error {
+	response, err := d.cli.ContainerCommit(context.Background(), containerID, types.ContainerCommitOptions{
+		Reference: target,
+	})
+	if err != nil {
+		return err
+	}
+
+	// 提取保存的镜像 ID
+	imageID := response.ID
+
+	// 保存镜像到本地文件系统
+	_, err = d.cli.ImageSave(context.Background(), []string{imageID})
+	return err
 }

@@ -123,3 +123,8 @@ func DeleteImage(id uint) error {
 	result := mysqlDb.Delete(&docker)
 	return result.Error
 }
+
+func DeleteUserAllPrivateImages(uid uint) error {
+	result := mysqlDb.Where("user_id = ? and kind = 2", uid).Delete(&models.Docker{})
+	return result.Error
+}
