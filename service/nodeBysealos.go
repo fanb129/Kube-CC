@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO 高版本sealos
 // CreateNodeBySealos  添加node
 func CreateNodeBySealos(passwd string, hosts []string) (*responses.Response, error) {
 	newSsh, err := ssh.NewSsh(ssh.MasterConfig)

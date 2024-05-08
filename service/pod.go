@@ -51,9 +51,11 @@ func ListDeployPod(ns string, label string) ([]responses.DeployPod, error) {
 		//pod.Status.ContainerStatuses[0].State
 		containerName := ""
 		containerId := ""
+		imageName := ""
 		if len(pod.Status.ContainerStatuses) == 1 {
 			containerName = pod.Status.ContainerStatuses[0].Name
 			containerId = pod.Status.ContainerStatuses[0].ContainerID
+			imageName = pod.Spec.Containers[0].Image
 		}
 		podList[i] = responses.DeployPod{
 			Name:        pod.Name,
@@ -63,6 +65,8 @@ func ListDeployPod(ns string, label string) ([]responses.DeployPod, error) {
 			HostIP:      pod.Status.HostIP,
 			Container:   containerName,
 			ContainerID: getConatinerId(containerId),
+			ImageName:   imageName,
+			StartTime:   pod.Status.StartTime.Format("2006-01-02 15:04:05"),
 		}
 	}
 	return podList, nil
@@ -152,5 +156,8 @@ func GetPodEvent(ns, name string) (string, error) {
 }
 
 func getConatinerId(digest string) string {
+	if digest == "" {
+		return ""
+	}
 	return digest[9 : 9+12]
 }

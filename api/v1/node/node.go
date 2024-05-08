@@ -55,7 +55,12 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	hosts := make([]string, len(form.Nodes))
+	length := len(form.Nodes)
+	if length == 0 {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: "请输入主机IP"})
+		return
+	}
+	hosts := make([]string, length)
 	for i, node := range form.Nodes {
 		hosts[i] = node.Host
 	}

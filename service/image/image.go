@@ -186,14 +186,23 @@ func backendPullAndPush(id uint, pullImage forms.PullImage) {
 	// 2. 对镜像进行tag操作
 	err = cli.Tag(pullImage.Name+":"+pullImage.Tag, docker.ImageName+":"+docker.Tag)
 	if err != nil {
-		zap.S().Errorln(err)
-		//docker.Status = 3
-		//dao.SaveImage(docker)
-		//return
+		zap.S().Errorln("tag:", err, "3s后第一次重试")
+		// 3秒后重试
+		time.Sleep(time.Second * 3)
+		err = cli.Tag(pullImage.Name+":"+pullImage.Tag, docker.ImageName+":"+docker.Tag)
+		if err != nil {
+			zap.S().Errorln("tag:", err, "10s后第二次重试")
+			// 10秒后重试
+			time.Sleep(time.Second * 10)
+			err = cli.Tag(pullImage.Name+":"+pullImage.Tag, docker.ImageName+":"+docker.Tag)
+			if err != nil {
+				zap.S().Errorln("tag:", err)
+			}
+		}
 	}
 	size, err := cli.GetSize(docker.ImageName + ":" + docker.Tag)
 	if err != nil {
-		zap.S().Errorln(err)
+		zap.S().Errorln("getSize:", err)
 	}
 	docker.Size = size
 
@@ -224,14 +233,14 @@ func backendSaveAndPush(id uint, containerId, nodeIp string) {
 	// 1. commit到本地
 	err = cli.Commit(containerId, docker.ImageName+":"+docker.Tag)
 	if err != nil {
-		zap.S().Errorln(err)
+		zap.S().Errorln("commit", err)
 		docker.Status = 3
 		dao.SaveImage(docker)
 		return
 	}
 	size, err := cli.GetSize(docker.ImageName + ":" + docker.Tag)
 	if err != nil {
-		zap.S().Errorln(err)
+		zap.S().Errorln("getSize:", err)
 	}
 	docker.Size = size
 
@@ -244,7 +253,7 @@ func backendPush(docker *models.Docker, cli *DockerCli) {
 	// push到仓库
 	err := cli.Push(docker.ImageName+":"+docker.Tag, sealosHubAdmin, sealosHubPasswd)
 	if err != nil {
-		zap.S().Errorln(err)
+		zap.S().Errorln("push:", err)
 		docker.Status = 3
 		dao.SaveImage(docker)
 		return

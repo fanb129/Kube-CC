@@ -96,12 +96,23 @@ func (d *DockerCli) GetSize(repositoryName string) (string, error) {
 		return "", err
 	}
 	for _, image := range images {
-		size := float64(image.Size) / (1000 * 1000) // 将大小转换为兆字节（MB）
-		sizeFormatted := fmt.Sprintf("%.1fMB", size)
+		size := float64(image.Size)
+		sizeFormatted := formatSize(size)
 		return sizeFormatted, nil
 	}
 
 	return "", fmt.Errorf("image not found: %s", repositoryName)
+}
+
+func formatSize(size float64) string {
+	units := []string{"B", "KB", "MB", "GB", "TB"}
+	unitIndex := 0
+	for size >= 1000 && unitIndex < len(units)-1 {
+		size /= 1000
+		unitIndex++
+	}
+	sizeFormatted := fmt.Sprintf("%.1f%s", size, units[unitIndex])
+	return sizeFormatted
 }
 
 // Commit 将容器保存为镜像到本地

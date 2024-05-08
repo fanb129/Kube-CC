@@ -23,6 +23,7 @@ var (
 	n             = 10 // 使request为limit的1/10
 	readWriteOnce = "ReadWriteOnce"
 	readWriteMany = "ReadWriteMany"
+	isPrivileged  = true
 )
 
 // CreateAppDeploy 创建deploy类型的整个应用app
@@ -160,6 +161,7 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 						Args:            form.Args,
 						Ports:           ports,
 						Env:             env,
+						SecurityContext: &corev1.SecurityContext{Privileged: &isPrivileged}, // 以特权模式进入容器
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
@@ -282,6 +284,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 		if err != nil {
 			return nil, err
 		}
+		log, _ := service.GetDeployEvent(deploy.Namespace, deploy.Name)
 		tmp := responses.AppDeploy{
 			Name:              deploy.Name,
 			Namespace:         deploy.Namespace,
@@ -302,6 +305,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 			Volume:  pvc.Spec.VolumeName,
 			PvcPath: pvcPath,
 			PodList: podList,
+			Log:     log,
 		}
 		deployList[i] = tmp
 	}
@@ -451,6 +455,7 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 						Args:            form.Args,
 						Ports:           ports,
 						Env:             env,
+						SecurityContext: &corev1.SecurityContext{Privileged: &isPrivileged}, // 以特权模式进入容器
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),

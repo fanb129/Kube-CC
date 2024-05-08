@@ -8,6 +8,8 @@ type DeployPod struct {
 	PodIP       string `json:"pod_ip"`
 	Container   string `json:"container"`
 	ContainerID string `json:"container_id"`
+	ImageName   string `json:"image_name"`
+	StartTime   string `json:"start_time"`
 }
 type StsPod struct {
 	Name      string `json:"name"`

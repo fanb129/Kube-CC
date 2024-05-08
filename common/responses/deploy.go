@@ -20,6 +20,7 @@ type AppDeploy struct {
 	ReadyReplicas     int32       `json:"ready_replicas"`
 	AvailableReplicas int32       `json:"available_replicas"`
 	PodList           []DeployPod `json:"pod_list"`
+	Log               string      `json:"log"`
 }
 
 type AppDeployList struct {

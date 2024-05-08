@@ -19,7 +19,7 @@ type AddUser struct {
 
 type GroupUpdateForm struct {
 	Name        string `form:"name" json:"name" binding:"required,min=1,max=16"`
-	Description string `form:"description" json:"description" binding:"required,min=1,max=256"`
+	Description string `form:"description" json:"description"`
 }
 
 // type CreateGroupForm struct {
