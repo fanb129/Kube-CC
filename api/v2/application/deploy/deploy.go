@@ -3,6 +3,7 @@ package deploy
 import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
+	"Kube-CC/service"
 	"Kube-CC/service/application"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -12,6 +13,14 @@ func Add(c *gin.Context) {
 	form := forms.DeployAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	err := service.VerifyResourceForm(form.ApplyResources)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
 		return
 	}
 	rsp, err := application.CreateAppDeploy(form)
@@ -50,6 +59,14 @@ func Update(c *gin.Context) {
 	form := forms.DeployAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	err := service.VerifyResourceForm(form.ApplyResources)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
 		return
 	}
 	response, err := application.UpdateAppDeploy(form)

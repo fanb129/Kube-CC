@@ -3,7 +3,6 @@ package service
 import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
-	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"errors"
 	"time"
@@ -13,98 +12,213 @@ import (
 
 // <<新增>>
 // IndexGroup  分页浏览组信息
-func IndexGroup(page int) (*responses.GroupListResponse, error) {
-	g, total, err := dao.GetGroupList(page, conf.PageSize)
+//func IndexGroup(page int) (*responses.GroupListResponse, error) {
+//	g, total, err := dao.GetGroupList(page, conf.PageSize)
+//	if err != nil {
+//		return nil, errors.New("获取组列表失败")
+//	}
+//	// 如果无数据，则返回到第一页
+//	if len(g) == 0 && page > 1 {
+//		page = 1
+//		g, total, err = dao.GetGroupList(page, conf.PageSize)
+//		if err != nil {
+//			return nil, errors.New("获取组列表失败")
+//		}
+//	}
+//	groupList := make([]responses.GroupInfo, len(g))
+//	for i, v := range g {
+//		aduser, _ := dao.GetUserById(v.Adminid)
+//		tmp := responses.GroupInfo{
+//			Groupid:     v.ID,
+//			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+//			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+//			Name:        v.Name,
+//			Adminid:     v.Adminid,
+//			Adminname:   aduser.Username,
+//			Description: v.Description,
+//		}
+//		groupList[i] = tmp
+//	}
+//	return &responses.GroupListResponse{
+//		Response:  responses.OK,
+//		Page:      page,
+//		Total:     total,
+//		GroupList: groupList,
+//	}, nil
+//}
+//
+//// IndexGroupUser 分页浏览组内信息
+//func IndexGroupUser(page int, groupid uint) (*responses.UserListResponse, error) {
+//	gu, total, err := dao.GetGroupUserList(page, conf.PageSize, groupid)
+//	if err != nil {
+//		return nil, errors.New("获取该组用户列表失败")
+//	}
+//	// 如果无数据，则返回到第一页
+//	if len(gu) == 0 && page > 1 {
+//		page = 1
+//		gu, total, err = dao.GetGroupUserList(page, conf.PageSize, groupid)
+//		if err != nil {
+//			return nil, errors.New("获取该组用户列表失败")
+//		}
+//	}
+//	groupuserList := make([]responses.UserInfo, len(gu))
+//	for i, v := range gu {
+//		tmp := responses.UserInfo{
+//			ID:        v.ID,
+//			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
+//			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
+//			Username:  v.Username,
+//			Nickname:  v.Nickname,
+//			Role:      v.Role,
+//			Avatar:    v.Avatar,
+//		}
+//		groupuserList[i] = tmp
+//	}
+//	return &responses.UserListResponse{
+//		Response: responses.OK,
+//		Page:     page,
+//		Total:    total,
+//		UserList: groupuserList,
+//	}, nil
+//}
+
+// ViewGroupUser 查看组内成员
+//func ViewGroupUser(groupid uint) (*responses.GroupUser, error) {
+//	gu, err := dao.GetGroupUserById(groupid)
+//	if err != nil {
+//		return nil, errors.New("获取该组用户列表失败")
+//	}
+//	groupuserList := make([]responses.UserInfo, len(gu))
+//	for i, v := range gu {
+//		tmp := responses.UserInfo{
+//			ID:        v.ID,
+//			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
+//			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
+//			Username:  v.Username,
+//			Nickname:  v.Nickname,
+//			Role:      v.Role,
+//			Avatar:    v.Avatar,
+//		}
+//		groupuserList[i] = tmp
+//	}
+//	return &responses.GroupUser{
+//		Response: responses.OK,
+//		UserList: groupuserList,
+//	}, nil
+//}
+
+//func GetGroupByAdid(adid uint) (*responses.GroupList, error) {
+//	groups, err := dao.GetGroupByAdminid(adid)
+//	if err != nil {
+//		return nil, errors.New("获取组失败")
+//	}
+//	if groups == nil {
+//		return nil, errors.New("当前用户未管理组")
+//	}
+//	groupList := make([]responses.GroupInfo, len(groups))
+//	for i, v := range groups {
+//		tmp := responses.GroupInfo{
+//			Groupid:     v.ID,
+//			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+//			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+//			Name:        v.Name,
+//			Adminid:     v.Adminid,
+//			Description: v.Description,
+//		}
+//		groupList[i] = tmp
+//	}
+//	return &responses.GroupList{
+//		Response:  responses.OK,
+//		GroupList: groupList,
+//	}, nil
+//}
+
+// GetGroupList 根据当前组管理员id获取其所有组
+func GetGroupList(uid uint) (*responses.GroupListResponse, error) {
+	groups, err := dao.GetGroupByAdminid(uid)
 	if err != nil {
-		return nil, errors.New("获取组列表失败")
+		return nil, errors.New("获取组失败")
 	}
-	// 如果无数据，则返回到第一页
-	if len(g) == 0 && page > 1 {
-		page = 1
-		g, total, err = dao.GetGroupList(page, conf.PageSize)
-		if err != nil {
-			return nil, errors.New("获取组列表失败")
+	length := len(groups)
+	groupList := make([]responses.GroupInfo, length)
+	for i, v := range groups {
+		username, nickname := "", ""
+		user, _ := dao.GetUserById(v.Adminid)
+		if user != nil {
+			username = user.Username
+			nickname = user.Nickname
 		}
-	}
-	groupList := make([]responses.GroupInfo, len(g))
-	for i, v := range g {
-		aduser, _ := dao.GetUserById(v.Adminid)
 		tmp := responses.GroupInfo{
 			Groupid:     v.ID,
 			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
 			Name:        v.Name,
 			Adminid:     v.Adminid,
-			Adminname:   aduser.Username,
+			Username:    username,
+			Nickname:    nickname,
 			Description: v.Description,
 		}
 		groupList[i] = tmp
 	}
 	return &responses.GroupListResponse{
 		Response:  responses.OK,
-		Page:      page,
-		Total:     total,
+		Length:    length,
 		GroupList: groupList,
 	}, nil
+
 }
 
-// IndexGroupUser 分页浏览组内信息
-func IndexGroupUser(page int, groupid uint) (*responses.UserListResponse, error) {
-	gu, total, err := dao.GetGroupUserList(page, conf.PageSize, groupid)
+// GetAllGroup 获取所有组
+func GetAllGroup() (*responses.GroupListResponse, error) {
+	groups, err := dao.GetAllGroup()
 	if err != nil {
-		return nil, errors.New("获取该组用户列表失败")
+		return nil, errors.New("获取组失败")
 	}
-	// 如果无数据，则返回到第一页
-	if len(gu) == 0 && page > 1 {
-		page = 1
-		gu, total, err = dao.GetGroupUserList(page, conf.PageSize, groupid)
-		if err != nil {
-			return nil, errors.New("获取该组用户列表失败")
+	length := len(groups)
+	groupList := make([]responses.GroupInfo, length)
+	for i, v := range groups {
+		username, nickname := "", ""
+		user, _ := dao.GetUserById(v.Adminid)
+		if user != nil {
+			username = user.Username
+			nickname = user.Nickname
 		}
+		tmp := responses.GroupInfo{
+			Groupid:     v.ID,
+			CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   v.UpdatedAt.Format("2006-01-02 15:04:05"),
+			Name:        v.Name,
+			Adminid:     v.Adminid,
+			Username:    username,
+			Nickname:    nickname,
+			Description: v.Description,
+		}
+		groupList[i] = tmp
 	}
-	groupuserList := make([]responses.UserInfo, len(gu))
-	for i, v := range gu {
-		tmp := responses.UserInfo{
-			ID:        v.ID,
-			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:  v.Username,
-			Nickname:  v.Nickname,
-			Role:      v.Role,
-			Avatar:    v.Avatar,
-		}
-		groupuserList[i] = tmp
+	return &responses.GroupListResponse{
+		Response:  responses.OK,
+		Length:    length,
+		GroupList: groupList,
+	}, nil
+
+}
+
+// GetOkUser 获取可加入本组的user
+func GetOkUser() (*responses.UserListResponse, error) {
+	users, err := dao.GetOkUserList()
+	if err != nil {
+		return nil, err
+	}
+	length := len(users)
+	userList := make([]responses.UserInfo, length)
+	for i, v := range users {
+		info := getUserInfo(v)
+		userList[i] = *info
 	}
 	return &responses.UserListResponse{
 		Response: responses.OK,
-		Page:     page,
-		Total:    total,
-		UserList: groupuserList,
-	}, nil
-}
-
-// ViewGroupUser 查看组内成员
-func ViewGroupUser(groupid uint) (*responses.GroupUser, error) {
-	gu, err := dao.GetGroupUserById(groupid)
-	if err != nil {
-		return nil, errors.New("获取该组用户列表失败")
-	}
-	groupuserList := make([]responses.UserInfo, len(gu))
-	for i, v := range gu {
-		tmp := responses.UserInfo{
-			ID:        v.ID,
-			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt: v.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Username:  v.Username,
-			Nickname:  v.Nickname,
-			Role:      v.Role,
-			Avatar:    v.Avatar,
-		}
-		groupuserList[i] = tmp
-	}
-	return &responses.GroupUser{
-		Response: responses.OK,
-		UserList: groupuserList,
+		Length:   length,
+		UserList: userList,
 	}, nil
 }
 
@@ -195,6 +309,9 @@ func AddUser(g_id, u_id uint) (*responses.Response, error) {
 	}
 	if user.Groupid != 0 {
 		return nil, errors.New("该用户属于其他组")
+	}
+	if user.Role > 1 {
+		return nil, errors.New("只能添加普通用户")
 	}
 	user.Groupid = g_id
 	row, err := dao.UpdateUser(user)

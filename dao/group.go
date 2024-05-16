@@ -9,45 +9,65 @@ import (
 //<<新增>>
 
 // GetGroupUserList 分页返回组用户列表(page第几页,pageSize每页几条数据)
-func GetGroupUserList(page int, pageSize int, groupid uint) ([]models.User, int, error) {
-	var users []models.User
-	var total int64
-	mysqlDb.Find(&users).Count(&total)
-	// 计算偏移量 Offset指定开始返回记录前要跳过的记录数。
-	offset := (page - 1) * pageSize
-	// 查看所有的user
-	result := mysqlDb.Where("groupid = ?", groupid).Offset(offset).Limit(pageSize).Find(&users)
+//func GetGroupUserList(page int, pageSize int, groupid uint) ([]models.User, int, error) {
+//	var users []models.User
+//	var total int64
+//	mysqlDb.Find(&users).Count(&total)
+//	// 计算偏移量 Offset指定开始返回记录前要跳过的记录数。
+//	offset := (page - 1) * pageSize
+//	// 查看所有的user
+//	result := mysqlDb.Where("groupid = ?", groupid).Offset(offset).Limit(pageSize).Find(&users)
+//
+//	if result.Error != nil {
+//		return nil, 0, result.Error
+//	}
+//	//r := 0
+//	//if int(total)%pageSize != 0 {
+//	//	r = 1
+//	//}
+//	//return users, int(total)/pageSize + r, nil
+//	return users, int(total), nil
+//}
+//
+//// GetGroupList 分页返回组列表(page第几页,pageSize每页几条数据)
+//func GetGroupList(page int, pageSize int) ([]models.Group, int, error) {
+//	var groups []models.Group
+//	var total int64
+//	mysqlDb.Find(&groups).Count(&total)
+//	// 计算偏移量 Offset指定开始返回记录前要跳过的记录数。
+//	offset := (page - 1) * pageSize
+//	// 查看所有的user
+//	result := mysqlDb.Offset(offset).Limit(pageSize).Find(&groups)
+//
+//	if result.Error != nil {
+//		return nil, 0, result.Error
+//	}
+//	//r := 0
+//	//if int(total)%pageSize != 0 {
+//	//	r = 1
+//	//}
+//	//return users, int(total)/pageSize + r, nil
+//	return groups, int(total), nil
+//}
 
+// GetOkUserList 获取可以加入本组的用户
+func GetOkUserList() ([]models.User, error) {
+	users := []models.User{}
+	result := mysqlDb.Where("role = 1 and groupid = 0").Find(&users)
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return nil, result.Error
 	}
-	//r := 0
-	//if int(total)%pageSize != 0 {
-	//	r = 1
-	//}
-	//return users, int(total)/pageSize + r, nil
-	return users, int(total), nil
+	return users, nil
 }
 
-// GetGroupList 分页返回组列表(page第几页,pageSize每页几条数据)
-func GetGroupList(page int, pageSize int) ([]models.Group, int, error) {
+// GetAllGroup 超级管理元可查看所有的组
+func GetAllGroup() ([]models.Group, error) {
 	var groups []models.Group
-	var total int64
-	mysqlDb.Find(&groups).Count(&total)
-	// 计算偏移量 Offset指定开始返回记录前要跳过的记录数。
-	offset := (page - 1) * pageSize
-	// 查看所有的user
-	result := mysqlDb.Offset(offset).Limit(pageSize).Find(&groups)
-
+	result := mysqlDb.Find(&groups)
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return nil, result.Error
 	}
-	//r := 0
-	//if int(total)%pageSize != 0 {
-	//	r = 1
-	//}
-	//return users, int(total)/pageSize + r, nil
-	return groups, int(total), nil
+	return groups, nil
 }
 
 // GetGroupById 通过id获取group
@@ -58,6 +78,16 @@ func GetGroupById(id uint) (*models.Group, error) {
 		return nil, result.Error
 	}
 	return &group, nil
+}
+
+// GetGroupByAdminid 通过adminid获取Group
+func GetGroupByAdminid(adid uint) ([]models.Group, error) {
+	groups := []models.Group{}
+	result := mysqlDb.Where("adminid = ?", adid).Find(&groups)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return groups, nil
 }
 
 // GetGroupUserById 通过id获取groupuser

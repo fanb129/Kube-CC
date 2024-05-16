@@ -3,6 +3,7 @@ package linux
 import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
+	"Kube-CC/service"
 	"Kube-CC/service/application"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -34,6 +35,14 @@ func Add(c *gin.Context) {
 	form := forms.LinuxAddForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	err := service.VerifyResourceForm(form.ApplyResources)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
 		return
 	}
 	response, err := application.CreateLinux(form.Name, form.Namespace, form.Kind, form.ApplyResources)
@@ -95,6 +104,14 @@ func Update(c *gin.Context) {
 	form := forms.LinuxUpdateForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	err := service.VerifyResourceForm(form.ApplyResources)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
 		return
 	}
 	response, err := application.UpdateLinux(form.Name, form.Namespace, form.ApplyResources)

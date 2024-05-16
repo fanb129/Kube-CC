@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"time"
 )
 
 const (
@@ -32,7 +31,7 @@ const (
 )
 
 // CreateHadoop 创建hadoop  hdfsMasterReplicas,datanodeReplicas,yarnMasterReplicas,yarnNodeReplicas 默认1，3，1，3
-func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
 	newUuid := string(uuid.NewUUID())
 	ns := name + "-" + newUuid
 	label := map[string]string{
@@ -70,8 +69,8 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 		DatanodeReplicas:   datanodeReplicas,
 		YarnMasterReplicas: yarnMasterReplicas,
 		YarnNodeReplicas:   yarnNodeReplicas,
-		ExpiredTime:        expiredTime,
-		ApplyResources:     resources,
+		//ExpiredTime:        expiredTime,
+		ApplyResources: resources,
 	}
 	jsonBytes, err := json.Marshal(form)
 	if err != nil {
@@ -107,7 +106,7 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 	}
 
 	// 创建namespace
-	_, err = service.CreateNs(ns, strForm, expiredTime, label, rsc)
+	_, err = service.CreateNs(ns, strForm, label, rsc)
 	if err != nil {
 		DeleteHadoop(ns)
 		return nil, err
@@ -138,10 +137,10 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 		datenodePvcName := datanodeDeployName + "-pvc"
 		yarnMasterPvcName := hadoopYarnMasterDeployName + "-pvc"
 		yarnNodePvcName := hadoopYarnNodeDeployName + "-pvc"
-		_, err = service.CreatePVC(ns, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.CreatePVC(ns, datenodePvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.CreatePVC(ns, yarnMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.CreatePVC(ns, yarnNodePvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.CreatePVC(ns, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.CreatePVC(ns, datenodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.CreatePVC(ns, yarnMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.CreatePVC(ns, yarnNodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
 		if err != nil {
 			DeleteHadoop(ns)
 			return nil, err
@@ -231,7 +230,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -311,7 +309,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -387,7 +384,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -481,7 +477,6 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -544,7 +539,7 @@ func CreateHadoop(u_id, name string, hdfsMasterReplicas, datanodeReplicas, yarnM
 }
 
 // ListHadoop 获取uid下的所有hadoop
-func ListHadoop(u_id string) (*responses.HadoopListResponse, error) {
+func ListHadoop(u_id string) (*responses.BigdataListResponse, error) {
 	label := map[string]string{
 		"image": "hadoop",
 	}
@@ -557,22 +552,22 @@ func ListHadoop(u_id string) (*responses.HadoopListResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	hadoopList := make([]responses.Hadoop, hadoops.Length)
+	hadoopList := make([]responses.Bigdata, hadoops.Length)
 	for i, hadoop := range hadoops.NsList {
 		// 获取deploy
 		deploy, err := ListAppDeploy(hadoop.Name, "")
 		if err != nil {
 			return nil, err
 		}
-		hadoopList[i] = responses.Hadoop{
+		hadoopList[i] = responses.Bigdata{
 			Ns:         hadoop,
 			DeployList: deploy.DeployList,
 		}
 	}
-	return &responses.HadoopListResponse{
-		Response:   responses.OK,
-		Length:     hadoops.Length,
-		HadoopList: hadoopList,
+	return &responses.BigdataListResponse{
+		Response:    responses.OK,
+		Length:      hadoops.Length,
+		BigdataList: hadoopList,
 	}, nil
 }
 
@@ -613,7 +608,7 @@ func DeleteHadoop(ns string) (*responses.Response, error) {
 }
 
 // UpdateHadoop 更新hadoop的uid，以及replicas
-func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, expiredTime *time.Time, resources forms.ApplyResources) (*responses.Response, error) {
+func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterReplicas, yarnNodeReplicas int32, resources forms.ApplyResources) (*responses.Response, error) {
 	rsc := forms.Resources{
 		Cpu:        resources.Cpu,
 		Memory:     resources.Memory,
@@ -628,15 +623,15 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		DatanodeReplicas:   datanodeReplicas,
 		YarnMasterReplicas: yarnMasterReplicas,
 		YarnNodeReplicas:   yarnNodeReplicas,
-		ExpiredTime:        expiredTime,
-		ApplyResources:     resources,
+		//ExpiredTime:        expiredTime,
+		ApplyResources: resources,
 	}
 	jsonBytes, err := json.Marshal(form)
 	if err != nil {
 		return nil, err
 	}
 	strForm := string(jsonBytes)
-	if _, err := service.UpdateNs(name, strForm, expiredTime, rsc); err != nil {
+	if _, err := service.UpdateNs(name, strForm, rsc); err != nil {
 		return nil, err
 	}
 
@@ -692,10 +687,10 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 		datenodePvcName := datanodeDeployName + "-pvc"
 		yarnMasterPvcName := hadoopYarnMasterDeployName + "-pvc"
 		yarnNodePvcName := hadoopYarnNodeDeployName + "-pvc"
-		_, err = service.UpdateOrCreatePvc(name, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.UpdateOrCreatePvc(name, datenodePvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.UpdateOrCreatePvc(name, yarnMasterPvcName, resources.StorageClassName, pvcStorage, accessModes)
-		_, err = service.UpdateOrCreatePvc(name, yarnNodePvcName, resources.StorageClassName, pvcStorage, accessModes)
+		_, err = service.UpdateOrCreatePvc(name, hdfsMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.UpdateOrCreatePvc(name, datenodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.UpdateOrCreatePvc(name, yarnMasterPvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
+		_, err = service.UpdateOrCreatePvc(name, yarnNodePvcName, resources.StorageClassName, pvcStorage, readWriteOnce)
 		if err != nil {
 			return nil, err
 		}
@@ -760,7 +755,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -785,7 +779,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -810,7 +803,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -835,7 +827,6 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 			corev1.ResourceCPU:              resource.MustParse(requestCpu),
 			corev1.ResourceMemory:           resource.MustParse(requestMemory),
 			corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-			//TODO GPU
 		},
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:              resource.MustParse(limitsCpu),
@@ -853,7 +844,7 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 }
 
 // GetHadoop  更新之前先获取信息
-func GetHadoop(name string) (*forms.HadoopUpdateForm, error) {
+func GetHadoop(name string) (*responses.InfoHadoop, error) {
 	form := forms.HadoopUpdateForm{}
 	ns, err := service.GetNs(name)
 	if err != nil {
@@ -864,5 +855,8 @@ func GetHadoop(name string) (*forms.HadoopUpdateForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoHadoop{
+		Response: responses.OK,
+		Form:     form,
+	}, nil
 }

@@ -4,8 +4,10 @@ import (
 	"Kube-CC/common/responses"
 	"Kube-CC/dao"
 	"context"
+	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 // GetDeploy 获得指定deploy
@@ -75,4 +77,19 @@ func UpdateDeploy(name, ns, form string, spec appsv1.DeploymentSpec) (*appsv1.De
 		return nil, err
 	}
 	return update, nil
+}
+
+func GetDeployEvent(ns, name string) (string, error) {
+	events, err := dao.ClientSet.CoreV1().Events(ns).List(context.TODO(), metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("involvedObject.name=%s", name),
+	})
+	if err != nil {
+		return "", err
+	}
+	// 拼接事件信息到 res
+	var res strings.Builder
+	for _, event := range events.Items {
+		res.WriteString(fmt.Sprintf("%s\t%s\t[%s]\t%s\n", event.CreationTimestamp.Format("2006-01-02 15:04:05"), event.Type, event.Reason, event.Message))
+	}
+	return res.String(), nil
 }

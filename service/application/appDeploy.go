@@ -7,7 +7,6 @@ import (
 	"Kube-CC/service"
 	"context"
 	"encoding/json"
-	"errors"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,8 +19,11 @@ import (
 )
 
 var (
-	n           = 10 // 使request为limit的1/10
-	accessModes = "ReadWriteOnce"
+	n             = 10 // 使request为limit的1/10
+	readWriteOnce = "ReadWriteOnce"
+	readWriteMany = "ReadWriteMany"
+	isPrivileged  = true
+	nfsSc         = "openebs-rwx"
 )
 
 // CreateAppDeploy 创建deploy类型的整个应用app
@@ -60,6 +62,10 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	limitsGpu, err := service.SplitRSC(form.Gpu, m)
+	if err != nil {
+		return nil, err
+	}
 
 	// 创建uuid，以便筛选出属于同一组的deploy、pod、service等
 	newUuid := string(uuid.NewUUID())
@@ -71,36 +77,47 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
-		volumes = make([]corev1.Volume, 1)
-		//volumeMounts = make([]corev1.VolumeMount, len(form.PvcPath))
-		volumeMounts = make([]corev1.VolumeMount, 1)
-		if form.StorageClassName == "" {
-			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
-		}
+		//volumes = make([]corev1.Volume, 1)
+		volumes = make([]corev1.Volume, len(form.PvcPath))
+		volumeMounts = make([]corev1.VolumeMount, len(form.PvcPath))
+		//volumeMounts = make([]corev1.VolumeMount, 1)
+		//if form.StorageClassName == "" {
+		//	return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
+		//}
+		form.StorageClassName = nfsSc
 		pvcName := form.Name + "-pvc"
-		_, err = service.CreatePVC(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, accessModes)
+		_, err = service.CreatePVC(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
-		volumes[0] = corev1.Volume{
-			Name: pvcName,
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvcName,
-				},
-			},
-		}
-		// 写死为/data目录
-		volumeMounts[0] = corev1.VolumeMount{
-			Name:      pvcName,
-			MountPath: "/data",
-		}
-		//for i, path := range form.PvcPath {
-		//	volumeMounts[i] = corev1.VolumeMount{
-		//		Name:      pvcName,
-		//		MountPath: path,
-		//	}
+		//volumes[0] = corev1.Volume{
+		//	Name: pvcName,
+		//	VolumeSource: corev1.VolumeSource{
+		//		PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+		//			ClaimName: pvcName,
+		//		},
+		//	},
 		//}
+		//// 写死为/data目录
+		//volumeMounts[0] = corev1.VolumeMount{
+		//	Name:      pvcName,
+		//	MountPath: "/data",
+		//}
+
+		for i, path := range form.PvcPath {
+			volumes[i] = corev1.Volume{
+				Name: pvcName + "-" + strconv.Itoa(i),
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvcName,
+					},
+				},
+			}
+			volumeMounts[i] = corev1.VolumeMount{
+				Name:      pvcName + "-" + strconv.Itoa(i),
+				MountPath: path,
+			}
+		}
 	}
 
 	// 0.创建configMap，存储环境变量
@@ -155,17 +172,18 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 						Args:            form.Args,
 						Ports:           ports,
 						Env:             env,
+						SecurityContext: &corev1.SecurityContext{Privileged: &isPrivileged}, // 以特权模式进入容器
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
 								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+								service.GpuShare:                resource.MustParse(limitsGpu),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -267,6 +285,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 		limitCpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceCPU]
 		limitMemory := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceMemory]
 		limitStorage := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[corev1.ResourceEphemeralStorage]
+		limitGpu := deploy.Spec.Template.Spec.Containers[0].Resources.Limits[service.GpuShare]
 		// 获取对应pod
 		label1 := map[string]string{
 			"uuid": deploy.Labels["uuid"],
@@ -276,6 +295,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 		if err != nil {
 			return nil, err
 		}
+		log, _ := service.GetDeployEvent(deploy.Namespace, deploy.Name)
 		tmp := responses.AppDeploy{
 			Name:              deploy.Name,
 			Namespace:         deploy.Namespace,
@@ -291,11 +311,12 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 				Memory:  limitMemory.String(),
 				Storage: limitStorage.String(),
 				PVC:     pvc.Spec.Resources.Requests.Storage().String(),
-				// TODO GPU
+				GPU:     limitGpu.String(),
 			},
 			Volume:  pvc.Spec.VolumeName,
 			PvcPath: pvcPath,
 			PodList: podList,
+			Log:     log,
 		}
 		deployList[i] = tmp
 	}
@@ -303,7 +324,7 @@ func ListAppDeploy(ns string, label string) (*responses.AppDeployList, error) {
 }
 
 // GetAppDeploy 更新之前先获取deployApp的信息
-func GetAppDeploy(name, ns string) (*forms.DeployAddForm, error) {
+func GetAppDeploy(name, ns string) (*responses.InfoDeploy, error) {
 	form := forms.DeployAddForm{}
 	deploy, err := service.GetDeploy(name, ns)
 	if err != nil {
@@ -314,7 +335,10 @@ func GetAppDeploy(name, ns string) (*forms.DeployAddForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoDeploy{
+		Response: responses.OK,
+		Form:     form,
+	}, nil
 }
 
 func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
@@ -351,13 +375,20 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	limitsGpu, err := service.SplitRSC(form.Gpu, m)
+	if err != nil {
+		return nil, err
+	}
 	configName := form.Name + "-configMap"
 	pvcName := form.Name + "-pvc"
 	serviceName := form.Name + "-service"
 	// 更新configmap
 	ns := form.Namespace
-	if _, err := service.UpdateConfigMap(configName, ns, form.Env); err != nil {
-		return nil, err
+	if len(form.Env) > 0 {
+		_, err = service.CreateOrUpdateConfigMap(configName, ns, form.Env)
+		if err != nil {
+			return nil, err
+		}
 	}
 	env := make([]corev1.EnvVar, len(form.Env))
 	j := 0
@@ -392,31 +423,42 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
-		volumes = make([]corev1.Volume, 1)
-		volumeMounts = make([]corev1.VolumeMount, 1)
-		_, err = service.UpdateOrCreatePvc(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, accessModes)
+		//volumes = make([]corev1.Volume, 1)
+		//volumeMounts = make([]corev1.VolumeMount, 1)
+		volumes = make([]corev1.Volume, len(form.PvcPath))
+		volumeMounts = make([]corev1.VolumeMount, len(form.PvcPath))
+		form.StorageClassName = nfsSc
+		_, err = service.UpdateOrCreatePvc(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
-		volumes[0] = corev1.Volume{
-			Name: pvcName,
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvcName,
-				},
-			},
-		}
-		// 写死为/data目录
-		volumeMounts[0] = corev1.VolumeMount{
-			Name:      pvcName,
-			MountPath: "/data",
-		}
-		//for i, path := range form.PvcPath {
-		//	volumeMounts[i] = corev1.VolumeMount{
-		//		Name:      pvcName,
-		//		MountPath: path,
-		//	}
+		//volumes[0] = corev1.Volume{
+		//	Name: pvcName,
+		//	VolumeSource: corev1.VolumeSource{
+		//		PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+		//			ClaimName: pvcName,
+		//		},
+		//	},
 		//}
+		//// 写死为/data目录
+		//volumeMounts[0] = corev1.VolumeMount{
+		//	Name:      pvcName,
+		//	MountPath: "/data",
+		//}
+		for i, path := range form.PvcPath {
+			volumes[i] = corev1.Volume{
+				Name: pvcName + "-" + strconv.Itoa(i),
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvcName,
+					},
+				},
+			}
+			volumeMounts[i] = corev1.VolumeMount{
+				Name:      pvcName + "-" + strconv.Itoa(i),
+				MountPath: path,
+			}
+		}
 	}
 	spec := appsv1.DeploymentSpec{
 		Replicas: &form.Replicas,
@@ -428,23 +470,25 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 				RestartPolicy: corev1.RestartPolicyAlways,
 				Containers: []corev1.Container{
 					{
+						Name:            form.Name,
 						Image:           form.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         form.Command,
 						Args:            form.Args,
 						Ports:           ports,
 						Env:             env,
+						SecurityContext: &corev1.SecurityContext{Privileged: &isPrivileged}, // 以特权模式进入容器
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(requestCpu),
 								corev1.ResourceMemory:           resource.MustParse(requestMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(requestStorage),
-								//TODO GPU
 							},
 							Limits: corev1.ResourceList{
 								corev1.ResourceCPU:              resource.MustParse(limitsCpu),
 								corev1.ResourceMemory:           resource.MustParse(limitsMemory),
 								corev1.ResourceEphemeralStorage: resource.MustParse(limitsStorage),
+								service.GpuShare:                resource.MustParse(limitsGpu),
 							},
 						},
 						VolumeMounts: volumeMounts,
@@ -458,21 +502,23 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	}
 
 	// 更新service
-	servicePorts := make([]corev1.ServicePort, num)
-	for i, port := range form.Ports {
-		servicePorts[i] = corev1.ServicePort{
-			Name:       strconv.Itoa(int(port)),
-			Port:       port,
-			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: port},
+	if num > 0 {
+		servicePorts := make([]corev1.ServicePort, num)
+		for i, port := range form.Ports {
+			servicePorts[i] = corev1.ServicePort{
+				Name:       strconv.Itoa(int(port)),
+				Port:       port,
+				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: port},
+			}
 		}
-	}
-	serviceSpec := corev1.ServiceSpec{
-		Type:     corev1.ServiceTypeNodePort,
-		Selector: label,
-		Ports:    servicePorts,
-	}
-	if _, err := service.UpdateService(serviceName, ns, serviceSpec); err != nil {
-		return nil, err
+		serviceSpec := corev1.ServiceSpec{
+			Type:     corev1.ServiceTypeNodePort,
+			Selector: label,
+			Ports:    servicePorts,
+		}
+		if _, err := service.UpdateService(serviceName, ns, serviceSpec); err != nil {
+			return nil, err
+		}
 	}
 
 	// TODO niginx

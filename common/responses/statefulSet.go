@@ -1,15 +1,16 @@
 package responses
 
 import (
+	"Kube-CC/common/forms"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // AppStatefulSet 的信息,用于查看详细信息
 type AppStatefulSet struct {
-	Name      string               `json:"name" form:"name" binding:"required,min=3,max=16"`
-	Namespace string               `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
-	Replicas  int32                `json:"replicas" form:"replicas" binding:"required,gte=1"`
-	Image     string               `json:"image" form:"image" binding:"required"`
+	Name      string               `json:"name"`
+	Namespace string               `json:"namespace"`
+	Replicas  int32                `json:"replicas"`
+	Image     string               `json:"image"`
 	Ports     []corev1.ServicePort `json:"ports"`
 	Resources
 	PvcPath           []string `json:"pvc_path"`
@@ -25,4 +26,9 @@ type AppStatefulSetList struct {
 	Response
 	Length          int              `json:"length"`
 	StatefulSetList []AppStatefulSet `json:"stateful_set_list"`
+}
+
+type InfoStatefulSet struct {
+	Response
+	Form forms.StatefulSetAddForm
 }

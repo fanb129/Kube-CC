@@ -4,6 +4,7 @@ import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/service"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -25,10 +26,42 @@ import (
 //		}
 //		c.JSON(http.StatusOK, rsp)
 //	}
+
+func OkUser(c *gin.Context) {
+	rsp, err := service.GetOkUser()
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, rsp)
+}
+
 func Index(c *gin.Context) {
-	//fmt.Println("userindex")
-	page, _ := strconv.Atoi(c.Param("page"))
-	groupListResponse, err := service.IndexGroup(page)
+	u_id, exists := c.Get("u_id")
+	if !exists {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("获取权限信息失败").Error(),
+		})
+		return
+	}
+	uid := u_id.(uint)
+	groupListResponse, err := service.GetGroupList(uid)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, groupListResponse)
+}
+
+func All(c *gin.Context) {
+	groupListResponse, err := service.GetAllGroup()
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -56,15 +89,35 @@ func Delete(c *gin.Context) {
 
 }
 
+//func ViewGroupByAdid(c *gin.Context) {
+//	adid, _ := strconv.Atoi(c.Param("id"))
+//	response, err := service.GetGroupByAdid(uint(adid))
+//	if err != nil {
+//		c.JSON(http.StatusOK, responses.Response{
+//			StatusCode: -1,
+//			StatusMsg:  err.Error(),
+//		})
+//		return
+//	}
+//	c.JSON(http.StatusOK, response)
+//}
+
 // Create 创建组
 func Create(c *gin.Context) {
-	adid, _ := strconv.Atoi(c.Param("id"))
+	u_id, exists := c.Get("u_id")
+	if !exists {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("获取权限信息失败").Error(),
+		})
+		return
+	}
 	form := forms.GroupUpdateForm{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
-	response, err := service.CreateNewGroup(uint(adid), form.Name, form.Description)
+	response, err := service.CreateNewGroup(u_id.(uint), form.Name, form.Description)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -76,19 +129,19 @@ func Create(c *gin.Context) {
 }
 
 // ViewGroupUser 查看组内成员
-func ViewGroupUser(c *gin.Context) {
-	//fmt.Println("userindex")
-	gid, _ := strconv.Atoi(c.Param("id"))
-	groupuserListResponse, err := service.ViewGroupUser(uint(gid))
-	if err != nil {
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-		return
-	}
-	c.JSON(http.StatusOK, groupuserListResponse)
-}
+//func ViewGroupUser(c *gin.Context) {
+//	//fmt.Println("userindex")
+//	gid, _ := strconv.Atoi(c.Param("id"))
+//	groupuserListResponse, err := service.ViewGroupUser(uint(gid))
+//	if err != nil {
+//		c.JSON(http.StatusOK, responses.Response{
+//			StatusCode: -1,
+//			StatusMsg:  err.Error(),
+//		})
+//		return
+//	}
+//	c.JSON(http.StatusOK, groupuserListResponse)
+//}
 
 // Add 添加用户
 func Add(c *gin.Context) {
@@ -125,7 +178,7 @@ func Remove(c *gin.Context) {
 
 }
 
-// Update 更新用户信息
+// Update 更新信息
 func Update(c *gin.Context) {
 	gid, _ := strconv.Atoi(c.Param("id"))
 	form := forms.GroupUpdateForm{}

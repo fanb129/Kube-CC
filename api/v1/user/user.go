@@ -4,6 +4,7 @@ import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/service"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -27,8 +28,26 @@ func Info(c *gin.Context) {
 }
 func Index(c *gin.Context) {
 	//fmt.Println("userindex")
-	page, _ := strconv.Atoi(c.Param("page"))
-	userListResponse, err := service.IndexUser(page)
+	g_id := c.Query("gid")
+	gid, err := strconv.Atoi(g_id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	u_id, exists := c.Get("u_id")
+	if !exists {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  errors.New("获取权限信息失败").Error(),
+		})
+		return
+	}
+	uid := u_id.(uint)
+
+	userListResponse, err := service.GetUserList(uint(gid), uid)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,
@@ -38,6 +57,18 @@ func Index(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, userListResponse)
 }
+
+//func GetAll(c *gin.Context) {
+//	allUserList, err := service.GetAll()
+//	if err != nil {
+//		c.JSON(http.StatusOK, responses.Response{
+//			StatusCode: -1,
+//			StatusMsg:  err.Error(),
+//		})
+//		return
+//	}
+//	c.JSON(http.StatusOK, allUserList)
+//}
 
 // // GetAd 获取管理员用户
 // func GetAd(c *gin.Context) {
@@ -90,6 +121,24 @@ func Edit(c *gin.Context) {
 
 }
 
+func Allocation(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	form := forms.AllocationForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.AllocationUser(uint(id), form)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // Update 更新用户信息
 func Update(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
@@ -119,6 +168,41 @@ func ResetPass(c *gin.Context) {
 		return
 	}
 	response, err := service.ResetPassUser(uint(id), form.Password)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func SetEmail(c *gin.Context) {
+	form := forms.SetEmailForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.SetEmail(form.Id, form.Email, form.VCode)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+// Add 添加注册用户
+func Add(c *gin.Context) {
+	form := forms.AddUserForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	response, err := service.RegisterUser(form.Username, form.Password, form.Nickname, form.Gid)
 	if err != nil {
 		c.JSON(http.StatusOK, responses.Response{
 			StatusCode: -1,

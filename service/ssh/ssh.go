@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"Kube-CC/conf"
 	"bufio"
 	"errors"
 	"fmt"
@@ -17,6 +18,13 @@ import (
 var (
 	TypePassword = "password"
 	TypeKey      = "key"
+	MasterConfig = Config{
+		Host:     conf.MasterInfo.Host,
+		Port:     conf.MasterInfo.Port,
+		User:     conf.MasterInfo.User,
+		Type:     TypePassword,
+		Password: conf.MasterInfo.Password,
+	}
 )
 
 type Config struct {

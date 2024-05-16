@@ -1,15 +1,16 @@
 package responses
 
 import (
+	"Kube-CC/common/forms"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // AppDeploy appDeploy的信息,用于查看详细信息
 type AppDeploy struct {
-	Name      string               `json:"name" form:"name" binding:"required,min=3,max=16"`
-	Namespace string               `json:"namespace" form:"namespace" binding:"required,min=3,max=16"`
-	Replicas  int32                `json:"replicas" form:"replicas" binding:"required,gte=1"`
-	Image     string               `json:"image" form:"image" binding:"required"`
+	Name      string               `json:"name"`
+	Namespace string               `json:"namespace"`
+	Replicas  int32                `json:"replicas"`
+	Image     string               `json:"image"`
 	Ports     []corev1.ServicePort `json:"ports"`
 	Resources
 	PvcPath           []string    `json:"pvc_path"`
@@ -19,10 +20,21 @@ type AppDeploy struct {
 	ReadyReplicas     int32       `json:"ready_replicas"`
 	AvailableReplicas int32       `json:"available_replicas"`
 	PodList           []DeployPod `json:"pod_list"`
+	Log               string      `json:"log"`
 }
 
 type AppDeployList struct {
 	Response
 	Length     int         `json:"length"`
 	DeployList []AppDeploy `json:"deploy_list"`
+}
+
+type InfoDeploy struct {
+	Response
+	Form forms.DeployAddForm
+}
+
+type InfoLinux struct {
+	Response
+	Form forms.LinuxUpdateForm
 }
