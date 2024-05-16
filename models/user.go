@@ -8,7 +8,7 @@ import (
 type User struct {
 	gorm.Model
 	Username string `gorm:"type:varchar(20);not null;unique;uniqueIndex:idx_username"` // 账号
-	Email    string `gorm:"type:varchar(256);not  null;unique;uniqueIndex:idx_email"`  // 邮箱
+	Email    string `gorm:"type:varchar(256)"`                                         // 邮箱
 
 	Password string `gorm:"type:varchar(100);not null;"`     // 加密后的密码
 	Nickname string `gorm:"type:varchar(20);not null;index"` // 昵称

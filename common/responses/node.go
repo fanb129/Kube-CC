@@ -9,6 +9,7 @@ type Node struct {
 	CreatedAt      string                 `json:"created_at"`
 	OsImage        string                 `json:"os_image"`
 	KubeletVersion string                 `json:"kubelet_version"`
+	Role           string                 `json:"role"`
 	Resources
 }
 

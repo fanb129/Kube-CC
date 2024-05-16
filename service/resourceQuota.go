@@ -106,6 +106,9 @@ func UpdateResourceQuota(ns string, resouces forms.Resources) error {
 
 // SplitRSC 将资源除以n，用作request
 func SplitRSC(rsc string, n int) (string, error) {
+	if rsc == "" {
+		return "0", nil
+	}
 	quantity, err := resource.ParseQuantity(rsc)
 	if err != nil {
 		return "", errors.New("failed to parse resource quantity: " + err.Error())
@@ -144,6 +147,9 @@ func SplitRSC(rsc string, n int) (string, error) {
 }
 
 func VerifyCpu(rsc string) error {
+	if rsc == "" {
+		return nil
+	}
 	quantity, err := resource.ParseQuantity(rsc)
 	if err != nil {
 		return errors.New("failed to parse resource quantity: " + err.Error())
@@ -157,6 +163,9 @@ func VerifyCpu(rsc string) error {
 	return nil
 }
 func VerifyResource(rsc string) error {
+	if rsc == "" {
+		return nil
+	}
 	quantity, err := resource.ParseQuantity(rsc)
 	if err != nil {
 		return errors.New("failed to parse resource quantity: " + err.Error())
@@ -173,23 +182,23 @@ func VerifyResource(rsc string) error {
 func VerifyResourceForm(resources forms.ApplyResources) error {
 	err := VerifyCpu(resources.Cpu)
 	if err != nil {
-		return err
+		return errors.New("cpu:" + err.Error())
 	}
 	err = VerifyResource(resources.Memory)
 	if err != nil {
-		return err
+		return errors.New("memory:" + err.Error())
 	}
 	err = VerifyResource(resources.Gpu)
 	if err != nil {
-		return err
+		return errors.New("gpu:" + err.Error())
 	}
 	err = VerifyResource(resources.Storage)
 	if err != nil {
-		return err
+		return errors.New("storage:" + err.Error())
 	}
 	err = VerifyResource(resources.PvcStorage)
 	if err != nil {
-		return err
+		return errors.New("pvcStorage:" + err.Error())
 	}
 	return nil
 }

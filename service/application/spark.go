@@ -536,7 +536,7 @@ func UpdateSpark(name string, masterReplicas int32, workerReplicas int32, resour
 }
 
 // GetSpark 更新之前先获取信息
-func GetSpark(name string) (*forms.SparkUpdateForm, error) {
+func GetSpark(name string) (*responses.InfoSpark, error) {
 	form := forms.SparkUpdateForm{}
 	ns, err := service.GetNs(name)
 	if err != nil {
@@ -547,5 +547,5 @@ func GetSpark(name string) (*forms.SparkUpdateForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoSpark{Response: responses.OK, Form: form}, nil
 }

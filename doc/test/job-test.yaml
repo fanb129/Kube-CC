@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pc-job
+  namespace: default
+spec:
+  completions: 4 # 指定job需要成功运行Pods的次数。默认值: 1
+  parallelism: 2 # 指定job在任一时刻应该并发运行Pods的数量。默认值: 1
+  manualSelector: true
+  selector:
+    matchLabels:
+      app: counter-pod
+  template:
+    metadata:
+      labels:
+        app: counter-pod
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: counter
+          image: busybox:1.30
+          command: ["bin/sh","-c","for i in 9 8 7 6 5 4 3 2 1; do echo $i;sleep 3;done"]

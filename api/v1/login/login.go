@@ -11,6 +11,28 @@ import (
 	"go.uber.org/zap"
 )
 
+// FindPass 找回密码
+func FindPass(c *gin.Context) {
+	form := forms.FindPass{}
+	// 参数绑定
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+
+	// 调用业务层登录
+	res, err := service.FindPass(form)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
 // CheckPass 验证密码
 func CheckPass(c *gin.Context) {
 	loginForm := forms.LoginForm{}
@@ -61,25 +83,25 @@ func Logout(c *gin.Context) {
 }
 
 // Register 用户注册
-func Register(c *gin.Context) {
-	//fmt.Println("register")
-	// 表单验证，参数绑定
-	registerForm := forms.RegisterForm{}
-	if err := c.ShouldBind(&registerForm); err != nil {
-		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
-		return
-	}
-	registerRes, err := service.Register(registerForm.Username, registerForm.Password, registerForm.Nickname, registerForm.Email)
-	if err != nil {
-		c.JSON(http.StatusOK, responses.Response{
-			StatusCode: -1,
-			StatusMsg:  err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, registerRes)
-}
+//func Register(c *gin.Context) {
+//	//fmt.Println("register")
+//	// 表单验证，参数绑定
+//	registerForm := forms.RegisterForm{}
+//	if err := c.ShouldBind(&registerForm); err != nil {
+//		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+//		return
+//	}
+//	registerRes, err := service.Register(registerForm.Username, registerForm.Password, registerForm.Nickname, registerForm.Email)
+//	if err != nil {
+//		c.JSON(http.StatusOK, responses.Response{
+//			StatusCode: -1,
+//			StatusMsg:  err.Error(),
+//		})
+//		return
+//	}
+//
+//	c.JSON(http.StatusOK, registerRes)
+//}
 
 var store = base64Captcha.DefaultMemStore
 

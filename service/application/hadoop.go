@@ -844,7 +844,7 @@ func UpdateHadoop(name string, hdfsMasterReplicas, datanodeReplicas, yarnMasterR
 }
 
 // GetHadoop  更新之前先获取信息
-func GetHadoop(name string) (*forms.HadoopUpdateForm, error) {
+func GetHadoop(name string) (*responses.InfoHadoop, error) {
 	form := forms.HadoopUpdateForm{}
 	ns, err := service.GetNs(name)
 	if err != nil {
@@ -855,5 +855,8 @@ func GetHadoop(name string) (*forms.HadoopUpdateForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoHadoop{
+		Response: responses.OK,
+		Form:     form,
+	}, nil
 }

@@ -7,7 +7,6 @@ import (
 	"Kube-CC/log"
 	"Kube-CC/routers"
 	"Kube-CC/service"
-	"Kube-CC/service/docker"
 	"time"
 
 	"go.uber.org/zap"
@@ -25,14 +24,13 @@ func main() {
 	if err := dao.InitDB(); err != nil {
 		zap.S().Panicln(err)
 	}
-	dao.InitRedis() //Redis 初始化(暂时不用)
+	dao.InitRedis() //Redis 初始化
 	// client-go k8s初始化
 	if err := dao.InitKube(); err != nil {
 		zap.S().Panicln(err)
 	}
-
-	//初始化连接docker
-	if err := docker.ConnectDocker(); err != nil {
+	// 初始化镜像仓库连接
+	if err := dao.InitRegistry(); err != nil {
 		zap.S().Panicln(err)
 	}
 
@@ -56,13 +54,20 @@ func main() {
 				}
 				for _, user := range users {
 					// 如果为nil就是永久时长
-					if user.ExpiredTime.Before(time.Now()) && user.Role < 3 {
-						// 删除user
-						_, err := service.DeleteUSer(user.ID)
+					if user.ExpiredTime.Before(time.Now()) && user.Role < 2 {
+						//// 删除user
+						//_, err := service.DeleteUSer(user.ID)
+						//if err != nil {
+						//	zap.S().Errorln("删除user失败:", err)
+						//} else {
+						//	zap.S().Infoln("delete user:", user.Username)
+						//}
+
+						// 删除其所有ns
+						zap.S().Infoln("冻结用户:" + user.Username + ",删除其所有工作空间")
+						err = service.DeleteNsByUser(user.ID)
 						if err != nil {
-							zap.S().Errorln("删除user失败:", err)
-						} else {
-							zap.S().Infoln("delete user:", user.Username)
+							zap.S().Errorln(err)
 						}
 					}
 				}

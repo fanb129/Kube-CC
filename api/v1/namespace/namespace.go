@@ -12,10 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // Index 展示所有的工作空间 namespace，
-func Index(c *gin.Context) {
+func Index1(c *gin.Context) {
 	label := map[string]string{
 		"kind": "workspace",
 	}
@@ -205,6 +206,34 @@ func Index(c *gin.Context) {
 	}
 }
 
+// Index 简化版，无权限鉴别
+func Index(c *gin.Context) {
+	label := map[string]string{
+		"kind": "workspace",
+	}
+	u_id := c.DefaultQuery("u_id", "")
+	if u_id != "" {
+		label["u_id"] = u_id
+		// 将map标签转换为string
+		selector := labels.SelectorFromSet(label).String()
+		nsListResponse, err := service.ListNs(selector)
+		if err != nil {
+			c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+		} else {
+			c.JSON(http.StatusOK, nsListResponse)
+		}
+		return
+	}
+	// 将map标签转换为string
+	selector := labels.SelectorFromSet(label).String()
+	nsListResponse, err := service.ListNs(selector)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, nsListResponse)
+	}
+}
+
 // Delete 删除指定namespace
 func Delete(c *gin.Context) {
 	ns := c.Param("ns")
@@ -288,6 +317,18 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
 		return
 	}
+	// 判断用户的过期时间
+	user, err := dao.GetUserById(form.Uid)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{-1, err.Error()})
+		return
+	}
+	expiredTime := user.ExpiredTime
+	if expiredTime.Before(time.Now()) {
+		c.JSON(http.StatusOK, responses.Response{-1, "用户已到过期时间"})
+		return
+	}
+
 	label := map[string]string{
 		"kind": "workspace",
 	}
@@ -333,7 +374,7 @@ func Update(c *gin.Context) {
 }
 
 // BigDataIndex  将spark，hadoop的index操作封装在一起
-func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataListResponse, error)) {
+func BigDataIndex1(c *gin.Context, listFun func(uid string) (*responses.BigdataListResponse, error)) {
 	g_id := c.DefaultQuery("g_id", "")
 	u_id := c.DefaultQuery("u_id", "")
 
@@ -507,6 +548,18 @@ func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataLi
 	}
 }
 
+// BigDataIndex 简化版，无权限鉴别
+func BigDataIndex(c *gin.Context, listFun func(uid string) (*responses.BigdataListResponse, error)) {
+	u_id := c.DefaultQuery("u_id", "")
+	nsListResponse, err := listFun(u_id)
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+	} else {
+		c.JSON(http.StatusOK, nsListResponse)
+	}
+	return
+}
+
 // NsTotal 用户总的ns的资源和
 func NsTotal(c *gin.Context) {
 	u_id := c.DefaultQuery("u_id", "")
@@ -523,17 +576,17 @@ func NsTotal(c *gin.Context) {
 }
 
 // ListAllKindNs 返回所有类型的ns，包括工作空间、spark、hadoop
-func ListAllKindNs(c *gin.Context) {
-	u_id := c.DefaultQuery("u_id", "")
-	label := map[string]string{
-		"u_id": u_id,
-	}
-	// 将map标签转换为string
-	selector := labels.SelectorFromSet(label).String()
-	nsListResponse, err := service.ListNs(selector)
-	if err != nil {
-		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
-	} else {
-		c.JSON(http.StatusOK, nsListResponse)
-	}
-}
+//func ListAllKindNs(c *gin.Context) {
+//	u_id := c.DefaultQuery("u_id", "")
+//	label := map[string]string{
+//		"u_id": u_id,
+//	}
+//	// 将map标签转换为string
+//	selector := labels.SelectorFromSet(label).String()
+//	nsListResponse, err := service.ListNs(selector)
+//	if err != nil {
+//		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+//	} else {
+//		c.JSON(http.StatusOK, nsListResponse)
+//	}
+//}

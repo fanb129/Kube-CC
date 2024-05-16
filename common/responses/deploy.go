@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"Kube-CC/common/forms"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -19,10 +20,21 @@ type AppDeploy struct {
 	ReadyReplicas     int32       `json:"ready_replicas"`
 	AvailableReplicas int32       `json:"available_replicas"`
 	PodList           []DeployPod `json:"pod_list"`
+	Log               string      `json:"log"`
 }
 
 type AppDeployList struct {
 	Response
 	Length     int         `json:"length"`
 	DeployList []AppDeploy `json:"deploy_list"`
+}
+
+type InfoDeploy struct {
+	Response
+	Form forms.DeployAddForm
+}
+
+type InfoLinux struct {
+	Response
+	Form forms.LinuxUpdateForm
 }

@@ -9,6 +9,7 @@ type UserInfo struct {
 	Role        uint   `json:"role"`
 	Avatar      string `json:"avatar"`
 	Gid         uint   `json:"gid"`
+	Group       string `json:"group"`
 	Cpu         string `json:"cpu"`
 	Memory      string `json:"memory"`
 	Storage     string `json:"storage"`
@@ -34,26 +35,16 @@ type UserInfoResponse struct {
 	Response
 	UserInfo UserInfo `json:"user_info"`
 }
+
+//type UserListResponse struct {
+//	Response
+//	Page     int        `json:"page"`
+//	Total    int        `json:"total"`
+//	UserList []UserInfo `json:"user_list"`
+//}
+
 type UserListResponse struct {
 	Response
-	Page     int        `json:"page"`
-	Total    int        `json:"total"`
+	Length   int        `json:"length"`
 	UserList []UserInfo `json:"user_list"`
-}
-type AllUserList struct {
-	Response
-	UserList []UserInfo `json:"all_user_list"`
-}
-type GroupUser struct {
-	Response
-	UserList []UserInfo `json:"groupuser_list"`
-}
-type AdminUserResponse struct {
-	Response
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
-}
-type AdminUserListResponse struct {
-	Response
-	AdminUserList []AdminUserResponse `json:"adminuser_list"`
 }

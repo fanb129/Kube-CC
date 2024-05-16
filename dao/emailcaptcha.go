@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"Kube-CC/conf"
 	"fmt"
 	"math/rand" //随机数
 	"net/smtp"
@@ -9,10 +10,11 @@ import (
 	"github.com/jordan-wright/email"
 )
 
-func SendEmailValidate(em []string) (string, error) {
+func SendEmailValidate(em string) (string, error) {
 	e := email.NewEmail()
-	e.From = fmt.Sprintf("Kube-CC <1223970473@qq.com>")
-	e.To = em
+	e.Subject = "Kube-CC <邮箱验证>"
+	e.From = fmt.Sprintf("Kube-CC <%s>", conf.EmailUser)
+	e.To = []string{em}
 	// 生成6位随机验证码
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	vCode := fmt.Sprintf("%06v", rnd.Int31n(1000000))
@@ -22,9 +24,9 @@ func SendEmailValidate(em []string) (string, error) {
 		您本次的验证码为%s
 		尊敬的%s，您好！您于 %s 提交本次邮箱验证，为了保证账号安全，验证码有效期为5分钟。请确认为本人操作，切勿向他人泄露，感谢您的理解与使用。
 		此邮箱为系统邮箱，请勿回复。
-	`, vCode, em[0], t)
+	`, vCode, em, t)
 	e.Text = []byte(content)
 	//设置服务器相关的配置
-	err := e.Send("smtp.qq.com:25", smtp.PlainAuth("", "1223970473@qq.com", "jyojveywjbvibabg", "smtp.qq.com"))
+	err := e.Send(conf.EmailAddr, smtp.PlainAuth("", conf.EmailUser, conf.EmailPassword, conf.EmailHost))
 	return vCode, err
 }

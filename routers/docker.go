@@ -8,11 +8,12 @@ import (
 func dockerRouter(router *gin.RouterGroup) {
 	dockerRouters := router.Group("/docker")
 	{
-		dockerRouters.GET("/:page", docker.Index)
-		dockerRouters.GET("/remove/:image_id", docker.Remove)
-		dockerRouters.POST("/pullpublic", docker.PullPublic)
-		dockerRouters.POST("/tagadd", docker.TagAdd)
-		dockerRouters.POST("/pullprivate", docker.PullPrivate)
-		dockerRouters.POST("/createimagebyid", docker.CreateImageByImageId)
+		dockerRouters.GET("", docker.Index)
+		dockerRouters.GET("/ok", docker.IndexOk)
+		dockerRouters.GET("/delete/:id", docker.Delete)
+
+		dockerRouters.POST("/pull", docker.Pull)
+		dockerRouters.POST("/update", docker.Update)
+		dockerRouters.POST("/save", docker.Save)
 	}
 }

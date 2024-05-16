@@ -99,7 +99,7 @@ func ListAppJob(ns string, label string) (*responses.AppJobList, error) {
 }
 
 // GetAppJob 返回job填写时的表单信息，方便再次运行
-func GetAppJob(name, ns string) (*forms.JobAddForm, error) {
+func GetAppJob(name, ns string) (*responses.InfoJob, error) {
 	form := forms.JobAddForm{}
 	job, err := service.GetJob(name, ns)
 	if err != nil {
@@ -110,5 +110,5 @@ func GetAppJob(name, ns string) (*forms.JobAddForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoJob{Response: responses.OK, Form: form}, nil
 }

@@ -171,7 +171,7 @@ func DeleteLinux(name, ns string) (*responses.Response, error) {
 }
 
 // GetLinux 更新之前先get
-func GetLinux(name, ns string) (*forms.LinuxUpdateForm, error) {
+func GetLinux(name, ns string) (*responses.InfoLinux, error) {
 	form := forms.LinuxUpdateForm{}
 	deploy, err := service.GetDeploy(name, ns)
 	if err != nil {
@@ -182,7 +182,7 @@ func GetLinux(name, ns string) (*forms.LinuxUpdateForm, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &form, nil
+	return &responses.InfoLinux{Response: responses.OK, Form: form}, nil
 }
 
 func UpdateLinux(name, ns string, resources forms.ApplyResources) (*responses.Response, error) {

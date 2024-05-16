@@ -63,6 +63,11 @@ func GetNode(label string) (*responses.NodeListResponse, error) {
 		gpu := node.Status.Capacity.Name(GpuShare, resource.BinarySI)
 		usedGpu := gpu.DeepCopy()
 		usedGpu.Sub(*node.Status.Allocatable.Name(GpuShare, resource.BinarySI))
+
+		role := "worker"
+		if _, ok := node.Labels["node-role.kubernetes.io/control-plane"]; ok {
+			role = "master"
+		}
 		tmp := responses.Node{
 			Name:           node.Name,
 			Ip:             node.Status.Addresses[0].Address,
@@ -70,6 +75,7 @@ func GetNode(label string) (*responses.NodeListResponse, error) {
 			CreatedAt:      node.CreationTimestamp.Format("2006-01-02 15:04:05"),
 			OsImage:        node.Status.NodeInfo.OSImage,
 			KubeletVersion: node.Status.NodeInfo.KubeletVersion,
+			Role:           role,
 			Resources: responses.Resources{
 				Cpu:         cpu.String(),
 				UsedCpu:     usedCpu.String(),
