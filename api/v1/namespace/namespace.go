@@ -576,17 +576,17 @@ func NsTotal(c *gin.Context) {
 }
 
 // ListAllKindNs 返回所有类型的ns，包括工作空间、spark、hadoop
-func ListAllKindNs(c *gin.Context) {
-	u_id := c.DefaultQuery("u_id", "")
-	label := map[string]string{
-		"u_id": u_id,
-	}
-	// 将map标签转换为string
-	selector := labels.SelectorFromSet(label).String()
-	nsListResponse, err := service.ListNs(selector)
-	if err != nil {
-		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
-	} else {
-		c.JSON(http.StatusOK, nsListResponse)
-	}
-}
+//func ListAllKindNs(c *gin.Context) {
+//	u_id := c.DefaultQuery("u_id", "")
+//	label := map[string]string{
+//		"u_id": u_id,
+//	}
+//	// 将map标签转换为string
+//	selector := labels.SelectorFromSet(label).String()
+//	nsListResponse, err := service.ListNs(selector)
+//	if err != nil {
+//		c.JSON(http.StatusOK, responses.Response{StatusCode: -1, StatusMsg: err.Error()})
+//	} else {
+//		c.JSON(http.StatusOK, nsListResponse)
+//	}
+//}

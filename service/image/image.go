@@ -3,6 +3,7 @@ package image
 import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
+	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"Kube-CC/models"
 	"go.uber.org/zap"
@@ -162,8 +163,8 @@ func backendPullAndPush(id uint, pullImage forms.PullImage) {
 	}
 
 	//TODO ip暂时写死
-	//cli, err := NewDockerCli(conf.MasterInfo.Host, 2375)
-	cli, err := NewDockerCli("192.168.139.143", 2375)
+	cli, err := NewDockerCli(conf.MasterInfo.Host, 2375)
+	//cli, err := NewDockerCli("192.168.139.143", 2375)
 	if cli != nil {
 		defer cli.Close()
 	}

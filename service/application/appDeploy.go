@@ -7,7 +7,6 @@ import (
 	"Kube-CC/service"
 	"context"
 	"encoding/json"
-	"errors"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -24,6 +23,7 @@ var (
 	readWriteOnce = "ReadWriteOnce"
 	readWriteMany = "ReadWriteMany"
 	isPrivileged  = true
+	nfsSc         = "openebs-rwx"
 )
 
 // CreateAppDeploy 创建deploy类型的整个应用app
@@ -77,36 +77,47 @@ func CreateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
-		volumes = make([]corev1.Volume, 1)
-		//volumeMounts = make([]corev1.VolumeMount, len(form.PvcPath))
-		volumeMounts = make([]corev1.VolumeMount, 1)
-		if form.StorageClassName == "" {
-			return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
-		}
+		//volumes = make([]corev1.Volume, 1)
+		volumes = make([]corev1.Volume, len(form.PvcPath))
+		volumeMounts = make([]corev1.VolumeMount, len(form.PvcPath))
+		//volumeMounts = make([]corev1.VolumeMount, 1)
+		//if form.StorageClassName == "" {
+		//	return nil, errors.New("已填写PvcStorage,StorageClassName不能为空")
+		//}
+		form.StorageClassName = nfsSc
 		pvcName := form.Name + "-pvc"
 		_, err = service.CreatePVC(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
-		volumes[0] = corev1.Volume{
-			Name: pvcName,
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvcName,
-				},
-			},
-		}
-		// 写死为/data目录
-		volumeMounts[0] = corev1.VolumeMount{
-			Name:      pvcName,
-			MountPath: "/data",
-		}
-		//for i, path := range form.PvcPath {
-		//	volumeMounts[i] = corev1.VolumeMount{
-		//		Name:      pvcName,
-		//		MountPath: path,
-		//	}
+		//volumes[0] = corev1.Volume{
+		//	Name: pvcName,
+		//	VolumeSource: corev1.VolumeSource{
+		//		PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+		//			ClaimName: pvcName,
+		//		},
+		//	},
 		//}
+		//// 写死为/data目录
+		//volumeMounts[0] = corev1.VolumeMount{
+		//	Name:      pvcName,
+		//	MountPath: "/data",
+		//}
+
+		for i, path := range form.PvcPath {
+			volumes[i] = corev1.Volume{
+				Name: pvcName + "-" + strconv.Itoa(i),
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvcName,
+					},
+				},
+			}
+			volumeMounts[i] = corev1.VolumeMount{
+				Name:      pvcName + "-" + strconv.Itoa(i),
+				MountPath: path,
+			}
+		}
 	}
 
 	// 0.创建configMap，存储环境变量
@@ -412,31 +423,42 @@ func UpdateAppDeploy(form forms.DeployAddForm) (*responses.Response, error) {
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
 	if form.PvcStorage != "" {
-		volumes = make([]corev1.Volume, 1)
-		volumeMounts = make([]corev1.VolumeMount, 1)
+		//volumes = make([]corev1.Volume, 1)
+		//volumeMounts = make([]corev1.VolumeMount, 1)
+		volumes = make([]corev1.Volume, len(form.PvcPath))
+		volumeMounts = make([]corev1.VolumeMount, len(form.PvcPath))
+		form.StorageClassName = nfsSc
 		_, err = service.UpdateOrCreatePvc(form.Namespace, pvcName, form.StorageClassName, form.PvcStorage, readWriteMany)
 		if err != nil {
 			return nil, err
 		}
-		volumes[0] = corev1.Volume{
-			Name: pvcName,
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: pvcName,
-				},
-			},
-		}
-		// 写死为/data目录
-		volumeMounts[0] = corev1.VolumeMount{
-			Name:      pvcName,
-			MountPath: "/data",
-		}
-		//for i, path := range form.PvcPath {
-		//	volumeMounts[i] = corev1.VolumeMount{
-		//		Name:      pvcName,
-		//		MountPath: path,
-		//	}
+		//volumes[0] = corev1.Volume{
+		//	Name: pvcName,
+		//	VolumeSource: corev1.VolumeSource{
+		//		PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+		//			ClaimName: pvcName,
+		//		},
+		//	},
 		//}
+		//// 写死为/data目录
+		//volumeMounts[0] = corev1.VolumeMount{
+		//	Name:      pvcName,
+		//	MountPath: "/data",
+		//}
+		for i, path := range form.PvcPath {
+			volumes[i] = corev1.Volume{
+				Name: pvcName + "-" + strconv.Itoa(i),
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvcName,
+					},
+				},
+			}
+			volumeMounts[i] = corev1.VolumeMount{
+				Name:      pvcName + "-" + strconv.Itoa(i),
+				MountPath: path,
+			}
+		}
 	}
 	spec := appsv1.DeploymentSpec{
 		Replicas: &form.Replicas,

@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"Kube-CC/conf"
 	"fmt"
 	"math/rand" //随机数
 	"net/smtp"
@@ -11,7 +12,8 @@ import (
 
 func SendEmailValidate(em string) (string, error) {
 	e := email.NewEmail()
-	e.From = fmt.Sprintf("Kube-CC <1916861581@qq.com>")
+	e.Subject = "Kube-CC <邮箱验证>"
+	e.From = fmt.Sprintf("Kube-CC <%s>", conf.EmailUser)
 	e.To = []string{em}
 	// 生成6位随机验证码
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -25,6 +27,6 @@ func SendEmailValidate(em string) (string, error) {
 	`, vCode, em, t)
 	e.Text = []byte(content)
 	//设置服务器相关的配置
-	err := e.Send("smtp.qq.com:25", smtp.PlainAuth("", "1916861581@qq.com", "rxtspyuerwocbcae", "smtp.qq.com"))
+	err := e.Send(conf.EmailAddr, smtp.PlainAuth("", conf.EmailUser, conf.EmailPassword, conf.EmailHost))
 	return vCode, err
 }
