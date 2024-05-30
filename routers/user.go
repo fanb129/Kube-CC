@@ -22,6 +22,8 @@ func userRouter(router *gin.RouterGroup) {
 		userRouters.POST("/setemail", user.SetEmail)                                    // 绑定邮箱
 		userRouters.GET("/emailcaptcha/:email", emailcaptcha.GetValidateCodeToSetEmail) //邮箱验证码
 		userRouters.POST("/add", middleware.Is2Role(), user.Add)                        // 添加注册用户
+		userRouters.POST("/addbyfile", middleware.Is2Role(), user.AddByFile)            // 批量添加注册用户
+		//userRouters.GET("/getuserfile", middleware.Is2Role(), user.GetUserFile)         // 获取文件模板
 	}
 
 }

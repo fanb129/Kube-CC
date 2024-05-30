@@ -4,9 +4,14 @@ import (
 	"Kube-CC/common/forms"
 	"Kube-CC/common/responses"
 	"Kube-CC/service"
+	"encoding/csv"
 	"errors"
+	"go.uber.org/zap"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -211,4 +216,65 @@ func Add(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response)
+}
+
+// AddByFile 通过文件批量添加
+// csv 文件 username,nickname,password
+func AddByFile(c *gin.Context) {
+	form := forms.AddUserByFileForm{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusOK, responses.ValidatorResponse(err))
+		return
+	}
+	file, err := form.File.Open()
+	//file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+	}
+	if file != nil {
+		defer file.Close()
+	}
+	//reader := csv.NewReader(file)
+	//解决读取csv中文乱码的问题
+	reader := csv.NewReader(transform.NewReader(file, simplifiedchinese.GBK.NewDecoder()))
+	reader.FieldsPerRecord = -1
+	records, err := reader.ReadAll()
+	if err != nil {
+		c.JSON(http.StatusOK, responses.Response{
+			StatusCode: -1,
+			StatusMsg:  err.Error(),
+		})
+		return
+	}
+	// 忽略第一行的表头
+	records = records[1:]
+
+	// 协程批量添加
+	var wg sync.WaitGroup
+	for _, record := range records {
+		wg.Add(1)
+		go func(record []string) {
+			defer wg.Done()
+			// 从 record 中获取需要的数据
+			username := record[0]
+			nickname := record[1]
+			password := record[2]
+			// 使用 form.Gid 作为 group ID
+			// 执行添加用户的逻辑
+			if _, err = service.RegisterUser(username, password, nickname, form.Gid); err != nil {
+				// 处理添加用户失败的情况
+				zap.S().Errorln(err)
+				return
+			}
+		}(record)
+	}
+	wg.Wait()
+	c.JSON(http.StatusOK, &responses.OK)
+}
+
+func GetUserFile(c *gin.Context) {
+	c.File("add_user.csv")
 }
