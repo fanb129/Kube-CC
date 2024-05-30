@@ -1,5 +1,7 @@
 package forms
 
+import "mime/multipart"
+
 type ResetPassForm struct {
 	Password string `form:"password" json:"password" binding:"required,min=6,max=16"`
 }
@@ -33,4 +35,9 @@ type AddUserForm struct {
 	Password string `form:"password" json:"password" binding:"required,min=6,max=16"`
 	Nickname string `form:"nickname" json:"nickname" binding:"required,min=1,max=16"`
 	Gid      uint   `form:"gid" json:"gid"`
+}
+
+type AddUserByFileForm struct {
+	File *multipart.FileHeader `form:"file" json:"file" binding:"required"`
+	Gid  uint                  `form:"gid" json:"gid"`
 }

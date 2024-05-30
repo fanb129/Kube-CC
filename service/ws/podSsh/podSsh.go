@@ -4,7 +4,6 @@ import (
 	"Kube-CC/conf"
 	"Kube-CC/dao"
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -98,7 +97,7 @@ func PodWsSsh(resp http.ResponseWriter, req *http.Request) {
 	podName = req.Form.Get("podName")
 	containerName = req.Form.Get("containerName")
 
-	fmt.Println(podNs, podName, containerName)
+	//fmt.Println(podNs, podName, containerName)
 	// 得到websocket长连接
 	if wsConn, err = InitWebsocket(resp, req); err != nil {
 		return
