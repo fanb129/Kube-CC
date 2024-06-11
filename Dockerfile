@@ -19,7 +19,6 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 COPY --from=builder /go/src/github.com/fanb129/Kube-CC/kubecc .
-COPY conf/conf.ini conf/admin.conf /app/conf/
 
 EXPOSE 8080
 
