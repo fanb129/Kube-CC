@@ -40,6 +40,14 @@ func main() {
 		zap.S().Panicln(err)
 	}
 
+	// 初始化管理员
+	service.RegisterUser("admin", "admin", "系统管理员", 0)
+	user, _ := dao.GetUserByName("admin")
+	if user != nil {
+		user.Role = 3
+		dao.UpdateUser(user)
+	}
+
 	go func() {
 		// 每隔一小时检测用户是否过期
 		ticker := time.NewTicker(time.Hour)
